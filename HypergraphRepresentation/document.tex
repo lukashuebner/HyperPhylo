@@ -30,14 +30,7 @@
 		\label{fig:example}
 	\end{figure}
 	
-	This only works, if KaHyPar allows for hyperedges with a single vertex (as described above). If this is not allowed, we additionally need to use the \textit{repeat class balancing constraint}: \[ \forall V_i \in \Pi: \left|\bigcap_{v \in V_i}I\left(v\right)\right| + \left|\set{v | v \in V_i \land I\left(v\right)=\emptyset}\right| \]
+	This only works if KaHyPar allows for hyperedges with a single vertex (as described above). If this is not allowed, we need to use the \textit{repeat class balancing constraint} instead: \[ \forall V_i \in \Pi: \left|\bigcap_{v \in V_i}I\left(v\right)\right| + \sum_{v \in V_i}w\left(v\right) \] with redefined vertex weights $\forall v \in V: w\left(v\right)=\left|\set{r | v \in r, r \in \mathcal{R}, \left|r\right|=1} \right|$ where $\mathcal{R} := \set{\textit{repeat classes in RCCP}}$.
 	
-	The \textit{vertex balancing constraint} proposed by the practical explenation would not work because it treats vertices in a cut hyperedge equally to vertices without a hyperedge. This can cause problems with balancing as seen in \cref{fig:example}. However, this is an approximation because it will remove repeat classes as shown in \cref{fig:missingrc}.
-	
-	\begin{figure}[ht]
-		\centering
-		\includegraphics[width=0.65\textwidth]{missingrc.png}
-		\caption{Missing repeat classes when using the repeat class balancing constraint}
-		\label{fig:missingrc}
-	\end{figure}
+	The \textit{vertex balancing constraint} proposed by the practical explenation would not work because it treats vertices in a cut hyperedge equally to vertices without a hyperedge. This can cause problems with balancing as seen in \cref{fig:example}.
 \end{document}
