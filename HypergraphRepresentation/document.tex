@@ -21,7 +21,7 @@
 	
 	To divide as little repeat classes as possible we minimize the \textit{connectivity metric} described by  \[ \left(\lambda-1\right)\left(\Pi\right):=\sum\nolimits_{e \in E'}\left(\lambda\left(e\right)-1\right)\omega\left(e\right) = \sum\nolimits_{e \in E'}\left(\lambda\left(e\right)-1\right) \] with $\lambda\left(e\right):=|\Lambda\left(e\right)|$, $\Lambda\left(e\right):=\set{V_i \mid V_i \cap e = \emptyset}$ and the set of divided nets $E'$. 
 	
-	To preserve the \textit{Balancing} between blocks, we balance by the edge weights per block using the \textit{capacity constraint} \[ \left|\bigcap_{v \in V_i}I\left(v\right)\right| \leq \left(1+\epsilon\right)\frac{\left|E\right|}{k} \] with $I(v):=\set{\textit{nets incident towards v}}$.
+	To preserve the \textit{Balancing} between blocks, we balance by the edge weights per block using the \textit{capacity constraint} \[ \left|\bigcup_{v \in V_i}I\left(v\right)\right| \leq \left(1+\epsilon\right)\frac{\left|E\right|}{k} \] with $I(v):=\set{\textit{nets incident towards v}}$.
 	
 	\begin{figure}[ht]
 		\centering
@@ -30,7 +30,7 @@
 		\label{fig:example}
 	\end{figure}
 	
-	This only works if KaHyPar allows for hyperedges with a single vertex (as described above). If this is not allowed, we need to use the \textit{repeat class balancing constraint} instead: \[ \forall V_i \in \Pi: \left|\bigcap_{v \in V_i}I\left(v\right)\right| + \sum_{v \in V_i}w\left(v\right) \] with redefined vertex weights $\forall v \in V: w\left(v\right)=\left|\set{r | v \in r, r \in \mathcal{R}, \left|r\right|=1} \right|$ where $\mathcal{R} := \set{\textit{repeat classes in RCCP}}$.
+	This only works if KaHyPar allows for hyperedges with a single vertex (as described above). If this is not allowed, we need to use the \textit{repeat class balancing constraint} instead: \[ \forall V_i \in \Pi: \left|\bigcup_{v \in V_i}I\left(v\right)\right| + \sum_{v \in V_i}w\left(v\right) \leq C\] with redefined vertex weights $\forall v \in V: w\left(v\right)=\left|\set{r | v \in r, r \in \mathcal{R}, \left|r\right|=1} \right|$ where $\mathcal{R} := \set{\textit{repeat classes in RCCP}}$ and some constant $C$.
 	
-	The \textit{vertex balancing constraint} proposed by the practical explenation would not work because it treats vertices in a cut hyperedge equally to vertices without a hyperedge. This can cause problems with balancing as seen in \cref{fig:example}.
+	The \textit{vertex balancing constraint} proposed by the initial practical description paper would not work because it treats vertices in a cut hyperedge equally to vertices without a hyperedge. This can cause problems with balancing as seen in \cref{fig:example}.
 \end{document}
