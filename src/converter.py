@@ -22,6 +22,7 @@ def partition_file_to_hypergraph(file):
     # Read file
     file_lines = open(file, 'r').readlines()
     file_lines = [line.split() for line in file_lines]
+    file_lines = file_lines[2:]
     number_of_sites = len(file_lines[0])
 
     # Initialize

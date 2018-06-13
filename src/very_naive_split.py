@@ -8,7 +8,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Split one partition of a MSA to k CPUs just by splitting the sites "
                                                  "into k blocks.")
 
-    parser.add_argument('partition_file', nargs=1, help="the partitions file you want to split")
+    parser.add_argument('partition_file', nargs=1, help="the partition file you want to split")
     parser.add_argument('k', nargs=1, type=int, help="the number of blocks you want to split the partition into")
 
     args = parser.parse_args()
@@ -17,6 +17,7 @@ def parse_arguments():
 
 def get_number_of_sites_from_partition_file(file):
     partition_lines = open(file, 'r').readlines()
+    partition_lines = partition_lines[2:]
     first_partition = partition_lines[0].split()
     return len(first_partition)
 
