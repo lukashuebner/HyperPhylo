@@ -40,7 +40,7 @@ def print_split(split, k):
     for i in range(k):
         print('CPU' + str(i + 1), str(number_of_partitions))
         for j in range(number_of_partitions):
-            print("partition_" + str(j), end=' ')
+            print("partition_" + str(j), len(split[i]), end=' ')
             for l in split[i]:
                 print(str(l), end=' ')
             print()
