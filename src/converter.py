@@ -37,6 +37,8 @@ def partition_file_to_hypergraph(file):
                     cur_hyperedge.append(j)
             if cur_hyperedge:
                 hyperedges.append(cur_hyperedge)
+            else:  # No site contains cur_repeat_class --> none will contain any "higher" repeat class
+                break
 
     return vertices, hyperedges
 
