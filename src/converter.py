@@ -29,22 +29,14 @@ def partition_file_to_hypergraph(file):
     hyperedges = []
 
     # Fill the hyperedges one by one
-    all_repeat_classes_found = False
-    cur_repeat_class = 0
-    while not all_repeat_classes_found:
-        cur_hyperedge = []
-
-        for i in range(number_of_sites):  # Traverse all sites (columns in the partition file)
-            for j in range(len(file_lines)):  # Traverse all lines (rows in the partition file)
-                # Add sites that contain the current repeat class to the current hyperedge
-                if int(file_lines[j][i]) == cur_repeat_class and i not in cur_hyperedge:
-                    cur_hyperedge.append(i)
-
-        if cur_hyperedge:
-            hyperedges.append(cur_hyperedge)
-            cur_repeat_class += 1
-        else:
-            all_repeat_classes_found = True
+    for i in range(len(file_lines)):  # Traverse all lines (rows in the partition file)
+        for cur_repeat_class in range(number_of_sites):  # Can have a maximum of number_of_sites repeat classes per row
+            cur_hyperedge = []
+            for j in range(number_of_sites):  # Traverse all sites (columns in the partition file)
+                if int(file_lines[i][j]) == cur_repeat_class:
+                    cur_hyperedge.append(j)
+            if cur_hyperedge:
+                hyperedges.append(cur_hyperedge)
 
     return vertices, hyperedges
 
