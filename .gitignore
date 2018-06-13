@@ -243,5 +243,7 @@ TSWLatexianTemp*
 
 ############### Own Stuff
 HypergraphRepresentation/*.pdf
+.idea
+*.iml
 
 rc
