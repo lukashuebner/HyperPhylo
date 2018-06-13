@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse
 
@@ -67,6 +67,10 @@ def extract_partition(partitions, args):
 
 
 def print_partition(partition):
+    number_of_partitions = '1'
+    number_of_internal_nodes = len(partition)
+    print(number_of_partitions, number_of_internal_nodes)
+    print('partition_0', len(partition[0].split()))
     for n in partition:
         print(n)
 
