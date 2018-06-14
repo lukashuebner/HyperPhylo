@@ -2,6 +2,7 @@
 import itertools
 import argparse
 
+import converter
 from Elem import Elem
 
 
@@ -16,18 +17,8 @@ def parse_arguments():
 	return args
 
 
-def split_very_naive(n, k):
-	"""Split n sites into k blocks of roughly same size."""
-	split = []
-	splitsize = float(n) / k
-	n_range = range(n)
-	for i in range(k):
-		split.append(n_range[int(round(i * splitsize)):int(round((i + 1) * splitsize))])
-	return split
-
-
-def generate_T(H, cm):
-	return set(itertools.combinations(H, cm))
+def generate_T(H, cm_plus_d):
+	return set(itertools.combinations(H, cm_plus_d))
 
 
 def generate_S(T, E):
@@ -65,28 +56,7 @@ def find_minimum_set_in_S_covering_E(E, S):
 def minimum_k_and_d(T, E):
 	S = generate_S(T, E)
 	minimum_set = find_minimum_set_in_S_covering_E(E, S)
-	return len(minimum_set)
-
-
-def get_number_of_sites_from_partition_file(file):
-	partition_lines = open(file, 'r').readlines()
-	first_partition = partition_lines[0].split()
-	return len(first_partition)
-
-
-def print_split(split, k):
-	"""Print the split in the format of a data distribution file."""
-	# Already included "number of partitions" so the code can be extended more easily later (hopefully)
-	number_of_partitions = 1
-
-	print(k)
-	for i in range(k):
-		print('CPU' + str(i + 1), str(number_of_partitions))
-		for j in range(number_of_partitions):
-			print("partition_" + str(j), end=' ')
-			for l in split[i]:
-				print(str(l), end=' ')
-			print()
+	return minimum_set, len(minimum_set)
 
 
 def generate_E(V: set, H: set):
@@ -96,26 +66,81 @@ def generate_E(V: set, H: set):
 		for h in H:
 			if v in h:
 				e_i.add(h)
-		E.add(Elem("E" + str(idx + 1), e_i))
+		E.add(Elem("E" + str(idx + 1), e_i, {v}))
 
 	return E
 
 
+def partitioner(numCPUs, cm, m, V, H):
+	min_max_L = cm
+	E = generate_E(V, H)
+	for d in range(m - cm):
+		S_star, k = minimum_k_and_d(generate_T(H, cm + d), E)
+		if k > numCPUs:
+			# create new E
+			E = set()
+			used_vertices = set()
+			for idx, s in enumerate(S_star):
+				E_i = set()
+				E_i_vertices = set()
+				for e in s:
+					E_i.update(e)
+					# add only vertices to the element E_i that aren't already used in another element E_j
+					diff = e.contained_vertices - used_vertices
+					used_vertices.update(diff)
+					E_i_vertices.update(diff)
+				E.add(Elem("E" + str(idx + 1), E_i, E_i_vertices))
+
+		else:
+			min_max_L = cm + d
+			# extract partitions
+			V = set()
+			for idx, s in enumerate(S_star):
+				V_i = set()
+				for e in s:
+					V_i.update(e.contained_vertices)
+				V.add(Elem("V" + str(idx + 1), V_i))
+
+			return min_max_L, V
+
+
+def partition_file_to_hypergraph(file_path):
+	V_raw, H_raw = converter.partition_file_to_hypergraph(file_path)
+	V = set(V_raw)
+	H = set()
+	for idx, h in enumerate(H_raw):
+		H.add(Elem("H" + str(idx + 1), set(h)))
+
+	return V, H
+
+
+def print_ddf(k, blocks):
+	"""Print the split in the format of a data distribution file."""
+	print(k)
+	for i, block in enumerate(sorted(blocks, key=str)):
+		print('CPU' + str(i + 1), str(1))
+		print("partition_0", len(block), end=' ')
+		for l in block:
+			print(str(l), end=' ')
+		print()
+
 
 def main():
 	args = parse_arguments()
-	V = {1, 2, 3, 4, 5, 6}
-	H = {
-		Elem("H1", {1, 2, 3}),
-		Elem("H2", {4, 5}),
-		Elem("H3", {2, 6}),
-		Elem("H4", {3, 5, 6})
-	}
+	# V = {1, 2, 3, 4, 5, 6}
+	# H = {
+	# 	Elem("H1", {1, 2, 3}),
+	# 	Elem("H2", {4, 5}),
+	# 	Elem("H3", {2, 6}),
+	# 	Elem("H4", {3, 5, 6})
+	# }
+	V, H = partition_file_to_hypergraph(args.partition_file)
 	E = generate_E(V, H)
-	minimum_k_and_d(generate_T(H, 3), E)
-	# number_of_sites = get_number_of_sites_from_partition_file(args.partition_file)
-	# split = split_very_naive(number_of_sites, args.k)
-	# print_split(split, args.k)
+	# maximum hyperdegree
+	cm = len(max(E, key=len))
+	m = len(H)
+	l, partitions = partitioner(args.k, cm, m, V, H)
+	print_ddf(args.k, partitions)
 
 
 if __name__ == "__main__":

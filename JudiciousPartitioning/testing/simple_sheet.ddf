@@ -1,0 +1,5 @@
+2
+CPU1 1
+partition_0 5 0 1 2 3 4
+CPU2 1
+partition_0 1 5

@@ -1,7 +1,9 @@
 class Elem:
-	def __init__(self, name, containing_set):
+	def __init__(self, name, contained_set, contained_vertices=None):
 		self.name = name
-		self.containing_set = containing_set
+		self.contained_set = contained_set
+		# Only used for E
+		self.contained_vertices = contained_vertices
 
 	def __str__(self):
 		return self.name
@@ -10,20 +12,22 @@ class Elem:
 		return hash(self.name)
 
 	def __eq__(self, other):
-		return self.containing_set == other.containing_set
+		return self.contained_set == other.contained_set
 
 	def __ne__(self, other):
 		return not self == other
 
 	def __iter__(self):
-		return iter(self.containing_set)
+		return iter(self.contained_set)
 
 	def __next__(self):
-		return next(self.containing_set)
+		return next(self.contained_set)
 
 	def __sub__(self, other):
 		if isinstance(other, set):
-			return self.containing_set - other
+			return self.contained_set - other
 		else:
 			return NotImplemented
 
+	def __len__(self):
+		return len(self.contained_set)

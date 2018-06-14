@@ -245,5 +245,6 @@ TSWLatexianTemp*
 HypergraphRepresentation/*.pdf
 .idea
 *.iml
+__pycache__
 
 rc
