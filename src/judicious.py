@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import itertools
 import argparse
 
@@ -7,8 +8,7 @@ from Elem import Elem
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description="Split one partition of a MSA to k CPUs just by splitting the sites "
-                                                 "into k blocks.")
+    parser = argparse.ArgumentParser(description="Split one partition of a MSA to k CPUs using judicious partitioning.")
 
     parser.add_argument('partition_file', help="the partitions file you want to split")
     parser.add_argument('k', type=int, help="the number of blocks you want to split the partition into")
@@ -126,19 +126,13 @@ def print_ddf(k, blocks):
 
 def main():
     args = parse_arguments()
-    # V = {1, 2, 3, 4, 5, 6}
-    # H = {
-    # 	Elem("H1", {1, 2, 3}),
-    # 	Elem("H2", {4, 5}),
-    # 	Elem("H3", {2, 6}),
-    # 	Elem("H4", {3, 5, 6})
-    # }
+
     V, H = partition_file_to_hypergraph(args.partition_file)
     E = generate_E(V, H)
-    # maximum hyperdegree
-    cm = len(max(E, key=len))
+    cm = len(max(E, key=len))  # maximum hyperdegree
     m = len(H)
     l, partitions = partitioner(args.k, cm, m, V, H)
+
     print_ddf(args.k, partitions)
 
 
