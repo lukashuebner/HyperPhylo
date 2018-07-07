@@ -16,8 +16,8 @@ def partition_file_to_hypergraph(file):
     """
     Convert a partition file to a hypergraph.
     :param file: the partition file
-    :return: two lists: one containing the vertices = sites, and one containing the hyperedges = repeat classes
-    (which are represented as lists of their vertices)
+    :return: two lists: one containing the hypernodes = sites, and one containing the hyperedges = repeat classes
+    (which are represented as lists of their hypernodes)
     """
     # Read file
     file_lines = open(file, 'r').readlines()
@@ -26,7 +26,7 @@ def partition_file_to_hypergraph(file):
     number_of_sites = len(file_lines[0])
 
     # Initialize
-    vertices = [i for i in range(number_of_sites)]
+    hypernodes = [i for i in range(number_of_sites)]
     hyperedges = []
 
     # Fill the hyperedges one by one
@@ -41,7 +41,7 @@ def partition_file_to_hypergraph(file):
             else:  # No site contains cur_repeat_class --> none will contain any "higher" repeat class
                 break
 
-    return vertices, hyperedges
+    return hypernodes, hyperedges
 
 
 def main():

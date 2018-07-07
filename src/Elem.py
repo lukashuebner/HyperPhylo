@@ -1,9 +1,9 @@
 class Elem:
-    def __init__(self, name, contained_set, contained_vertices=None):
+    def __init__(self, name, contained_set, contained_hypernodes=None):
         self.name = name
         self.contained_set = contained_set
         # Only used for E
-        self.contained_vertices = contained_vertices
+        self.contained_hypernodes = contained_hypernodes
 
     def __str__(self):
         return self.name

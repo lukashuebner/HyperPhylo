@@ -78,17 +78,17 @@ def partitioner(numCPUs, cm, m, V, H):
         if k > numCPUs:
             # create new E
             E = set()
-            used_vertices = set()
+            used_hypernodes = set()
             for idx, s in enumerate(S_star):
                 E_i = set()
-                E_i_vertices = set()
+                E_i_hypernodes = set()
                 for e in s:
                     E_i.update(e)
-                    # add only vertices to the element E_i that aren't already used in another element E_j
-                    diff = e.contained_vertices - used_vertices
-                    used_vertices.update(diff)
-                    E_i_vertices.update(diff)
-                E.add(Elem("E" + str(idx + 1), E_i, E_i_vertices))
+                    # add only hypernodes to the element E_i that aren't already used in another element E_j
+                    diff = e.contained_hypernodes - used_hypernodes
+                    used_hypernodes.update(diff)
+                    E_i_hypernodes.update(diff)
+                E.add(Elem("E" + str(idx + 1), E_i, E_i_hypernodes))
 
         else:
             min_max_L = cm + d
@@ -97,7 +97,7 @@ def partitioner(numCPUs, cm, m, V, H):
             for idx, s in enumerate(S_star):
                 V_i = set()
                 for e in s:
-                    V_i.update(e.contained_vertices)
+                    V_i.update(e.contained_hypernodes)
                 V.add(Elem("V" + str(idx + 1), V_i))
 
             return min_max_L, V
@@ -126,6 +126,14 @@ def print_ddf(k, blocks):
 
 def main():
     args = parse_arguments()
+
+    # V = {1, 2, 3, 4, 5, 6}
+    # H = {
+    # 	Elem("H1", {1, 2, 3}),
+    # 	Elem("H2", {4, 5}),
+    # 	Elem("H3", {2, 6}),
+    # 	Elem("H4", {3, 5, 6})
+    # }
 
     V, H = partition_file_to_hypergraph(args.partition_file)
     E = generate_E(V, H)
