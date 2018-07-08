@@ -245,6 +245,8 @@ TSWLatexianTemp*
 HypergraphRepresentation/*.pdf
 .idea
 *.iml
+cmake-build-debug
+cmake-build-release
 __pycache__
 
 rc
