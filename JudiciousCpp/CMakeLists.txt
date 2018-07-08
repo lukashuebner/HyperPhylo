@@ -7,4 +7,6 @@ include_directories(.)
 
 add_executable(JudiciousCpp
         Hypergraph.h
-        main.cpp)
+        twiddle.h
+        main.cpp
+        twiddle.cpp)
