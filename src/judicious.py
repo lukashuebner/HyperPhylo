@@ -74,7 +74,6 @@ def partitioner(numCPUs, V, H):
     E = generate_E(V, H)
     cm = len(max(E, key=len))  # maximum hyperdegree
     m = len(H)
-    min_max_L = cm
     for d in range(m - cm):
         S_star, k = minimum_k_and_d(generate_T(H, cm + d), E)
         if k > numCPUs:
@@ -93,16 +92,15 @@ def partitioner(numCPUs, V, H):
                 E.add(Elem("E" + str(idx + 1), E_i, E_i_hypernodes))
 
         else:
-            min_max_L = cm + d
             # extract partitions
-            V = set()
+            partitions = set()
             for idx, s in enumerate(S_star):
-                V_i = set()
+                partition = set()
                 for e in s:
-                    V_i.update(e.contained_hypernodes)
-                V.add(Elem("V" + str(idx + 1), V_i))
+                    partition.update(e.contained_hypernodes)
+                partitions.add(Elem("Partition" + str(idx + 1), partition))
 
-            return min_max_L, V
+            return V
 
 
 def partition_file_to_hypergraph(file_path):
@@ -138,7 +136,7 @@ def main():
     # }
 
     V, H = partition_file_to_hypergraph(args.partition_file)
-    l, partitions = partitioner(args.k, V, H)
+    partitions = partitioner(args.k, V, H)
 
     print_ddf(args.k, partitions)
 
