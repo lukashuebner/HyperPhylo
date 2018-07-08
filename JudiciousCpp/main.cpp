@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <boost/algorithm/cxx11/all_of.hpp>
 #include <boost/range/algorithm/set_algorithm.hpp>
+#include <cassert>
 
 #include "Hypergraph.h"
 #include "twiddle.h"
@@ -17,31 +18,38 @@ Hypergraph getHypergraphFromPartitionFile(const std::string &filepath) {
     return hypergraph;
 }
 
-/**
- * Returns all possible (hyperedges.size() over cmPlusD) combinations of hyperedges.
- *
- * @param hyperedges The set of hyperedges to combine.
- * @param cmPlusD the number of elements in one combination.
- * @return The set of combinations of hyperedges.
- */
-std::set<std::set<hElem>> generateT(const std::set<hElem> &hyperedges, uint64_t cmPlusD) {
-    // TODO Try our "only calculate fitting elements of T" trick
-    return getAllCombinations(hyperedges, (int) hyperedges.size(), (int) cmPlusD);
-}
+///**
+// * Returns all possible (hyperedges.size() over cmPlusD) combinations of hyperedges.
+// *
+// * @param hyperedges The set of hyperedges to combine.
+// * @param cmPlusD the number of elements in one combination.
+// * @return The set of combinations of hyperedges.
+// */
+//std::set<std::set<hElem>> generateT(const std::set<hElem> &hyperedges, uint64_t cmPlusD) {
+//    // TODO Try our "only calculate fitting elements of T" trick
+//    return getAllCombinations(hyperedges, (int) hyperedges.size(), (int) cmPlusD);
+//}
 
 /**
- * Returns the set S containing one element for each element in t. The element s contains
- * each element of E that is a subset of the element in t.
+ * Returns the set S containing one element for each element in T. The element s contains
+ * each element of E that is a subset of the element in T. T is generated in place.
  *
- * @param t The set of all combinations of hyperedges of a specific size.
+ * @param t cmPlusD The number of elements per combination in T.
  * @param e The set e as described in generateE.
  * @return The set S
  */
-std::set<sElem> generateS(const std::set<std::set<hElem>> &t, const std::set<eElem> &e) {
+std::set<sElem> generateS(size_t cmPlusD, const std::set<eElem> &e) {
+    assert(cmPlusD < INT32_MAX);
+    assert(!e.empty());
+
     std::set<sElem> s;
 
+    // Init generator for T
+    initCombinationGenerator((int) cmPlusD);
+
     // For all sets in t create a set in s
-    for (const std::set<hElem> &currentT : t) {
+    std::set<hElem> currentT = getNextCombination();
+    while (!currentT.empty()) {
         sElem currentS;
 
         // In the set currentS are all elements of e that are a subset of currentT
@@ -54,6 +62,7 @@ std::set<sElem> generateS(const std::set<std::set<hElem>> &t, const std::set<eEl
         }
 
         s.insert(currentS);
+        currentT = getNextCombination();
     }
 
     return s;
@@ -95,12 +104,12 @@ std::set<sElem> findMinimalSubset(const std::set<eElem> &e, const std::set<sElem
 /**
  * Runs the minimum k and d algorithm as shown in the paper.
  *
- * @param t The set of combinations of hyperedges with a specific number of hyperedges per element.
+ * @param t cmPlusD The number of elements per combination in T.
  * @param e The set E as described in generateE.
  * @return The found minimal set. The size of the minimal set is the value k.
  */
-std::set<std::set<eElem>> minimumKAndD(const std::set<std::set<hElem>> &t, const std::set<eElem> &e) {
-    std::set<sElem> s = generateS(t, e);
+std::set<std::set<eElem>> minimumKAndD(size_t cmPlusD, const std::set<eElem> &e) {
+    std::set<sElem> s = generateS(cmPlusD, e);
     return findMinimalSubset(e, s);
 }
 
@@ -154,8 +163,11 @@ std::set<std::set<uint32_t>> partition(size_t n, const Hypergraph &hypergraph) {
     // get hyperedge count of the hypergraph
     size_t m = hypergraph.getHyperEdges().size();
 
+    // Set the base set for the combinations generator to the hyperedge
+    setBaseSet(hypergraph.getHyperEdges());
+
     for (size_t d = 0; d < m - cm; d++) {
-        std::set<sElem> sStar = minimumKAndD(generateT(hypergraph.getHyperEdges(), cm + d), e);
+        std::set<sElem> sStar = minimumKAndD(cm + d, e);
         size_t k = sStar.size();
         if (k > n) {
             // Create new e

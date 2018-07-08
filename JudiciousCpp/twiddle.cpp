@@ -40,9 +40,19 @@
 */
 
 #include <vector>
-#include "Hypergraph.h"
+#include <cassert>
+#include "twiddle.h"
 
-int twiddle(int *x, int *y, int *z, int *p) {
+int attr_x;
+int attr_y;
+int attr_z;
+std::vector<int> p;
+std::vector<int> mask;
+std::set<hElem> combination;
+// Base set for combinations
+std::vector<hElem> elements;
+
+int twiddle(int *x, int *y, int *z) {
     int i, j, k;
     j = 1;
 
@@ -96,56 +106,81 @@ int twiddle(int *x, int *y, int *z, int *p) {
     return (0);
 }
 
-void inittwiddle(int m, int n, int *p) {
+void setBaseSet(const std::set<hElem> &baseSet) {
+    assert(baseSet.size() <= INT32_MAX);
+    assert(!baseSet.empty());
+
+    // Convert set to vector for O(1) indexed access
+    elements = std::vector<hElem>(baseSet.begin(), baseSet.end());
+}
+
+void initCombinationGenerator(int k) {
+    assert(!elements.empty());
+
+    auto n = (int) elements.size();
+
+    assert(k > 0);
+    assert(k <= n);
+
+
+    p = std::vector<int>((size_t) n + 2);
+    mask = std::vector<int>((size_t) n);
+    attr_x = 0;
+    attr_y = 0;
+    attr_z = 0;
+
+    // INIT
     int i;
     p[0] = n + 1;
 
-    for (i = 1; i != n - m + 1; i++) {
+    for (i = 1; i != n - k + 1; i++) {
         p[i] = 0;
     }
 
     while (i != n + 1) {
-        p[i] = i + m - n;
+        p[i] = i + k - n;
         i++;
     }
 
     p[n + 1] = -2;
-    if (m == 0) {
+    if (k == 0) {
         p[1] = 1;
+    }
+
+    // Generate first combination
+    for (i = 0; i != n - k; i++) {
+        mask[i] = 0;
+    }
+
+    while (i != n) {
+        mask[i++] = 1;
+        combination.insert(elements[i - 1]);
     }
 }
 
-std::set<std::set<hElem>> getAllCombinations(const std::set<hElem> &inputSet, int n, int k) {
-    // Convert set to vector for O(1) indexed access
-    std::vector<hElem> elements(inputSet.begin(), inputSet.end());
-    std::set<std::set<hElem>> combinations;
-
-    size_t i;
-    int x, y, z, p[n + 2], b[n];
-    inittwiddle(k, n, p);
-
-    for (i = 0; i != n - k; i++) {
-        b[i] = 0;
+std::set<hElem> getNextCombination() {
+    if (combination.empty()) {
+        return combination;
     }
 
-    std::set<hElem> combination;
-    while (i != n) {
-        b[i++] = 1;
-        combination.insert(elements.at(i - 1));
-    }
-    combinations.insert(combination);
+    std::set<hElem> nextCombination = combination;
 
-    while (!twiddle(&x, &y, &z, p)) {
-        b[x] = 1;
-        b[y] = 0;
+    if (!twiddle(&attr_x, &attr_y, &attr_z)) {
+        mask[attr_x] = 1;
+        mask[attr_y] = 0;
         combination.clear();
-        for (i = 0; i != n; i++) {
-            if (b[i]) {
-                combination.insert(elements.at(i));
+
+        int i;
+        for (i = 0; i != elements.size(); i++) {
+            if (mask[i]) {
+                combination.insert(elements[i]);
+            } else {
             }
         }
-        combinations.insert(combination);
-    }
 
-    return combinations;
+        return nextCombination;
+    } else {
+        combination.clear();
+        return nextCombination;
+    }
 }

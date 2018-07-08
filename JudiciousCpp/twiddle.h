@@ -4,6 +4,8 @@
 #include <vector>
 #include "Hypergraph.h"
 
-std::set<std::set<hElem>> getAllCombinations(const std::set<hElem> &inputSet, int n, int k);
+void setBaseSet(const std::set<hElem> &baseSet);
+void initCombinationGenerator(int k);
+std::set<hElem> getNextCombination();
 
 #endif //JUDICIOUSCPP_TWIDDLE_H
