@@ -100,7 +100,7 @@ def partitioner(numCPUs, V, H):
                     partition.update(e.contained_hypernodes)
                 partitions.add(Elem("Partition" + str(idx + 1), partition))
 
-            return V
+            return partitions
 
 
 def partition_file_to_hypergraph(file_path):
