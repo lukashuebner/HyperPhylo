@@ -1,19 +1,88 @@
 #include <iostream>
+#include <fstream>
 #include <sstream>
+#include <string>
 #include <set>
 #include <algorithm>
+#include <cassert>
+
 #include <boost/algorithm/cxx11/all_of.hpp>
 #include <boost/range/algorithm/set_algorithm.hpp>
-#include <cassert>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 
 #include "Hypergraph.h"
 #include "twiddle.h"
 
 
+/**
+ * Parse a partition file and create its hypergraph.
+ * @param filepath The path to the partition file.
+ * @return The hypergraph that represents the partition described in the input file.
+ */
 Hypergraph getHypergraphFromPartitionFile(const std::string &filepath) {
-    // TODO
+    // Read the file
+    std::ifstream input_file(filepath);
+
+    if (input_file.bad()) {
+        std::cout << "Could not read " << filepath << std::endl;
+        exit(1);
+    }
+
+    // We will create a 2D array containing the information from the file
+    std::vector<std::vector<uint32_t>> partition;
+    std::string line;
+    int i = -3;
+    while (std::getline(input_file, line)) {
+        i++;
+        // Ignore the first two lines
+        if (i < 0) {
+            continue;
+        }
+
+        // Fill in the 2D array
+        partition.push_back({});
+        std::vector<std::string> split_line;
+        boost::split(split_line, line, boost::is_any_of(" "));
+        for (auto s : split_line) {
+            // Awkward conversion from string to uint32_t
+            uint32_t curRepeatClass;
+            std::istringstream iss(s);
+            iss >> curRepeatClass;
+
+            partition[i].push_back(curRepeatClass);
+        }
+    }
+
+    // Now create the hypergraph from the 2D array
     std::set<uint32_t> hypernodes;
     std::set<hElem> hyperedges;
+
+    unsigned long numberOfSites = partition[0].size();
+
+    // Fill the hypernodes
+    for (uint32_t j = 0; j < numberOfSites; j++) {
+        hypernodes.insert(j);
+    }
+
+    // Fill the hyperedges
+    for (std::vector<uint32_t> curLine : partition) {  // Traverse all lines (rows in the partition)
+        // Can have a maximum of numberOfSites repeat classes per row:
+        for (uint32_t curRepeatClass = 0; curRepeatClass < numberOfSites; curRepeatClass++) {
+            hElem curHyperedge;
+            for (uint32_t k = 0; k < numberOfSites; k++) {  // Traverse all sites (columns in the partition)
+                if (curLine[k] == curRepeatClass) {
+                    curHyperedge.insert(k);
+                }
+            }
+            if (!curHyperedge.empty()) {
+                hyperedges.insert(curHyperedge);
+            } else {  // No site contains curRepeatClass --> none will contain any "higher" repeat class
+                break;
+            }
+        }
+    }
+
     Hypergraph hypergraph(hypernodes, hyperedges);
     return hypergraph;
 }
@@ -243,17 +312,8 @@ int main(int argc, char **argv) {
         std::cout << "Usage: " << argv[0] << " partition_file k" << std::endl;
     }
 
-    // Hypergraph hypergraph = getHypergraphFromPartitionFile(filepath);
-
-    // Hardcoded sample hypergraph
-    std::set<uint32_t> hypernodes { 1, 2, 3, 4, 5, 6 };
-    std::set<hElem> hyperedges {
-        {1, 2, 3},
-        {4, 5},
-        {2, 6},
-        {3, 5, 6}
-    };
-    Hypergraph hypergraph(hypernodes, hyperedges);
+    Hypergraph hypergraph = getHypergraphFromPartitionFile(filepath);
+    
     std::set<std::set<uint32_t>> partitions = partition(k, hypergraph);
 
     printDDF(k, partitions);
