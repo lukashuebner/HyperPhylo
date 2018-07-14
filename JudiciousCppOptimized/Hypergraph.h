@@ -5,11 +5,14 @@
 #ifndef JUDICIOUSCPP_HYPERGAPH_H
 #define JUDICIOUSCPP_HYPERGAPH_H
 
+#define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
+
 
 #include <iostream>
 #include <set>
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/functional/hash.hpp>
 
 // elems of the set of hyperedges: Hypernodes connected by this hyperedge
 typedef std::vector<uint32_t> hElem;
@@ -21,7 +24,7 @@ typedef boost::dynamic_bitset<> eElem;
 // elems of the set S: maps a combination to the covered elements in E
 struct sElem {
     boost::dynamic_bitset<> combination;
-    std::set<size_t> coveredEElems;
+    mutable std::set<size_t> coveredEElems;
 
     // Move combination set
     explicit sElem(boost::dynamic_bitset<> combination) : combination(std::move(combination)) {
@@ -35,6 +38,16 @@ struct sElem {
         return !(lhs == rhs);
     }
 };
+
+namespace std {
+    template <> struct hash<sElem>
+    {
+        size_t operator()(const sElem & S) const
+        {
+            return boost::hash_value(S.combination.m_bits);
+        }
+    };
+}
 
 class Hypergraph {
 private:

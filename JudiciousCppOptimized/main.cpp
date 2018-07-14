@@ -5,6 +5,7 @@
 #include <set>
 #include <algorithm>
 #include <cassert>
+#include <unordered_set>
 
 #include <boost/range/algorithm/set_algorithm.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -101,7 +102,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
 
     // TODO maybe figure out max size and reserve?
     // TODO unordered_set seems to be MUCH faster but was buggy and exploded memory for some reason
-    std::vector<sElem> s;
+    std::unordered_set<sElem> s;
 
     // For each element in E change each element that is a zero to a one.
     for (size_t currentEidx = 0; currentEidx < e.size(); currentEidx++) {
@@ -115,10 +116,11 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
                 newS.combination[i] = true;
 
                 // Insert into S if it doesn't exist already
-                auto foundIterator = std::find(s.begin(), s.end(), newS);
+                auto foundIterator = s.find(newS);
                 if (foundIterator == s.end()) {
                     newS.coveredEElems.insert(currentEidx);
-                    s.push_back(newS);
+                    auto result = s.insert(newS);
+                    assert(result.second && "Hash collision occured while creating S!");
                 } else { // If it does already exist, only add the element of E to the covered ones
                     foundIterator->coveredEElems.insert(currentEidx);
                 }
@@ -128,7 +130,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
 
     std::cout << " Size: " << s.size() << std::endl;
 
-    return s;
+    return std::vector<sElem>(s.begin(), s.end());
 }
 
 /**
@@ -320,7 +322,6 @@ int main(int argc, char **argv) {
         std::cout << "Usage: " << argv[0] << " partition_file k" << std::endl;
         return 1;
     }
-
 
 //    std::vector<uint32_t> V = {0,1,2};
 //    std::vector<hElem> H = {
