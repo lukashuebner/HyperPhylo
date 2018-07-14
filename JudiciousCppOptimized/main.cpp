@@ -53,14 +53,14 @@ Hypergraph getHypergraphFromPartitionFile(const std::string &filepath) {
     }
 
     // Now create the hypergraph from the 2D array
-    std::set<uint32_t> hypernodes;
-    std::set<hElem> hyperedges;
+    std::vector<uint32_t> hypernodes;
+    std::vector<hElem> hyperedges;
 
     unsigned long numberOfSites = partition[0].size();
 
     // Fill the hypernodes
     for (uint32_t j = 0; j < numberOfSites; j++) {
-        hypernodes.insert(j);
+        hypernodes.push_back(j);
     }
 
     // Fill the hyperedges
@@ -70,11 +70,11 @@ Hypergraph getHypergraphFromPartitionFile(const std::string &filepath) {
             hElem curHyperedge;
             for (uint32_t k = 0; k < numberOfSites; k++) {  // Traverse all sites (columns in the partition)
                 if (curLine[k] == curRepeatClass) {
-                    curHyperedge.insert(k);
+                    curHyperedge.push_back(k);
                 }
             }
             if (!curHyperedge.empty()) {
-                hyperedges.insert(curHyperedge);
+                hyperedges.push_back(curHyperedge);
             } else {  // No site contains curRepeatClass --> none will contain any "higher" repeat class
                 break;
             }
@@ -85,18 +85,6 @@ Hypergraph getHypergraphFromPartitionFile(const std::string &filepath) {
     return hypergraph;
 }
 
-///**
-// * Returns all possible (hyperedges.size() over cmPlusD) combinations of hyperedges.
-// *
-// * @param hyperedges The set of hyperedges to combine.
-// * @param cmPlusD the number of elements in one combination.
-// * @return The set of combinations of hyperedges.
-// */
-//std::set<std::set<hElem>> generateT(const std::set<hElem> &hyperedges, uint64_t cmPlusD) {
-//    // TODO Try our "only calculate fitting elements of T" trick
-//    return getAllCombinations(hyperedges, (int) hyperedges.size(), (int) cmPlusD);
-//}
-
 /**
  * Returns the set S containing each combination with cmPlusD elements that derives from at least one element in E.
  * Also contains a list of elements in E that are covered by the element in S.
@@ -106,16 +94,21 @@ Hypergraph getHypergraphFromPartitionFile(const std::string &filepath) {
  * @return The set S.
  */
 std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
+    std::cout << "Generating S" << std::endl;
+
     assert(cmPlusD < INT32_MAX);
     assert(!e.empty());
 
     // TODO maybe figure out max size and reserve?
+    // TODO unordered_set seems to be MUCH faster but was buggy and exploded memory for some reason
     std::vector<sElem> s;
 
     // For each element in E change each element that is a zero to a one.
     for (size_t currentEidx = 0; currentEidx < e.size(); currentEidx++) {
+        std::cout << "Iteration " << currentEidx << std::endl;
         const eElem &currentE = e[currentEidx];
         for (size_t i = 0; i < currentE.size(); i++) {
+            std::cout << "Subiteration " << i << "\r" << std::flush;
             if (!currentE[i]) {
                 // Create the combination
                 sElem newS(currentE);
@@ -133,6 +126,8 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
         }
     }
 
+    std::cout << " Size: " << s.size() << std::endl;
+
     return s;
 }
 
@@ -144,13 +139,15 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
  * @return The found minimal subset.
  */
 std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> &e, const std::vector<sElem> &s) {
+    std::cout << "Searching for minimal subset" << std::flush;
+
     std::set<size_t> alreadyCovered;
     std::vector<boost::dynamic_bitset<>> minimalSubset;
     minimalSubset.reserve(e.size());
 
     // As long as not all of e is covered, i.e. alreadyCovered and E differ
     // Because of how the loop works (adding diffsets), alreadyCovered and E are the same when they have the same number of elements
-    while (alreadyCovered.size() == e.size()) {
+    while (alreadyCovered.size() != e.size()) {
         // findest longest difference set
         std::set<size_t> longestDiffset;
         boost::dynamic_bitset<> combinationOfLongestDiffset;
@@ -170,6 +167,8 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
         minimalSubset.push_back(combinationOfLongestDiffset);
     }
 
+    std::cout << " Size: " << minimalSubset.size() << std::endl;
+
     return minimalSubset;
 }
 
@@ -181,6 +180,7 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
  * @return The found minimal set. The size of the minimal set is the value k.
  */
 std::vector<boost::dynamic_bitset<>> minimumKAndD(size_t cmPlusD, const std::vector<eElem> &e) {
+    std::cout << "Running minKD" << std::endl;
     std::vector<sElem> s = generateS(cmPlusD, e);
     return findMinimalSubset(e, s);
 }
@@ -193,8 +193,10 @@ std::vector<boost::dynamic_bitset<>> minimumKAndD(size_t cmPlusD, const std::vec
  * @return the set E
  */
 std::vector<eElem> generateE(const Hypergraph &hypergraph) {
-    const std::set<uint32_t> &hypernodes = hypergraph.getHypernodes();
-    const std::set<hElem> &hyperedges = hypergraph.getHyperEdges();
+    std::cout << "Generating E" << std::flush;
+    const std::vector<uint32_t> &hypernodes = hypergraph.getHypernodes();
+    std::vector<hElem> hyperedges = hypergraph.getHyperEdges();
+    std::reverse(hyperedges.begin(), hyperedges.end());
 
     std::vector<boost::dynamic_bitset<>> e;
     e.reserve(hypernodes.size());
@@ -204,10 +206,12 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph) {
         curE.reserve(hyperedges.size());
         for (const hElem &hedge : hyperedges) {
             // If hypernode is in hyperedge set 1, else 0
-            curE.push_back(hedge.count(hnode) == 1);
+            curE.push_back(std::find(hedge.begin(), hedge.end(), hnode) != hedge.end());
         }
         e.push_back(curE);
     }
+
+    std::cout << " Size: " << e.size() << std::endl;
 
     return e;
 }
@@ -220,6 +224,8 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph) {
  * @return The resulting partitions as set of hypernode sets.
  */
 std::vector<std::vector<uint32_t>> partition(size_t n, const Hypergraph &hypergraph) {
+    std::cout << "Hyperedges: " << hypergraph.getHyperEdges().size() << " Hypernodes: " << hypergraph.getHypernodes().size() << std::endl;
+
     // Generate set E according to the paper
     std::vector<eElem> originalE = generateE(hypergraph);
     std::vector<eElem> e = originalE;
@@ -228,7 +234,7 @@ std::vector<std::vector<uint32_t>> partition(size_t n, const Hypergraph &hypergr
     // calulate hyperdegree of the hypergraph
     size_t cm = 0;
     for (const eElem &curE : e) {
-        size_t curSize = curE.size();
+        size_t curSize = curE.count();
         if (curSize > cm) {
             cm = curSize;
         }
@@ -237,8 +243,11 @@ std::vector<std::vector<uint32_t>> partition(size_t n, const Hypergraph &hypergr
     // get hyperedge count of the hypergraph
     size_t m = hypergraph.getHyperEdges().size();
 
+    std::cout << "Hyperdegree: " << cm << std::endl;
+
     // Can skip the first cycle because that results in E = S* anyway
     for (size_t d = 1; d < m - cm; d++) {
+        std::cout << "Running with d " << d << std::endl;
         std::vector<boost::dynamic_bitset<>> sStar = minimumKAndD(cm + d, e);
         size_t k = sStar.size();
         if (k > n) {
@@ -247,18 +256,27 @@ std::vector<std::vector<uint32_t>> partition(size_t n, const Hypergraph &hypergr
         } else {
             // Extract partitions
             std::vector<std::vector<uint32_t>> partitions;
+            std::vector<uint32_t> hypernodes = hypergraph.getHypernodes();
+
+            std::vector<uint32_t> assignedHypernodes;
+            assignedHypernodes.reserve(hypernodes.size());
+
             for (const boost::dynamic_bitset<> &currentS : sStar) {
                 std::vector<uint32_t> partition;
-                std::vector<uint32_t> hypernodes(hypergraph.getHypernodes().begin(), hypergraph.getHypernodes().end());
                 partition.reserve(hypernodes.size());
 
                 // If element e & element s == element e of the original set E, then the vertex is part of
                 // the partition that the element s represents because the vertex is fully contained in this partition
                 for (size_t i = 0; i < originalE.size(); i++) {
-                    if ((originalE[i] & currentS) == originalE[i]) {
+                    // Additionally check if a node already is in a partition, if yes don't assign it again
+                    if ((originalE[i] & currentS) == originalE[i]
+                        && std::find(assignedHypernodes.begin(), assignedHypernodes.end(), hypernodes[i]) == assignedHypernodes.end()) {
                         partition.push_back(hypernodes[i]);
+                        assignedHypernodes.push_back(hypernodes[i]);
                     }
                 }
+
+                partitions.push_back(partition);
 
             }
             return partitions;
@@ -296,33 +314,26 @@ int main(int argc, char **argv) {
 
         if (k < 1) {
             std::cout << "The number of CPUs k can't be smaller than 1" << std::endl;
+            return 1;
         }
     } else {
         std::cout << "Usage: " << argv[0] << " partition_file k" << std::endl;
+        return 1;
     }
 
-    //Hypergraph hypergraph = getHypergraphFromPartitionFile(filepath);
 
-//    std::set<uint32_t> V = {1, 2, 3, 4, 5, 6};
-//    std::set<hElem> H = {
-//            {1, 2, 3},
-//    	    {4, 5},
-//    	    {2, 6},
-//    	    {3, 5, 6}
+//    std::vector<uint32_t> V = {0,1,2};
+//    std::vector<hElem> H = {
+//            {0,2},
+//            {0,1},
+//            {2},
+//            {1},
+//            {0,1,2}
 //    };
+//    std::vector<std::vector<uint32_t>> partitions = partition(k, Hypergraph(V, H));
 
-    std::set<uint32_t> V = {0,1,2};
-    std::set<hElem> H = {
-            {0,2},
-            {0,1},
-            {2},
-            {1},
-            {0,1,2}
-    };
-
-    std::vector<std::vector<uint32_t>> partitions = partition(k, Hypergraph(V, H));
-
-//    std::vector<std::vector<uint32_t>> partitions = partition(k, hypergraph);
+    Hypergraph hypergraph = getHypergraphFromPartitionFile(filepath);
+    std::vector<std::vector<uint32_t>> partitions = partition(k, hypergraph);
 
     printDDF(k, partitions);
 

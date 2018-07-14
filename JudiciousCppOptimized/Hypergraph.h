@@ -12,7 +12,7 @@
 #include <boost/dynamic_bitset.hpp>
 
 // elems of the set of hyperedges: Hypernodes connected by this hyperedge
-typedef std::set<uint32_t> hElem;
+typedef std::vector<uint32_t> hElem;
 
 // elems of the set E: sets of hyperedges for each hypernode that contain a hypernode and set S*, which
 // is just the set E of the next round
@@ -38,20 +38,20 @@ struct sElem {
 
 class Hypergraph {
 private:
-    std::set<uint32_t> hypernodes;
-    std::set<hElem> hyperedges;
+    std::vector<uint32_t> hypernodes;
+    std::vector<hElem> hyperedges;
 
 public:
-    Hypergraph(std::set<uint32_t> hypernodes, std::set<hElem> hyperedges) :
+    Hypergraph(std::vector<uint32_t> hypernodes, std::vector<hElem> hyperedges) :
             hypernodes(std::move(hypernodes)),
             hyperedges(std::move(hyperedges)) {
     }
 
-    const std::set<uint32_t> &getHypernodes() const {
+    const std::vector<uint32_t> &getHypernodes() const {
         return hypernodes;
     }
 
-    const std::set<hElem> &getHyperEdges() const {
+    const std::vector<hElem> &getHyperEdges() const {
         return hyperedges;
     }
 };
