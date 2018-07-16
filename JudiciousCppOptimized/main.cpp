@@ -67,8 +67,11 @@ Hypergraph getHypergraphFromPartitionFile(const std::string &filepath, int parti
                 if (curPartitionIsWantedPartition) {
                     partition.emplace_back();
                     for (const auto &s : splitLine) {
-                        uint32_t curRepeatClass = stringToUint32t(s);
-                        partition[i].push_back(curRepeatClass);
+                        if (!s.empty()) {  // There can be empty elements due to too much whitespace in the input
+                            // (especially at the end of the line). Ignore those, else buggy elements will be inserted.
+                            uint32_t curRepeatClass = stringToUint32t(s);
+                            partition[i].push_back(curRepeatClass);
+                        }
                     }
                     i++;
                 }
