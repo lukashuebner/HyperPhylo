@@ -13,7 +13,6 @@
 
 #include "Hypergraph.h"
 
-
 /**
  * Parse a partition file and create its hypergraph.
  * @param filepath The path to the partition file.
@@ -101,7 +100,6 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
     assert(!e.empty());
 
     // TODO maybe figure out max size and reserve?
-    // TODO unordered_set seems to be MUCH faster but was buggy and exploded memory for some reason
     std::unordered_set<sElem> s;
 
     // For each element in E change each element that is a zero to a one.
@@ -233,13 +231,11 @@ std::vector<std::vector<uint32_t>> partition(size_t n, const Hypergraph &hypergr
     std::vector<eElem> e = originalE;
 
 
-    // calulate hyperdegree of the hypergraph
-    size_t cm = 0;
+    // calulate hyperdegree of the hypergra
+    // We assume, that all hypernodes have the same degree
+    size_t cm = e[0].size();
     for (const eElem &curE : e) {
-        size_t curSize = curE.count();
-        if (curSize > cm) {
-            cm = curSize;
-        }
+        assert(curE.count() == cm);
     }
 
     // get hyperedge count of the hypergraph
@@ -304,6 +300,9 @@ void printDDF(size_t k, const std::vector<std::vector<uint32_t>> &partitions) {
 
 
 int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+
     std::string filepath;
     size_t k = 0;
 
