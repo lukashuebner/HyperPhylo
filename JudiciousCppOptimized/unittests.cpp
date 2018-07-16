@@ -53,6 +53,46 @@ TEST(PartitionFileReadin, invalid_partition) {
             "Error: Invalid partition!");
 }
 
+/* #### Partition function
+*/
+
+bool partitionsContainAllVerties(Hypergraph hypergraph, std::vector<std::vector<uint32_t>> partitions) {
+    std::vector<bool> nodeCovered(hypergraph.getHypernodes().size(), false);
+    for (auto partition: partitions) {
+        for (auto node: partition) {
+            nodeCovered[node] = true;
+        }
+    }
+
+    if(std::find(nodeCovered.begin(), nodeCovered.end(), false) != nodeCovered.end()) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+class PartitionFunction : public ::testing::TestWithParam<const char*> {};
+
+TEST_P(PartitionFunction, allNodesAreCoveredByPartitions) {
+    Hypergraph hypergraph = getHypergraphFromPartitionFile(DATASET_PTH + GetParam(), 0);
+    std::vector<std::vector<uint32_t>> partitions = partition(2, hypergraph);
+    ASSERT_TRUE(partitionsContainAllVerties(hypergraph, partitions));
+}
+
+INSTANTIATE_TEST_CASE_P(
+    simpePartitions,
+    PartitionFunction,
+    ::testing::Values("simple.repeats", "simple2.repeats", "example.repeats")
+);
+
+TEST_P(PartitionFunction, bothPartitionsWork) {
+    for (int k = 0; k <= 1; k++) {
+        Hypergraph hypergraph = getHypergraphFromPartitionFile(DATASET_PTH + "simple2.repeats", 0);
+        std::vector<std::vector<uint32_t>> partitions = partition(2, hypergraph);
+        ASSERT_TRUE(partitionsContainAllVerties(hypergraph, partitions));
+    }
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

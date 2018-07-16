@@ -310,8 +310,7 @@ std::vector<std::vector<uint32_t>> partition(size_t n, const Hypergraph &hypergr
         }
     }
 
-    std::cout << "Couldn't find any working partitioning. Exiting..." << std::endl;
-    exit(1);
+    return std::vector<std::vector<uint32_t>>();
 }
 
 void printDDF(size_t k, const std::vector<std::vector<uint32_t>> &partitions) {
