@@ -7,6 +7,13 @@
 
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 
+//#define DEBUG
+#ifdef DEBUG
+#define DEBUG_LOG(x) do { std::cout << (x) << std::flush; } while (0)
+#else
+#define DEBUG_LOG(x)
+#endif
+
 #include <iostream>
 #include <set>
 #include <vector>

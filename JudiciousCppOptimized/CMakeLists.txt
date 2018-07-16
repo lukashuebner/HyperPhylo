@@ -55,10 +55,16 @@ include_directories("${source_dir}/googletest/include"
 
 include_directories(.)
 
-add_executable(JudiciousCppOptimized
+add_executable(JudiciousCpp
         Hypergraph.h
         main.cpp
         algorithms.cpp)
+
+#add_executable(JudiciousCppDebugOn
+#        Hypergraph.h
+#        main.cpp
+#        algorithms.cpp)
+
 
 add_executable(unittest
         unittests.cpp

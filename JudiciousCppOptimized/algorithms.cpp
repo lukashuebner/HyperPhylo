@@ -14,14 +14,13 @@
 
 #include "Hypergraph.h"
 
-
 std::vector<std::string> splitLineAtSpaces(std::string line) {
     std::vector<std::string> splitLine;
     boost::split(splitLine, line, boost::is_any_of(" "));
     return splitLine;
 }
 
-uint32_t stringToUint32t(std::string theString) {
+uint32_t stringToUint32t(const std::string &theString) {
     uint32_t theInt;
     std::istringstream iss(theString);
     iss >> theInt;
@@ -121,7 +120,7 @@ Hypergraph getHypergraphFromPartitionFile(const std::string &filepath, int parti
  * @return The set S.
  */
 std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
-    std::cout << "Generating S" << std::endl;
+    DEBUG_LOG("Generating S\n");
 
     assert(cmPlusD < INT32_MAX);
     assert(!e.empty());
@@ -131,10 +130,10 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
 
     // For each element in E change each element that is a zero to a one.
     for (size_t currentEidx = 0; currentEidx < e.size(); currentEidx++) {
-        std::cout << "Iteration " << currentEidx << std::endl;
+        DEBUG_LOG("Iteration " + std::to_string(currentEidx) + "\n");
         const eElem &currentE = e[currentEidx];
         for (size_t i = 0; i < currentE.size(); i++) {
-            std::cout << "Subiteration " << i << "\r" << std::flush;
+            DEBUG_LOG("Subiteration " + std::to_string(i) + "\r");
             if (!currentE[i]) {
                 // Create the combination
                 sElem newS(currentE);
@@ -153,7 +152,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
         }
     }
 
-    std::cout << " Size: " << s.size() << std::endl;
+    DEBUG_LOG("Size: " + std::to_string(s.size()));
 
     return std::vector<sElem>(s.begin(), s.end());
 }
@@ -166,7 +165,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
  * @return The found minimal subset.
  */
 std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> &e, std::vector<sElem> &s) {
-    std::cout << "Searching for minimal subset" << std::flush;
+    DEBUG_LOG("Searching for minimal subset");
 
     std::set<size_t> alreadyCovered;
     std::vector<boost::dynamic_bitset<>> minimalSubset;
@@ -196,7 +195,7 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
         minimalSubset.push_back(combinationOfLongestDiffset);
     }
 
-    std::cout << " Size: " << minimalSubset.size() << std::endl;
+    DEBUG_LOG(", Size: " + std::to_string(minimalSubset.size()) + "\n");
 
     return minimalSubset;
 }
@@ -209,7 +208,7 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
  * @return The found minimal set. The size of the minimal set is the value k.
  */
 std::vector<boost::dynamic_bitset<>> minimumKAndD(size_t cmPlusD, const std::vector<eElem> &e) {
-    std::cout << "Running minKD" << std::endl;
+    DEBUG_LOG("Running minKD\n");
     std::vector<sElem> s = generateS(cmPlusD, e);
     return findMinimalSubset(e, s);
 }
@@ -222,7 +221,7 @@ std::vector<boost::dynamic_bitset<>> minimumKAndD(size_t cmPlusD, const std::vec
  * @return the set E
  */
 std::vector<eElem> generateE(const Hypergraph &hypergraph) {
-    std::cout << "Generating E" << std::flush;
+    DEBUG_LOG("Generating E");
     const std::vector<uint32_t> &hypernodes = hypergraph.getHypernodes();
     std::vector<hElem> hyperedges = hypergraph.getHyperEdges();
     std::reverse(hyperedges.begin(), hyperedges.end());
@@ -240,7 +239,7 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph) {
         e.push_back(curE);
     }
 
-    std::cout << " Size: " << e.size() << std::endl;
+    DEBUG_LOG(" Size: " + std::to_string(e.size()) + "\n");
 
     return e;
 }
@@ -253,7 +252,7 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph) {
  * @return The resulting partitions as set of hypernode sets.
  */
 std::vector<std::vector<uint32_t>> partition(size_t n, const Hypergraph &hypergraph) {
-    std::cout << "Hyperedges: " << hypergraph.getHyperEdges().size() << " Hypernodes: " << hypergraph.getHypernodes().size() << std::endl;
+    DEBUG_LOG("Hyperedges: " + std::to_string(hypergraph.getHyperEdges().size()) + " Hypernodes: " + std::to_string(hypergraph.getHypernodes().size()) + "\n");
 
     // Generate set E according to the paper
     std::vector<eElem> originalE = generateE(hypergraph);
@@ -270,11 +269,11 @@ std::vector<std::vector<uint32_t>> partition(size_t n, const Hypergraph &hypergr
     // get hyperedge count of the hypergraph
     size_t m = hypergraph.getHyperEdges().size();
 
-    std::cout << "Hyperdegree: " << cm << std::endl;
+    DEBUG_LOG("Hyperdegree: " + std::to_string(cm) + "\n");
 
     // Can skip the first cycle because that results in E = S* anyway
     for (size_t d = 1; d < m - cm; d++) {
-        std::cout << "Running with d " << d << std::endl;
+        DEBUG_LOG("Running with d " + std::to_string(d) + "\n");
         std::vector<boost::dynamic_bitset<>> sStar = minimumKAndD(cm + d, e);
         size_t k = sStar.size();
         if (k > n) {
