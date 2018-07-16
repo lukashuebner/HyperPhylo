@@ -10,15 +10,32 @@
 #include <boost/range/algorithm/set_algorithm.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include "Hypergraph.h"
+
+
+std::vector<std::string> splitLineAtSpaces(std::string line) {
+    std::vector<std::string> splitLine;
+    boost::split(splitLine, line, boost::is_any_of(" "));
+    return splitLine;
+}
+
+uint32_t stringToUint32t(std::string theString) {
+    uint32_t theInt;
+    std::istringstream iss(theString);
+    iss >> theInt;
+    return theInt;
+}
 
 /**
  * Parse a partition file and create its hypergraph.
  * @param filepath The path to the partition file.
+ * @param partitionNumber The number of the partition that should be extracted from the file. 0 is the first partition.
+ * When in doubt, use 0 :)
  * @return The hypergraph that represents the partition described in the input file.
  */
-Hypergraph getHypergraphFromPartitionFile(const std::string &filepath) {
+Hypergraph getHypergraphFromPartitionFile(const std::string &filepath, int partitionNumber) {
     // Read the file
     std::ifstream input_file(filepath);
 
@@ -30,25 +47,35 @@ Hypergraph getHypergraphFromPartitionFile(const std::string &filepath) {
     // We will create a 2D array containing the information from the file
     std::vector<std::vector<uint32_t>> partition;
     std::string line;
-    int i = -3;
+    bool curPartitionIsWantedPartition = false;
+    int i = -2;
     while (std::getline(input_file, line)) {
-        i++;
-        // Ignore the first two lines
-        if (i < 0) {
-            continue;
-        }
+        std::vector<std::string> splitLine = splitLineAtSpaces(line);
 
-        // Fill in the 2D array
-        partition.emplace_back();
-        std::vector<std::string> split_line;
-        boost::split(split_line, line, boost::is_any_of(" "));
-        for (const auto &s : split_line) {
-            // Awkward conversion from string to uint32_t
-            uint32_t curRepeatClass;
-            std::istringstream iss(s);
-            iss >> curRepeatClass;
-
-            partition[i].push_back(curRepeatClass);
+        if (i == -2) {  // First line
+            i++;
+        } else {
+            if (boost::starts_with(splitLine[0], "partition")) {
+                uint32_t curPartitionNumber = stringToUint32t(splitLine[0].substr(10));
+                if (curPartitionNumber == partitionNumber) {
+                    curPartitionIsWantedPartition = true;
+                    i++;
+                } else {
+                    curPartitionIsWantedPartition = false;
+                }
+            } else {
+                if (curPartitionIsWantedPartition) {
+                    partition.emplace_back();
+                    for (const auto &s : splitLine) {
+                        if (!s.empty()) {  // There can be empty elements due to too much whitespace in the input
+                            // (especially at the end of the line). Ignore those, else buggy elements will be inserted.
+                            uint32_t curRepeatClass = stringToUint32t(s);
+                            partition[i].push_back(curRepeatClass);
+                        }
+                    }
+                    i++;
+                }
+            }
         }
     }
 
@@ -300,14 +327,12 @@ void printDDF(size_t k, const std::vector<std::vector<uint32_t>> &partitions) {
 
 
 int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-
     std::string filepath;
     size_t k = 0;
+    int partitionNumber = 0;
 
     // Parse arguments
-    if (argc == 3) {
+    if (argc == 3 || argc == 4) {
         filepath = argv[1];
         std::string k_string(argv[2]);
         std::stringstream str(k_string);
@@ -317,8 +342,14 @@ int main(int argc, char **argv) {
             std::cout << "The number of CPUs k can't be smaller than 1" << std::endl;
             return 1;
         }
+
+        if (argc == 4) {
+            std::string pn_string(argv[3]);
+            std::stringstream pstr(pn_string);
+            pstr >> partitionNumber;
+        }
     } else {
-        std::cout << "Usage: " << argv[0] << " partition_file k" << std::endl;
+        std::cout << "Usage: " << argv[0] << " partition_file k [partition_number]" << std::endl;
         return 1;
     }
 
@@ -332,7 +363,7 @@ int main(int argc, char **argv) {
 //    };
 //    std::vector<std::vector<uint32_t>> partitions = partition(k, Hypergraph(V, H));
 
-    Hypergraph hypergraph = getHypergraphFromPartitionFile(filepath);
+    Hypergraph hypergraph = getHypergraphFromPartitionFile(filepath, partitionNumber);
     std::vector<std::vector<uint32_t>> partitions = partition(k, hypergraph);
 
     printDDF(k, partitions);
