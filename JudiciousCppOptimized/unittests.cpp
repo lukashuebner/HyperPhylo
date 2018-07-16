@@ -35,6 +35,24 @@ TEST(PartitionFileReadin, simple_repeats_p1) {
     }
 }
 
+TEST(PartitionFileReadin, invalid_file) {
+    ASSERT_EXIT(
+        Hypergraph hg = getHypergraphFromPartitionFile(DATASET_PTH + "non_existing_file.nonono", 1),
+        ::testing::ExitedWithCode(1),
+        "Error: Input file does not exist!");
+}
+
+TEST(PartitionFileReadin, invalid_partition) {
+    ASSERT_EXIT(
+        Hypergraph hg = getHypergraphFromPartitionFile(DATASET_PTH + "simple.repeats", 2),
+        ::testing::ExitedWithCode(2),
+        "Error: Invalid partition!");
+    ASSERT_EXIT(
+            Hypergraph hg = getHypergraphFromPartitionFile(DATASET_PTH + "simple.repeats", -1),
+            ::testing::ExitedWithCode(2),
+            "Error: Invalid partition!");
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
