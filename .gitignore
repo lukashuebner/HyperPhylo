@@ -241,16 +241,6 @@ TSWLatexianTemp*
 # generated if using elsarticle.cls
 *.spl
 
-############### Own Stuff
-HypergraphRepresentation/*.pdf
-.idea
-*.iml
-cmake-build-debug
-cmake-build-release
-__pycache__
-JudiciousCppOptimized/JudiciousCppOptimized
-
-rc
 ### https://raw.github.com/github/gitignore/2664dad61f3fda7755acc70ceb5aac4b1e956981/CMake.gitignore
 
 CMakeCache.txt
@@ -261,4 +251,14 @@ cmake_install.cmake
 install_manifest.txt
 CTestTestfile.cmake
 
-
+############### Own Stuff
+HypergraphRepresentation/*.pdf
+.idea
+*.iml
+cmake-build-debug
+cmake-build-release
+__pycache__
+JudiciousCppOptimized/JudiciousCppOptimized
+JudiciousCppOptimized/unittest
+JudiciousCppOptimized/JudiciousCppOptimized.cbp
+rc
