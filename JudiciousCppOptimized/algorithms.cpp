@@ -165,12 +165,14 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
  * @param s The set S as input.
  * @return The found minimal subset.
  */
-std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> &e, const std::vector<sElem> &s) {
+std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> &e, std::vector<sElem> &s) {
     std::cout << "Searching for minimal subset" << std::flush;
 
     std::set<size_t> alreadyCovered;
     std::vector<boost::dynamic_bitset<>> minimalSubset;
     minimalSubset.reserve(e.size());
+
+    std::sort(s.begin(), s.end());
 
     // As long as not all of e is covered, i.e. alreadyCovered and E differ
     // Because of how the loop works (adding diffsets), alreadyCovered and E are the same when they have the same number of elements

@@ -7,7 +7,6 @@
 
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 
-
 #include <iostream>
 #include <set>
 #include <vector>
@@ -36,6 +35,26 @@ struct sElem {
 
     friend bool operator!= (const sElem &lhs, const sElem &rhs) {
         return !(lhs == rhs);
+    }
+
+    friend bool operator< (const sElem &lhs, const sElem &rhs) {
+        if (lhs.coveredEElems.size() == rhs.coveredEElems.size()) {
+            return lhs.combination < rhs.combination;
+        }
+
+        return lhs.coveredEElems.size() == rhs.coveredEElems.size();
+    }
+
+    friend bool operator> (const sElem &lhs, const sElem &rhs) {
+        return rhs < lhs;
+    }
+
+    friend bool operator<= (const sElem &lhs, const sElem &rhs) {
+        return !(lhs > rhs);
+    }
+
+    friend bool operator>= (const sElem &lhs, const sElem &rhs) {
+        return !(lhs < rhs);
     }
 };
 
