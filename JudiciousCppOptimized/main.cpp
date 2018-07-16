@@ -257,10 +257,9 @@ std::vector<std::vector<uint32_t>> partition(size_t n, const Hypergraph &hypergr
     std::vector<eElem> originalE = generateE(hypergraph);
     std::vector<eElem> e = originalE;
 
-
-    // calulate hyperdegree of the hypergra
+    // calulate hyperdegree of the hypergraph
     // We assume, that all hypernodes have the same degree
-    size_t cm = e[0].size();
+    size_t cm = e[0].count();
     for (const eElem &curE : e) {
         assert(curE.count() == cm);
     }
