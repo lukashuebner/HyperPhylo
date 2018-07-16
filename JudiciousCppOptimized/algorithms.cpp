@@ -260,7 +260,7 @@ std::vector<std::vector<uint32_t>> partition(size_t n, const Hypergraph &hypergr
 
     // calulate hyperdegree of the hypergra
     // We assume, that all hypernodes have the same degree
-    size_t cm = e[0].size();
+    size_t cm = e[0].count();
     for (const eElem &curE : e) {
         assert(curE.count() == cm);
     }
