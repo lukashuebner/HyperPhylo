@@ -19,11 +19,9 @@ TEST(PartitionFileReadin, simple_repeats_p0) {
     ASSERT_EQ(hg.getHypernodes().size(), 6);
     ASSERT_EQ(hg.getHyperEdges().size(), 15);
 
-    /*
-    for(auto node: hg.getHypernodes()) {
-        ASSERT_EQ(node.size(), 3);
+    for(auto nodeId: hg.getHypernodes()) {
+        ASSERT_EQ(hg.getHypernodeDegree(nodeId), 3);
     }
-    */
 }
 
 TEST(PartitionFileReadin, simple_repeats_p1) {
@@ -32,11 +30,9 @@ TEST(PartitionFileReadin, simple_repeats_p1) {
     ASSERT_EQ(hg.getHypernodes().size(), 4);
     ASSERT_EQ(hg.getHyperEdges().size(), 11);
 
-    /*
-    for(auto node: hg.getHypernodes()) {
-        ASSERT_EQ(node.size(), 3);
+    for(auto nodeId: hg.getHypernodes()) {
+        ASSERT_EQ(hg.getHypernodeDegree(nodeId), 3);
     }
-    */
 }
 
 int main(int argc, char **argv) {

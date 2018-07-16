@@ -67,6 +67,16 @@ public:
     const std::vector<hElem> &getHyperEdges() const {
         return hyperedges;
     }
+
+    const uint32_t getHypernodeDegree(uint32_t nodeId) const {
+        uint32_t degree = 0;
+        for (auto edge: getHyperEdges()) {
+            if(std::find(edge.begin(), edge.end(), nodeId) != edge.end()) {
+                degree++;
+            }
+        }
+        return degree;
+    }
 };
 
 
