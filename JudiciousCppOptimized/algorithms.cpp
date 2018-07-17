@@ -306,7 +306,7 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph) {
  * @param hypergraph the hypergraph to partition.
  * @return The resulting partitions as set of hypernode sets.
  */
-void partition(const Hypergraph &hypergraph, std::set<size_t> setOfKs) {
+void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
     DEBUG_LOG(1, "Hyperedges: " + std::to_string(hypergraph.getHyperEdges().size()) + " Hypernodes: " + std::to_string(hypergraph.getHypernodes().size()) + "\n");
 
     // Generate set E according to the paper
@@ -329,6 +329,8 @@ void partition(const Hypergraph &hypergraph, std::set<size_t> setOfKs) {
 
     DEBUG_LOG(1, "Hyperdegree: " + std::to_string(cm) + "\n");
 
+    std::vector<size_t> listOfKs(setOfKs.begin(), setOfKs.end());
+
     // Can skip the first cycle because that results in E = S* anyway
     for (size_t d = 1; d < m - cm; d++) {
         DEBUG_LOG(1, "Running with cm+d " + std::to_string(cm + d) + "\n");
@@ -341,7 +343,9 @@ void partition(const Hypergraph &hypergraph, std::set<size_t> setOfKs) {
             return;
         }
 
-        if (setOfKs.find(k) != setOfKs.end()) {
+        size_t element;
+        element = listOfKs.back();
+        while (element >= k) {
             // Extract partitions
             std::vector<std::vector<uint32_t>> partitions;
             std::vector<uint32_t> hypernodes = hypergraph.getHypernodes();
@@ -365,11 +369,24 @@ void partition(const Hypergraph &hypergraph, std::set<size_t> setOfKs) {
                 }
 
                 partitions.push_back(partition);
-
             }
 
-            printDDF(k, partitions);
-            setOfKs.erase(k);
+            // If there are no elements in sStar left but there are not enough partitions yet, fill with empties
+            if (partitions.size() < element) {
+                for (size_t i = partitions.size(); i < element; i++) {
+                    partitions.push_back(std::vector<uint32_t>());
+                }
+            }
+
+            printDDF(element, partitions);
+            listOfKs.pop_back();
+
+            // All partitionings found, exiting
+            if (listOfKs.empty()) {
+                return;
+            }
+
+            element = listOfKs.back();
         }
     }
 
