@@ -390,6 +390,11 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
         }
     }
 
+    std::stringstream s;
+    for (size_t current : listOfKs) {
+        s << current << " ";
+    }
+    DEBUG_LOG(1, "Missed ks: " + s.str());
     assert(false && "Couldn't find a working partitioning. This should never happen!");
     return;
 }
