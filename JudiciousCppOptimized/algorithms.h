@@ -7,7 +7,7 @@
 
 Hypergraph getHypergraphFromPartitionFile(const std::string &filepath, int partitionNumber);
 
-std::vector<std::vector<uint32_t>> partition(size_t n, const Hypergraph &hypergraph);
+void partition(const Hypergraph &hypergraph, std::set<size_t> setOfKs);
 
 void printDDF(size_t k, const std::vector<std::vector<uint32_t>> &partitions);
 

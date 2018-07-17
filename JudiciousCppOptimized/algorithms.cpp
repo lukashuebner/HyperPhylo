@@ -111,6 +111,20 @@ Hypergraph getHypergraphFromPartitionFile(const std::string &filepath, int parti
     return hypergraph;
 }
 
+
+void printDDF(size_t k, const std::vector<std::vector<uint32_t>> &partitions) {
+    std::cout << k << std::endl;
+    size_t partitionCounter = 1;
+    for (const std::vector<uint32_t> &partition : partitions) {
+        std::cout << "CPU" << partitionCounter++ << " 1" << std::endl;
+        std::cout << "partition_0 " << partition.size();
+        for (uint32_t hypernode : partition) {
+            std::cout << " " << hypernode;
+        }
+        std::cout << std::endl;
+    }
+}
+
 /**
  * Returns the set S containing each combination with cmPlusD elements that derives from at least one element in E.
  * Also contains a list of elements in E that are covered by the element in S.
@@ -292,7 +306,7 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph) {
  * @param hypergraph the hypergraph to partition.
  * @return The resulting partitions as set of hypernode sets.
  */
-std::vector<std::vector<uint32_t>> partition(size_t n, const Hypergraph &hypergraph) {
+void partition(const Hypergraph &hypergraph, std::set<size_t> setOfKs) {
     DEBUG_LOG(1, "Hyperedges: " + std::to_string(hypergraph.getHyperEdges().size()) + " Hypernodes: " + std::to_string(hypergraph.getHypernodes().size()) + "\n");
 
     // Generate set E according to the paper
@@ -300,7 +314,7 @@ std::vector<std::vector<uint32_t>> partition(size_t n, const Hypergraph &hypergr
     std::vector<eElem> e = originalE;
 
 
-    // calulate hyperdegree of the hypergra
+    // calulate hyperdegree of the hypergraph
     // We assume, that all hypernodes have the same degree
     size_t cm = e[0].count();
 
@@ -320,10 +334,14 @@ std::vector<std::vector<uint32_t>> partition(size_t n, const Hypergraph &hypergr
         DEBUG_LOG(1, "Running with cm+d " + std::to_string(cm + d) + "\n");
         std::vector<boost::dynamic_bitset<>> sStar = minimumKAndD(cm + d, e);
         size_t k = sStar.size();
-        if (k > n) {
+        if (!setOfKs.empty()) {
             // Replace e with sStar
             e = sStar;
         } else {
+            return;
+        }
+
+        if (setOfKs.find(k) != setOfKs.end()) {
             // Extract partitions
             std::vector<std::vector<uint32_t>> partitions;
             std::vector<uint32_t> hypernodes = hypergraph.getHypernodes();
@@ -349,23 +367,12 @@ std::vector<std::vector<uint32_t>> partition(size_t n, const Hypergraph &hypergr
                 partitions.push_back(partition);
 
             }
-            return partitions;
+
+            printDDF(k, partitions);
+            setOfKs.erase(k);
         }
     }
 
     assert(false && "Couldn't find a working partitioning. This should never happen!");
-    return std::vector<std::vector<uint32_t>>();
-}
-
-void printDDF(size_t k, const std::vector<std::vector<uint32_t>> &partitions) {
-    std::cout << k << std::endl;
-    size_t partitionCounter = 1;
-    for (const std::vector<uint32_t> &partition : partitions) {
-        std::cout << "CPU" << partitionCounter++ << " 1" << std::endl;
-        std::cout << "partition_0 " << partition.size() << " ";
-        for (uint32_t hypernode : partition) {
-            std::cout << hypernode << " ";
-        }
-        std::cout << std::endl;
-    }
+    return;
 }

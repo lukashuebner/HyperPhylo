@@ -42,21 +42,20 @@ std::set<size_t> getKSetFromKString(std::string kString) {
 
 int main(int argc, char **argv) {
     std::string filepath;
-    size_t k = 0;
     int partitionNumber = 0;
+    std::set<size_t> kSet;
 
     // Parse arguments
     if (argc == 3 || argc == 4) {
         filepath = argv[1];
         std::string k_string(argv[2]);
-        std::set<size_t> kSet = getKSetFromKString(k_string);
-        // TODO Change the following code to support the k set accordingly
-        std::stringstream str(k_string);
-        str >> k;
+        kSet = getKSetFromKString(k_string);
 
-        if (k < 1) {
-            std::cout << "The number of CPUs k can't be smaller than 1" << std::endl;
-            return 1;
+        for (size_t k : kSet) {
+            if (k < 1) {
+                std::cout << "The number of CPUs k can't be smaller than 1" << std::endl;
+                return 1;
+            }
         }
 
         if (argc == 4) {
@@ -70,9 +69,7 @@ int main(int argc, char **argv) {
     }
 
     Hypergraph hypergraph = getHypergraphFromPartitionFile(filepath, partitionNumber);
-    std::vector<std::vector<uint32_t>> partitions = partition(k, hypergraph);
-
-    printDDF(k, partitions);
+    partition(hypergraph, kSet);
 
     return 0;
 }
