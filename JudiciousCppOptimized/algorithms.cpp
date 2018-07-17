@@ -130,10 +130,9 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
 
     // For each element in E change each element that is a zero to a one.
     for (size_t currentEidx = 0; currentEidx < e.size(); currentEidx++) {
-        DEBUG_LOG("Iteration " + std::to_string(currentEidx) + "\n");
         const eElem &currentE = e[currentEidx];
         for (size_t i = 0; i < currentE.size(); i++) {
-            DEBUG_LOG("Subiteration " + std::to_string(i) + "\r");
+            DEBUG_LOG("Iteration " + std::to_string(currentEidx + 1) + ", Subiteration " + std::to_string(i + 1) + "\r");
             if (!currentE[i]) {
                 // Create the combination
                 sElem newS(currentE);
@@ -152,7 +151,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
         }
     }
 
-    DEBUG_LOG("Size: " + std::to_string(s.size()));
+    DEBUG_LOG("\nSize: " + std::to_string(s.size()) + "\n");
 
     return std::vector<sElem>(s.begin(), s.end());
 }
@@ -171,6 +170,7 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
     std::vector<boost::dynamic_bitset<>> minimalSubset;
     minimalSubset.reserve(e.size());
 
+    // Needed for it to work, noone knows why :D
     std::sort(s.begin(), s.end());
 
     // As long as not all of e is covered, i.e. alreadyCovered and E differ
@@ -187,6 +187,15 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
                 combinationOfLongestDiffset = currentS.combination;
             }
         }
+
+//        std::stringstream x;
+//        x << "[ ";
+//        for (const size_t &current : longestDiffset) {
+//            x << current << " ";
+//        }
+//        x << "]";
+//
+//        DEBUG_LOG("Found longest diffset: " + x.str() + "\n");
 
         // Add all elements of the found longest diffset to the already covered elements of e
         std::copy(longestDiffset.begin(), longestDiffset.end(), std::inserter(alreadyCovered, alreadyCovered.end()));
@@ -309,14 +318,14 @@ std::vector<std::vector<uint32_t>> partition(size_t n, const Hypergraph &hypergr
         }
     }
 
-    return std::vector<std::vector<uint32_t>>();
+    assert(false && "Couldn't find a working partitioning. This should never happen!");
 }
 
 void printDDF(size_t k, const std::vector<std::vector<uint32_t>> &partitions) {
     std::cout << k << std::endl;
     size_t partitionCounter = 1;
     for (const std::vector<uint32_t> &partition : partitions) {
-        std::cout << "CPU " << partitionCounter++ << " 1" << std::endl;
+        std::cout << "CPU" << partitionCounter++ << " 1" << std::endl;
         std::cout << "partition_0 " << partition.size() << " ";
         for (uint32_t hypernode : partition) {
             std::cout << hypernode << " ";
