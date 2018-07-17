@@ -120,38 +120,49 @@ Hypergraph getHypergraphFromPartitionFile(const std::string &filepath, int parti
  * @return The set S.
  */
 std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
-    DEBUG_LOG("Generating S\n");
-
     assert(cmPlusD < INT32_MAX);
     assert(!e.empty());
+
+    DEBUG_LOG(1, "Generating S with only size >= 2 elements\n");
 
     // TODO maybe figure out max size and reserve?
     std::unordered_set<sElem> s;
 
-    // For each element in E change each element that is a zero to a one.
-    for (size_t currentEidx = 0; currentEidx < e.size(); currentEidx++) {
-        const eElem &currentE = e[currentEidx];
-        for (size_t i = 0; i < currentE.size(); i++) {
-            DEBUG_LOG("Iteration " + std::to_string(currentEidx + 1) + ", Subiteration " + std::to_string(i + 1) + "\r");
-            if (!currentE[i]) {
-                // Create the combination
-                sElem newS(currentE);
-                newS.combination[i] = true;
+    // Run over all possible pairs in E and check if they build a possible combination
+    for (size_t firstEidx = 0; firstEidx < e.size(); firstEidx++) {
+        for (size_t secondEidx = firstEidx + 1; secondEidx < e.size(); secondEidx++) {
+            DEBUG_LOG(2, "First element " + std::to_string(firstEidx + 1) + ", second element " + std::to_string(secondEidx + 1) + "\r");
 
-                // Insert into S if it doesn't exist already
-                auto foundIterator = s.find(newS);
-                if (foundIterator == s.end()) {
-                    newS.coveredEElems.insert(currentEidx);
-                    auto result = s.insert(newS);
-                    assert(result.second && "Hash collision occured while creating S!");
-                } else { // If it does already exist, only add the element of E to the covered ones
-                    foundIterator->coveredEElems.insert(currentEidx);
-                }
+            const eElem &firstE = e[firstEidx];
+            const eElem &secondE = e[secondEidx];
+
+            // Create pair representation
+            boost::dynamic_bitset<> combination = firstE | secondE;
+
+            // Add the representation if it is a valid cm + d combination
+            if (combination.count() == cmPlusD) {
+                sElem newS(combination);
+                newS.coveredEElems.insert(firstEidx);
+                newS.coveredEElems.insert(secondEidx);
+                s.insert(newS);
             }
         }
     }
 
-    DEBUG_LOG("\nSize: " + std::to_string(s.size()) + "\n");
+    // Run over E and check for each element if it fits into one of the generated combinations
+    // TODO This will obviously also add the initial elements of e that created the combination, so maybe we can try to avoid that?
+    DEBUG_LOG(2, "\n");
+    for (size_t eidx = 0; eidx < e.size(); eidx++) {
+        DEBUG_LOG(2, "Fitting element " + std::to_string(eidx + 1) + "\r");
+        for (const sElem &currentS : s) {
+            if ((e[eidx] & currentS.combination) == e[eidx]) {
+                currentS.coveredEElems.insert(eidx);
+            }
+        }
+    }
+
+    DEBUG_LOG(2, "\n");
+    DEBUG_LOG(1, "Size: " + std::to_string(s.size()) + "\n");
 
     return std::vector<sElem>(s.begin(), s.end());
 }
@@ -164,7 +175,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
  * @return The found minimal subset.
  */
 std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> &e, std::vector<sElem> &s) {
-    DEBUG_LOG("Searching for minimal subset");
+    DEBUG_LOG(1, "Searching for minimal subset");
 
     std::set<size_t> alreadyCovered;
     std::vector<boost::dynamic_bitset<>> minimalSubset;
@@ -188,14 +199,10 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
             }
         }
 
-//        std::stringstream x;
-//        x << "[ ";
-//        for (const size_t &current : longestDiffset) {
-//            x << current << " ";
-//        }
-//        x << "]";
-//
-//        DEBUG_LOG("Found longest diffset: " + x.str() + "\n");
+        // If there is no longest diffset, we need to fill with combinations that cover only one element of E
+        if (longestDiffset.empty()) {
+            break;
+        }
 
         // Add all elements of the found longest diffset to the already covered elements of e
         std::copy(longestDiffset.begin(), longestDiffset.end(), std::inserter(alreadyCovered, alreadyCovered.end()));
@@ -204,7 +211,28 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
         minimalSubset.push_back(combinationOfLongestDiffset);
     }
 
-    DEBUG_LOG(", Size: " + std::to_string(minimalSubset.size()) + "\n");
+    // Fill up coverage if needed
+    if (alreadyCovered.size() != e.size()) {
+        for (size_t eidx = 0; eidx < e.size(); eidx++) {
+            // If the element of e is not already covered, generate a coverage element for it
+            if (!alreadyCovered.count(eidx)) {
+                boost::dynamic_bitset<> combination = e[eidx];
+
+                // Flip the first 0 in the combination to a 1 to get a cmPlusD-sized combination that coveres the element in e
+                for (size_t i = 0; i < combination.size(); i++) {
+                    if (!combination[i]) {
+                        combination[i] = true;
+                        break;
+                    }
+                }
+
+                // Insert the covering element
+                minimalSubset.push_back(combination);
+            }
+        }
+    }
+
+    DEBUG_LOG(1, ", Size: " + std::to_string(minimalSubset.size()) + "\n");
 
     return minimalSubset;
 }
@@ -217,7 +245,7 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
  * @return The found minimal set. The size of the minimal set is the value k.
  */
 std::vector<boost::dynamic_bitset<>> minimumKAndD(size_t cmPlusD, const std::vector<eElem> &e) {
-    DEBUG_LOG("Running minKD\n");
+    DEBUG_LOG(1, "Running minKD\n");
     std::vector<sElem> s = generateS(cmPlusD, e);
     return findMinimalSubset(e, s);
 }
@@ -230,7 +258,7 @@ std::vector<boost::dynamic_bitset<>> minimumKAndD(size_t cmPlusD, const std::vec
  * @return the set E
  */
 std::vector<eElem> generateE(const Hypergraph &hypergraph) {
-    DEBUG_LOG("Generating E");
+    DEBUG_LOG(1, "Generating E");
     const std::vector<uint32_t> &hypernodes = hypergraph.getHypernodes();
     std::vector<hElem> hyperedges = hypergraph.getHyperEdges();
     std::reverse(hyperedges.begin(), hyperedges.end());
@@ -248,7 +276,7 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph) {
         e.push_back(curE);
     }
 
-    DEBUG_LOG(" Size: " + std::to_string(e.size()) + "\n");
+    DEBUG_LOG(1, " Size: " + std::to_string(e.size()) + "\n");
 
     return e;
 }
@@ -261,7 +289,7 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph) {
  * @return The resulting partitions as set of hypernode sets.
  */
 std::vector<std::vector<uint32_t>> partition(size_t n, const Hypergraph &hypergraph) {
-    DEBUG_LOG("Hyperedges: " + std::to_string(hypergraph.getHyperEdges().size()) + " Hypernodes: " + std::to_string(hypergraph.getHypernodes().size()) + "\n");
+    DEBUG_LOG(1, "Hyperedges: " + std::to_string(hypergraph.getHyperEdges().size()) + " Hypernodes: " + std::to_string(hypergraph.getHypernodes().size()) + "\n");
 
     // Generate set E according to the paper
     std::vector<eElem> originalE = generateE(hypergraph);
@@ -278,11 +306,11 @@ std::vector<std::vector<uint32_t>> partition(size_t n, const Hypergraph &hypergr
     // get hyperedge count of the hypergraph
     size_t m = hypergraph.getHyperEdges().size();
 
-    DEBUG_LOG("Hyperdegree: " + std::to_string(cm) + "\n");
+    DEBUG_LOG(1, "Hyperdegree: " + std::to_string(cm) + "\n");
 
     // Can skip the first cycle because that results in E = S* anyway
     for (size_t d = 1; d < m - cm; d++) {
-        DEBUG_LOG("Running with d " + std::to_string(d) + "\n");
+        DEBUG_LOG(1, "Running with cm+d " + std::to_string(cm + d) + "\n");
         std::vector<boost::dynamic_bitset<>> sStar = minimumKAndD(cm + d, e);
         size_t k = sStar.size();
         if (k > n) {

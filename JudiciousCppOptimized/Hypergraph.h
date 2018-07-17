@@ -7,11 +7,12 @@
 
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 
-#define DEBUG
-#ifdef DEBUG
-#define DEBUG_LOG(x) do { std::cout << (x) << std::flush; } while (0)
+#define DEBUG 1
+
+#if DEBUG > 0
+#define DEBUG_LOG(level, message) do { if (DEBUG >= (level)) std::cout << (message) << std::flush; } while (0)
 #else
-#define DEBUG_LOG(x)
+#define DEBUG_LOG(level, message)
 #endif
 
 #include <iostream>
