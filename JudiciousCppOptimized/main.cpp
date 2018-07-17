@@ -2,9 +2,43 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
+#include <set>
+
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "Hypergraph.h"
 #include "algorithms.h"
+
+
+/**
+ * Extract a set of k's from the string that is input on the command line.
+ * E.g., get {2, 4, 8} from "2,4,8"
+ */
+std::set<size_t> getKSetFromKString(std::string kString) {
+    std::set<size_t> kSet;
+
+    if (boost::contains(kString, ",")) {  // Input contains multiple elements
+        std::vector<std::string> splitKString;
+        boost::split(splitKString, kString, boost::is_any_of(","));
+
+        for (auto s : splitKString) {
+            size_t cur;
+            std::stringstream str(s);
+            str >> cur;
+            kSet.insert(cur);
+        }
+    } else {  // Input contains only one element
+        size_t k;
+        std::stringstream str(kString);
+        str >> k;
+        kSet.insert(k);
+    }
+
+    return kSet;
+}
 
 int main(int argc, char **argv) {
     std::string filepath;
@@ -15,6 +49,8 @@ int main(int argc, char **argv) {
     if (argc == 3 || argc == 4) {
         filepath = argv[1];
         std::string k_string(argv[2]);
+        std::set<size_t> kSet = getKSetFromKString(k_string);
+        // TODO Change the following code to support the k set accordingly
         std::stringstream str(k_string);
         str >> k;
 
@@ -29,7 +65,7 @@ int main(int argc, char **argv) {
             pstr >> partitionNumber;
         }
     } else {
-        std::cout << "Usage: " << argv[0] << " partition_file k [partition_number]" << std::endl;
+        std::cout << "Usage: " << argv[0] << " partition_file k1[,k2[,k3...]] [partition_number]" << std::endl;
         return 1;
     }
 
