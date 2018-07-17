@@ -52,8 +52,8 @@ int main(int argc, char **argv) {
         kSet = getKSetFromKString(k_string);
 
         for (size_t k : kSet) {
-            if (k < 1) {
-                std::cout << "The number of CPUs k can't be smaller than 1" << std::endl;
+            if (k < 2) {
+                std::cout << "The number of CPUs k can't be smaller than 2" << std::endl;
                 return 1;
             }
         }
