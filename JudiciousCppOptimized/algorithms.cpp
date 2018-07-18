@@ -373,7 +373,7 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
             // If there are no elements in sStar left but there are not enough partitions yet, fill with empties
             if (partitions.size() < element) {
                 for (size_t i = partitions.size(); i < element; i++) {
-                    partitions.push_back(std::vector<uint32_t>());
+                    partitions.emplace_back();
                 }
             }
 
@@ -389,11 +389,12 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
         }
     }
 
+#if DEBUG > 0
     std::stringstream s;
     for (size_t current : listOfKs) {
         s << current << " ";
     }
+#endif
     DEBUG_LOG(1, "Missed ks: " + s.str());
     assert(false && "Couldn't find a working partitioning. This should never happen!");
-    return;
 }
