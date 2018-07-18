@@ -68,7 +68,9 @@ include_directories(.)
 add_executable(JudiciousCpp
         Hypergraph.h
         main.cpp
-        algorithms.cpp)
+        algorithms.cpp
+        Helper.h
+        Helper.cpp)
 
 #add_executable(JudiciousCppDebugOn
 #        Hypergraph.h

@@ -13,6 +13,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include "Hypergraph.h"
+#include "Helper.h"
 
 std::vector<std::string> splitLineAtSpaces(std::string line) {
     std::vector<std::string> splitLine;
@@ -143,7 +144,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
     std::unordered_set<sElem> s;
 
     // Run over all possible pairs in E and check if they build a possible combination
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(dynamic)
     for (size_t firstEidx = 0; firstEidx < e.size(); firstEidx++) {
         for (size_t secondEidx = firstEidx + 1; secondEidx < e.size(); secondEidx++) {
             DEBUG_LOG(2, "First element " + std::to_string(firstEidx + 1) + ", second element " + std::to_string(secondEidx + 1) + "\r");
@@ -168,12 +169,10 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
     // Run over E and check for each element if it fits into one of the generated combinations
     // TODO This will obviously also add the initial elements of e that created the combination, so maybe we can try to avoid that?
     DEBUG_LOG(2, "\n");
-    #pragma omp parallel for
     for (size_t eidx = 0; eidx < e.size(); eidx++) {
         DEBUG_LOG(2, "Fitting element " + std::to_string(eidx + 1) + "\r");
         for (const sElem &currentS : s) {
             if ((e[eidx] & currentS.combination) == e[eidx]) {
-                #pragma omp critical
                 currentS.coveredEElems.insert(eidx);
             }
         }

@@ -11,6 +11,7 @@
 
 #include "Hypergraph.h"
 #include "algorithms.h"
+#include "Helper.h"
 
 
 /**
