@@ -11,9 +11,16 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <unordered_map>
 
 #include "Hypergraph.h"
 #include "Helper.h"
+
+// Key is the index of the element e that maps to the minimal distance element
+// Value is a pair where
+//   the first value is the index of the element if e with a minimal distance to the key element
+//   the second value is the minimal distance
+std::unordered_map<size_t, std::pair<size_t, size_t>> minimalDistances;
 
 std::vector<std::string> splitLineAtSpaces(std::string line) {
     std::vector<std::string> splitLine;
@@ -143,6 +150,8 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
     // TODO maybe figure out max size and reserve?
     std::unordered_set<sElem> s;
 
+    minimalDistances.clear();
+
     // Run over all possible pairs in E and check if they build a possible combination
     #pragma omp parallel for schedule(dynamic)
     for (size_t firstEidx = 0; firstEidx < e.size(); firstEidx++) {
@@ -152,16 +161,41 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
             const eElem &firstE = e[firstEidx];
             const eElem &secondE = e[secondEidx];
 
-            // Create pair representation
-            boost::dynamic_bitset<> combination = firstE | secondE;
+            // Calculate distance
+            size_t distance = (firstE ^ secondE).count();
 
             // Add the representation if it is a valid cm + d combination
-            if (combination.count() == cmPlusD) {
+            if (distance <= 2) {
+                boost::dynamic_bitset<> combination = firstE | secondE;
                 sElem newS(combination);
                 newS.coveredEElems.insert(firstEidx);
                 newS.coveredEElems.insert(secondEidx);
                 #pragma omp critical
                 s.insert(newS);
+            } else { // else, add to the table of minimal distances
+                // Store the mapping a --> b
+                auto result = minimalDistances.insert(std::make_pair(firstEidx, std::make_pair(secondEidx, distance)));
+
+                // If adding was not successful, there is already an entry for that element of e
+                if (!result.second) {
+                    // If the currently stored minimal distance is greater than this one, replace it
+                    if (result.first->second.second > distance) {
+                        result.first->second.first = secondEidx;
+                        result.first->second.second = distance;
+                    }
+                }
+
+                // Store the mapping b --> a
+                auto resultReverse = minimalDistances.insert(std::make_pair(secondEidx, std::make_pair(firstEidx, distance)));
+
+                // If adding was not successful, there is already an entry for that element of e
+                if (!resultReverse.second) {
+                    // If the currently stored minimal distance is greater than this one, replace it
+                    if (resultReverse.first->second.second > distance) {
+                        resultReverse.first->second.first = firstEidx;
+                        resultReverse.first->second.second = distance;
+                    }
+                }
             }
         }
     }
@@ -233,11 +267,18 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
         for (size_t eidx = 0; eidx < e.size(); eidx++) {
             // If the element of e is not already covered, generate a coverage element for it
             if (!alreadyCovered.count(eidx)) {
-                boost::dynamic_bitset<> combination = e[eidx];
+                // Get the minimalDistances entry for this element of e
+                std::unordered_map<size_t,std::pair<size_t, size_t>>::const_iterator elementIterator = minimalDistances.find(eidx);
+                assert(elementIterator != minimalDistances.end());
+                assert(elementIterator->second.second > 2);
 
-                // Flip the first 0 in the combination to a 1 to get a cmPlusD-sized combination that coveres the element in e
-                for (size_t i = 0; i < combination.size(); i++) {
-                    if (!combination[i]) {
+                boost::dynamic_bitset<> combination = e[eidx];
+                const eElem &otherElement = e[elementIterator->second.first];
+
+                // Flip a bit that makes the combination approach towards the element that is closest to the combination
+                // by flipping a bit to 1 that is already a one in the other element
+                for (size_t i = 0; i < otherElement.size(); i++) {
+                    if (otherElement[i] == 1 && combination[i] == 0) {
                         combination[i] = true;
                         break;
                     }
