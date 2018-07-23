@@ -442,7 +442,7 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
             #ifdef FAKE_DETECTION
                 if (used && expectedCombination != currentS) {
                     numberOfFakes++;
-                    fakes.push_back(partitions.size());
+                    fakes.push_back(partitions.size() + 1);
                 }
             #endif
 
