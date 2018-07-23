@@ -25,7 +25,7 @@ std::set<size_t> getKSetFromKString(std::string kString) {
         std::vector<std::string> splitKString;
         boost::split(splitKString, kString, boost::is_any_of(","));
 
-        for (auto s : splitKString) {
+        for (const auto &s : splitKString) {
             size_t cur;
             std::stringstream str(s);
             str >> cur;
@@ -70,7 +70,12 @@ int main(int argc, char **argv) {
     }
 
     Hypergraph hypergraph = getHypergraphFromPartitionFile(filepath, partitionNumber);
+
+    startTM("Runtime");
     partition(hypergraph, kSet);
+    endTM("Runtime");
+
+    printAllTM();
 
     return 0;
 }

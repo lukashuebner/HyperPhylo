@@ -14,12 +14,13 @@
 #include <unordered_map>
 
 #include "Hypergraph.h"
+#include "algorithms.h"
 #include "Helper.h"
 
 // Key is the index of the element e that maps to the minimal distance element
 // Value is a pair where
-//   the first value is the index of the element if e with a minimal distance to the key element
-//   the second value is the minimal distance
+// * the first value is the index of the element if e with a minimal distance to the key element
+// * the second value is the minimal distance
 std::unordered_map<size_t, std::pair<size_t, size_t>> minimalDistances;
 
 std::vector<std::string> splitLineAtSpaces(std::string line) {
@@ -145,7 +146,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
     assert(cmPlusD < INT32_MAX);
     assert(!e.empty());
 
-    DEBUG_LOG(1, "Generating S with only size >= 2 elements\n");
+    DEBUG_LOG(DEBUG_PROGRESS, "Generating S with only size >= 2 elements\n");
 
     // TODO maybe figure out max size and reserve?
     std::unordered_set<sElem> s;
@@ -156,7 +157,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
     #pragma omp parallel for schedule(dynamic)
     for (size_t firstEidx = 0; firstEidx < e.size(); firstEidx++) {
         for (size_t secondEidx = firstEidx + 1; secondEidx < e.size(); secondEidx++) {
-            DEBUG_LOG(2, "First element " + std::to_string(firstEidx + 1) + ", second element " + std::to_string(secondEidx + 1) + "\r");
+            DEBUG_LOG(DEBUG_VERBOSE, "First element " + std::to_string(firstEidx + 1) + ", second element " + std::to_string(secondEidx + 1) + "\r");
 
             const eElem &firstE = e[firstEidx];
             const eElem &secondE = e[secondEidx];
@@ -173,27 +174,32 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
                 #pragma omp critical
                 s.insert(newS);
             } else { // else, add to the table of minimal distances
-                // Store the mapping a --> b
-                auto result = minimalDistances.insert(std::make_pair(firstEidx, std::make_pair(secondEidx, distance)));
+                #pragma omp critical
+                {
+                    // Store the mapping a --> b
+                    auto result = minimalDistances.insert(
+                            std::make_pair(firstEidx, std::make_pair(secondEidx, distance)));
 
-                // If adding was not successful, there is already an entry for that element of e
-                if (!result.second) {
-                    // If the currently stored minimal distance is greater than this one, replace it
-                    if (result.first->second.second > distance) {
-                        result.first->second.first = secondEidx;
-                        result.first->second.second = distance;
+                    // If adding was not successful, there is already an entry for that element of e
+                    if (!result.second) {
+                        // If the currently stored minimal distance is greater than this one, replace it
+                        if (result.first->second.second > distance) {
+                            result.first->second.first = secondEidx;
+                            result.first->second.second = distance;
+                        }
                     }
-                }
 
-                // Store the mapping b --> a
-                auto resultReverse = minimalDistances.insert(std::make_pair(secondEidx, std::make_pair(firstEidx, distance)));
+                    // Store the mapping b --> a
+                    auto resultReverse = minimalDistances.insert(
+                            std::make_pair(secondEidx, std::make_pair(firstEidx, distance)));
 
-                // If adding was not successful, there is already an entry for that element of e
-                if (!resultReverse.second) {
-                    // If the currently stored minimal distance is greater than this one, replace it
-                    if (resultReverse.first->second.second > distance) {
-                        resultReverse.first->second.first = firstEidx;
-                        resultReverse.first->second.second = distance;
+                    // If adding was not successful, there is already an entry for that element of e
+                    if (!resultReverse.second) {
+                        // If the currently stored minimal distance is greater than this one, replace it
+                        if (resultReverse.first->second.second > distance) {
+                            resultReverse.first->second.first = firstEidx;
+                            resultReverse.first->second.second = distance;
+                        }
                     }
                 }
             }
@@ -202,9 +208,9 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
 
     // Run over E and check for each element if it fits into one of the generated combinations
     // TODO This will obviously also add the initial elements of e that created the combination, so maybe we can try to avoid that?
-    DEBUG_LOG(2, "\n");
+    DEBUG_LOG(DEBUG_VERBOSE, "\n");
     for (size_t eidx = 0; eidx < e.size(); eidx++) {
-        DEBUG_LOG(2, "Fitting element " + std::to_string(eidx + 1) + "\r");
+        DEBUG_LOG(DEBUG_VERBOSE, "Fitting element " + std::to_string(eidx + 1) + "\r");
         for (const sElem &currentS : s) {
             if ((e[eidx] & currentS.combination) == e[eidx]) {
                 currentS.coveredEElems.insert(eidx);
@@ -212,8 +218,8 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
         }
     }
 
-    DEBUG_LOG(2, "\n");
-    DEBUG_LOG(1, "Size: " + std::to_string(s.size()) + "\n");
+    DEBUG_LOG(DEBUG_VERBOSE, "\n");
+    DEBUG_LOG(DEBUG_PROGRESS, "Size: " + std::to_string(s.size()) + "\n");
 
     return std::vector<sElem>(s.begin(), s.end());
 }
@@ -226,14 +232,16 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
  * @return The found minimal subset.
  */
 std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> &e, std::vector<sElem> &s) {
-    DEBUG_LOG(1, "Searching for minimal subset");
+    DEBUG_LOG(DEBUG_PROGRESS, "Searching for minimal subset");
 
     std::set<size_t> alreadyCovered;
     std::vector<boost::dynamic_bitset<>> minimalSubset;
     minimalSubset.reserve(e.size());
 
-    // Needed for it to work, noone knows why :D
+    // Only for determinism. Not actually needed.
+#if DEBUG > DEBUG_DETERMINISM
     std::sort(s.begin(), s.end());
+#endif
 
     // As long as not all of e is covered, i.e. alreadyCovered and E differ
     // Because of how the loop works (adding diffsets), alreadyCovered and E are the same when they have the same number of elements
@@ -290,7 +298,7 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
         }
     }
 
-    DEBUG_LOG(1, ", Size: " + std::to_string(minimalSubset.size()) + "\n");
+    DEBUG_LOG(DEBUG_PROGRESS, ", Size: " + std::to_string(minimalSubset.size()) + "\n");
 
     return minimalSubset;
 }
@@ -303,7 +311,7 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
  * @return The found minimal set. The size of the minimal set is the value k.
  */
 std::vector<boost::dynamic_bitset<>> minimumKAndD(size_t cmPlusD, const std::vector<eElem> &e) {
-    DEBUG_LOG(1, "Running minKD\n");
+    DEBUG_LOG(DEBUG_PROGRESS, "Running minKD\n");
     std::vector<sElem> s = generateS(cmPlusD, e);
     return findMinimalSubset(e, s);
 }
@@ -316,7 +324,7 @@ std::vector<boost::dynamic_bitset<>> minimumKAndD(size_t cmPlusD, const std::vec
  * @return the set E
  */
 std::vector<eElem> generateE(const Hypergraph &hypergraph) {
-    DEBUG_LOG(1, "Generating E");
+    DEBUG_LOG(DEBUG_PROGRESS, "Generating E");
     const std::vector<uint32_t> &hypernodes = hypergraph.getHypernodes();
     std::vector<hElem> hyperedges = hypergraph.getHyperEdges();
     std::reverse(hyperedges.begin(), hyperedges.end());
@@ -334,7 +342,7 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph) {
         e.push_back(curE);
     }
 
-    DEBUG_LOG(1, " Size: " + std::to_string(e.size()) + "\n");
+    DEBUG_LOG(DEBUG_PROGRESS, " Size: " + std::to_string(e.size()) + "\n");
 
     return e;
 }
@@ -347,7 +355,7 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph) {
  * @return The resulting partitions as set of hypernode sets.
  */
 void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
-    DEBUG_LOG(1, "Hyperedges: " + std::to_string(hypergraph.getHyperEdges().size()) + " Hypernodes: " + std::to_string(hypergraph.getHypernodes().size()) + "\n");
+    DEBUG_LOG(DEBUG_PROGRESS, "Hyperedges: " + std::to_string(hypergraph.getHyperEdges().size()) + " Hypernodes: " + std::to_string(hypergraph.getHypernodes().size()) + "\n");
 
     // Generate set E according to the paper
     std::vector<eElem> originalE = generateE(hypergraph);
@@ -367,13 +375,13 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
     // get hyperedge count of the hypergraph
     size_t m = hypergraph.getHyperEdges().size();
 
-    DEBUG_LOG(1, "Hyperdegree: " + std::to_string(cm) + "\n");
+    DEBUG_LOG(DEBUG_PROGRESS, "Hyperdegree: " + std::to_string(cm) + "\n");
 
     std::vector<size_t> listOfKs(setOfKs.begin(), setOfKs.end());
 
     // Can skip the first cycle because that results in E = S* anyway
     for (size_t d = 1; d < m - cm; d++) {
-        DEBUG_LOG(1, "Running with cm+d " + std::to_string(cm + d) + "\n");
+        DEBUG_LOG(DEBUG_PROGRESS, "Running with cm+d " + std::to_string(cm + d) + "\n");
         std::vector<boost::dynamic_bitset<>> sStar = minimumKAndD(cm + d, e);
         size_t k = sStar.size();
         if (!setOfKs.empty()) {
@@ -393,9 +401,19 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
             std::vector<uint32_t> assignedHypernodes;
             assignedHypernodes.reserve(hypernodes.size());
 
+        #ifdef FAKE_DETECTION
+            size_t numberOfFakes = 0;
+            std::vector<size_t> fakes;
+        #endif
+
             for (const boost::dynamic_bitset<> &currentS : sStar) {
                 std::vector<uint32_t> partition;
                 partition.reserve(hypernodes.size());
+
+            #ifdef FAKE_DETECTION
+                boost::dynamic_bitset<> expectedCombination(originalE[0].size());
+                bool used = false;
+            #endif
 
                 // If element e & element s == element e of the original set E, then the vertex is part of
                 // the partition that the element s represents because the vertex is fully contained in this partition
@@ -405,11 +423,41 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
                         && std::find(assignedHypernodes.begin(), assignedHypernodes.end(), hypernodes[i]) == assignedHypernodes.end()) {
                         partition.push_back(hypernodes[i]);
                         assignedHypernodes.push_back(hypernodes[i]);
+
+                    #ifdef FAKE_DETECTION
+                        used = true;
+                    #endif
                     }
+
+                #ifdef FAKE_DETECTION
+                    // If the original E element is contained in the current element of S, OR it into the expected combination.
+                    if ((originalE[i] & currentS) == originalE[i]) {
+                        expectedCombination |= originalE[i];
+                    }
+                #endif
                 }
+
+                // Check for fake elements. A fake element is one that doesn't equal the result of ORing together
+                // all contained original e elements. It is only relevant if it was actually used for a partition though.
+            #ifdef FAKE_DETECTION
+                if (used && expectedCombination != currentS) {
+                    numberOfFakes++;
+                    fakes.push_back(partitions.size());
+                }
+            #endif
 
                 partitions.push_back(partition);
             }
+
+        #ifdef FAKE_DETECTION
+            if (numberOfFakes) {
+                std::cout << "\033[0;31mNumber of fake elements: " << numberOfFakes << " (";
+                for (size_t current : fakes) {
+                    std::cout << "CPU" << current << " ";
+                }
+                std::cout << "\b)" << "\033[0m" << std::endl;
+            }
+        #endif
 
             // If there are no elements in sStar left but there are not enough partitions yet, fill with empties
             if (partitions.size() < element) {
@@ -436,6 +484,6 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
         s << current << " ";
     }
 #endif
-    DEBUG_LOG(1, "Missed ks: " + s.str());
+    DEBUG_LOG(DEBUG_PROGRESS, "Missed ks: " + s.str());
     assert(false && "Couldn't find a working partitioning. This should never happen!");
 }

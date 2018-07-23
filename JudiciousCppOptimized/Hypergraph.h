@@ -7,14 +7,6 @@
 
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 
-#define DEBUG 0
-
-#if DEBUG > 0
-#define DEBUG_LOG(level, message) do { if (DEBUG >= (level)) std::cout << (message) << std::flush; } while (0)
-#else
-#define DEBUG_LOG(level, message)
-#endif
-
 #include <iostream>
 #include <set>
 #include <vector>
@@ -50,7 +42,7 @@ struct sElem {
             return lhs.combination < rhs.combination;
         }
 
-        return lhs.coveredEElems.size() == rhs.coveredEElems.size();
+        return lhs.coveredEElems.size() < rhs.coveredEElems.size();
     }
 
     friend bool operator> (const sElem &lhs, const sElem &rhs) {
