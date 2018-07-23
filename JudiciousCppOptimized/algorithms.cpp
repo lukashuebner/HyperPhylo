@@ -384,7 +384,7 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
         DEBUG_LOG(DEBUG_PROGRESS, "Running with cm+d " + std::to_string(cm + d) + "\n");
         std::vector<boost::dynamic_bitset<>> sStar = minimumKAndD(cm + d, e);
         size_t k = sStar.size();
-        if (!setOfKs.empty()) {
+        if (!listOfKs.empty()) {
             // Replace e with sStar
             e = sStar;
         } else {
