@@ -239,7 +239,7 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
     minimalSubset.reserve(e.size());
 
     // Only for determinism. Not actually needed.
-#if DEBUG > DEBUG_DETERMINISM
+#if DEBUG >= DEBUG_DETERMINISM
     std::sort(s.begin(), s.end());
 #endif
 
