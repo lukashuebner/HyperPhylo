@@ -42,3 +42,18 @@ void printAllTM() {
 		}
 	}
 }
+
+bool partitionsContainAllVerties(Hypergraph hypergraph, std::vector<std::vector<uint32_t>> partitions) {
+	std::vector<bool> nodeCovered(hypergraph.getHypernodes().size(), false);
+	for (auto partition: partitions) {
+		for (auto node: partition) {
+			nodeCovered[node] = true;
+		}
+	}
+
+	if(std::find(nodeCovered.begin(), nodeCovered.end(), false) != nodeCovered.end()) {
+		return false;
+	} else {
+		return true;
+	}
+}

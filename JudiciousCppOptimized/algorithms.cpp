@@ -374,6 +374,8 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
 
     // get hyperedge count of the hypergraph
     size_t m = hypergraph.getHyperEdges().size();
+    // TODO uncomment
+    //assert(m == cm * hypergraph.getHypernodes().size());
 
     DEBUG_LOG(DEBUG_PROGRESS, "Hyperdegree: " + std::to_string(cm) + "\n");
 
@@ -466,6 +468,7 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
                 }
             }
 
+            assert(partitionsContainAllVerties(hypergraph, partitions));
             printDDF(element, partitions);
             listOfKs.pop_back();
 
