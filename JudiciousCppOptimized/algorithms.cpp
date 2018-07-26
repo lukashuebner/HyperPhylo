@@ -309,7 +309,7 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
                 // Mark all uncovered elements of e that are covered by the created filler as covered
                 for (size_t checkEidx = 0; checkEidx < e.size(); checkEidx++) {
                     if ((e[checkEidx] & combination) == e[checkEidx]) {
-                        assert(checkEidx < eidx && "I didn't expect this to happen, there should be no coverage introduced to earlier elements");
+                        assert(checkEidx >= eidx && "I didn't expect this to happen, there should be no coverage introduced to earlier elements");
                         if (checkEidx != eidx) std::cerr << "This acutally did something!" << std::endl;
                         alreadyCovered.insert(checkEidx);
                     }
