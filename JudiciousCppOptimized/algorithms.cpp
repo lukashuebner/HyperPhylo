@@ -166,8 +166,12 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
             size_t distance = (firstE ^ secondE).count();
 
             // Add the representation if it is a valid cm + d combination
-            if (distance <= 2) {
+            assert(distance >= 2);
+            if (distance == 2) {
+                assert(firstE != secondE);
                 boost::dynamic_bitset<> combination = firstE | secondE;
+                assert(combination.count() == cmPlusD);
+
                 sElem newS(combination);
                 newS.coveredEElems.insert(firstEidx);
                 newS.coveredEElems.insert(secondEidx);
@@ -239,9 +243,15 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
     minimalSubset.reserve(e.size());
 
     // Only for determinism. Not actually needed.
-#if DEBUG >= DEBUG_DETERMINISM
+#ifdef DETERMINISM
     std::sort(s.begin(), s.end());
 #endif
+
+    std::set<size_t> uniques;
+    for (const sElem &currentS : s) {
+        uniques.insert(currentS.coveredEElems.begin(), currentS.coveredEElems.end());
+    }
+    std::cerr << "The >= 2 covering s elements cover " << uniques.size() << " unique elements of e" << std::endl;
 
     // As long as not all of e is covered, i.e. alreadyCovered and E differ
     // Because of how the loop works (adding diffsets), alreadyCovered and E are the same when they have the same number of elements
@@ -270,11 +280,15 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
         minimalSubset.push_back(combinationOfLongestDiffset);
     }
 
+    int counter = 0;
+    std::cerr << "Elements not covered yet: " << (e.size() - alreadyCovered.size()) << std::endl;
+
     // Fill up coverage if needed
     if (alreadyCovered.size() != e.size()) {
         for (size_t eidx = 0; eidx < e.size(); eidx++) {
             // If the element of e is not already covered, generate a coverage element for it
             if (!alreadyCovered.count(eidx)) {
+                counter++;
                 // Get the minimalDistances entry for this element of e
                 std::unordered_map<size_t,std::pair<size_t, size_t>>::const_iterator elementIterator = minimalDistances.find(eidx);
                 assert(elementIterator != minimalDistances.end());
@@ -291,6 +305,36 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
                         break;
                     }
                 }
+
+                // Mark all uncovered elements of e that are covered by the created filler as covered
+                for (size_t checkEidx = 0; checkEidx < e.size(); checkEidx++) {
+                    if ((e[checkEidx] & combination) == e[checkEidx]) {
+                        assert(checkEidx < eidx && "I didn't expect this to happen, there should be no coverage introduced to earlier elements");
+                        if (checkEidx != eidx) std::cerr << "This acutally did something!" << std::endl;
+                        alreadyCovered.insert(checkEidx);
+                    }
+                }
+
+                // Sanity Check: Does this element cover an element e that isn't already covered by a combination of other minimal subset elements?
+            #ifndef NDEBUG
+                boost::dynamic_bitset<> coveredSites;
+                bool test = true;
+                for (const boost::dynamic_bitset<> &current : minimalSubset) {
+                    if (!coveredSites.capacity()) {
+                        assert(test);
+                        test = false;
+                        coveredSites = boost::dynamic_bitset<>(current.size());
+                    }
+
+                    coveredSites |= current;
+                    if ((coveredSites & combination) == combination) {
+                        std::cerr << "Combination: " << combination << " is fully covered by elements already in the minimal subset" << std::endl;
+                        std::cerr << "Combination contains of elements with " << e[eidx].count() << " and " << otherElement.count() << " ones." << std::endl;
+                        std::cerr << "This occured in filling element " << counter << std::endl;
+                        assert(false);
+                    }
+                }
+            #endif
 
                 // Insert the covering element
                 minimalSubset.push_back(combination);
@@ -323,7 +367,7 @@ std::vector<boost::dynamic_bitset<>> minimumKAndD(size_t cmPlusD, const std::vec
  * @param hypergraph The input hypergraph
  * @return the set E
  */
-std::vector<eElem> generateE(const Hypergraph &hypergraph) {
+std::vector<eElem> generateE(const Hypergraph &hypergraph, bool generateDuplicates) {
     DEBUG_LOG(DEBUG_PROGRESS, "Generating E");
     const std::vector<uint32_t> &hypernodes = hypergraph.getHypernodes();
     std::vector<hElem> hyperedges = hypergraph.getHyperEdges();
@@ -339,7 +383,15 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph) {
             // If hypernode is in hyperedge set 1, else 0
             curE.push_back(std::find(hedge.begin(), hedge.end(), hnode) != hedge.end());
         }
-        e.push_back(curE);
+
+        if (generateDuplicates) {
+            e.push_back(curE);
+        } else {
+            // If element wasn't found (there is no duplicate), insert it
+            if (std::find(e.begin(), e.end(), curE) == e.end()) {
+                e.push_back(curE);
+            }
+        }
     }
 
     DEBUG_LOG(DEBUG_PROGRESS, " Size: " + std::to_string(e.size()) + "\n");
@@ -358,9 +410,8 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
     DEBUG_LOG(DEBUG_PROGRESS, "Hyperedges: " + std::to_string(hypergraph.getHyperEdges().size()) + " Hypernodes: " + std::to_string(hypergraph.getHypernodes().size()) + "\n");
 
     // Generate set E according to the paper
-    std::vector<eElem> originalE = generateE(hypergraph);
-    std::vector<eElem> e = originalE;
-
+    std::vector<eElem> originalE = generateE(hypergraph, true);
+    std::vector<eElem> e = generateE(hypergraph, false);
 
     // calulate hyperdegree of the hypergraph
     // We assume, that all hypernodes have the same degree
@@ -385,6 +436,14 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
     for (size_t d = 1; d < m - cm; d++) {
         DEBUG_LOG(DEBUG_PROGRESS, "Running with cm+d " + std::to_string(cm + d) + "\n");
         std::vector<boost::dynamic_bitset<>> sStar = minimumKAndD(cm + d, e);
+
+    #ifndef NDEBUG
+        size_t numberOfOnes = sStar[0].count();
+        for (const boost::dynamic_bitset<> &currentSStarElem : sStar) {
+            assert(currentSStarElem.count() == numberOfOnes);
+        }
+    #endif
+
         size_t k = sStar.size();
         if (!listOfKs.empty()) {
             // Replace e with sStar
@@ -412,9 +471,10 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
                 std::vector<uint32_t> partition;
                 partition.reserve(hypernodes.size());
 
+                std::vector<size_t> coveredHypernodes;
+
             #ifdef FAKE_DETECTION
                 boost::dynamic_bitset<> expectedCombination(originalE[0].size());
-                bool used = false;
             #endif
 
                 // If element e & element s == element e of the original set E, then the vertex is part of
@@ -425,15 +485,12 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
                         && std::find(assignedHypernodes.begin(), assignedHypernodes.end(), hypernodes[i]) == assignedHypernodes.end()) {
                         partition.push_back(hypernodes[i]);
                         assignedHypernodes.push_back(hypernodes[i]);
-
-                    #ifdef FAKE_DETECTION
-                        used = true;
-                    #endif
                     }
 
                 #ifdef FAKE_DETECTION
                     // If the original E element is contained in the current element of S, OR it into the expected combination.
                     if ((originalE[i] & currentS) == originalE[i]) {
+                        coveredHypernodes.push_back(i);
                         expectedCombination |= originalE[i];
                     }
                 #endif
@@ -442,12 +499,23 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
                 // Check for fake elements. A fake element is one that doesn't equal the result of ORing together
                 // all contained original e elements. It is only relevant if it was actually used for a partition though.
             #ifdef FAKE_DETECTION
-                if (used && expectedCombination != currentS) {
+                if (expectedCombination != currentS) {
                     numberOfFakes++;
                     fakes.push_back(partitions.size() + 1);
                 }
             #endif
 
+                std::stringstream s;
+                for (size_t &current : coveredHypernodes) {
+                    s << current << " ";
+                }
+                std::cout << "Covered by this subset element: " << s.str() << std::endl;
+
+                if (partition.empty()) {
+                    std::cout << currentS << std::endl;
+                }
+
+                assert(!partition.empty() && "A minimal subset element wasn't used for partitioning at all.");
                 partitions.push_back(partition);
             }
 
