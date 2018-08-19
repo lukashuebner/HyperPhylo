@@ -43,17 +43,26 @@ void printAllTM() {
 	}
 }
 
-bool partitionsContainAllVerties(Hypergraph hypergraph, std::vector<std::vector<uint32_t>> partitions) {
+bool partitionsContainAllVertices(Hypergraph hypergraph, std::vector<std::vector<uint32_t>> partitions) {
 	std::vector<bool> nodeCovered(hypergraph.getHypernodes().size(), false);
-	for (auto partition: partitions) {
-		for (auto node: partition) {
+	for (auto partition : partitions) {
+		for (auto node : partition) {
 			nodeCovered[node] = true;
 		}
 	}
 
-	if(std::find(nodeCovered.begin(), nodeCovered.end(), false) != nodeCovered.end()) {
-		return false;
-	} else {
-		return true;
-	}
+	return std::find(nodeCovered.begin(), nodeCovered.end(), false) == nodeCovered.end();
+}
+
+std::vector<std::string> splitLineAtSpaces(std::string line) {
+	std::vector<std::string> splitLine;
+	boost::split(splitLine, line, boost::is_any_of(" "));
+	return splitLine;
+}
+
+uint32_t stringToUint32t(const std::string &theString) {
+	uint32_t theInt;
+	std::istringstream iss(theString);
+	iss >> theInt;
+	return theInt;
 }

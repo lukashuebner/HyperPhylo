@@ -59,10 +59,8 @@ struct sElem {
 };
 
 namespace std {
-    template <> struct hash<sElem>
-    {
-        size_t operator()(const sElem & S) const
-        {
+    template <> struct hash<sElem> {
+        size_t operator()(const sElem & S) const {
             return boost::hash_value(S.combination.m_bits);
         }
     };
@@ -75,8 +73,8 @@ private:
 
 public:
     Hypergraph(std::vector<uint32_t> hypernodes, std::vector<hElem> hyperedges) :
-            hypernodes(std::move(hypernodes)),
-            hyperedges(std::move(hyperedges)) {
+        hypernodes(std::move(hypernodes)),
+        hyperedges(std::move(hyperedges)) {
     }
 
     const std::vector<uint32_t> &getHypernodes() const {

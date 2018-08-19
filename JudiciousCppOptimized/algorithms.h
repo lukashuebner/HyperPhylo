@@ -1,9 +1,22 @@
-//
-// Created by lukas on 7/16/18.
-//
-
 #ifndef JUDICIOUSCPPOPTIMIZED_ALGORITHMS_H
 #define JUDICIOUSCPPOPTIMIZED_ALGORITHMS_H
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <set>
+#include <algorithm>
+#include <cassert>
+#include <unordered_set>
+
+#include <boost/range/algorithm/set_algorithm.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <unordered_map>
+
+#include "Hypergraph.h"
 
 #define DEBUG 1
 #define DEBUG_PROGRESS 1

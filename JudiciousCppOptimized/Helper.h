@@ -7,11 +7,17 @@
 #include <map>
 #include <iostream>
 #include <vector>
+
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
+
 #include "Hypergraph.h"
 
 void startTM(std::string identifier);
 void endTM(std::string identifier);
 void printAllTM();
-bool partitionsContainAllVerties(Hypergraph, std::vector<std::vector<uint32_t>>);
+bool partitionsContainAllVertices(Hypergraph, std::vector<std::vector<uint32_t>>);
+std::vector<std::string> splitLineAtSpaces(std::string line);
+uint32_t stringToUint32t(const std::string &theString);
 
 #endif //STEREOMATCHING_HELPER_H

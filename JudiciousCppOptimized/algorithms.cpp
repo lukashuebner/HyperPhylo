@@ -1,18 +1,3 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <set>
-#include <algorithm>
-#include <cassert>
-#include <unordered_set>
-
-#include <boost/range/algorithm/set_algorithm.hpp>
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
-#include <boost/algorithm/string/predicate.hpp>
-#include <unordered_map>
-
 #include "Hypergraph.h"
 #include "algorithms.h"
 #include "Helper.h"
@@ -22,19 +7,6 @@
 // * the first value is the index of the element if e with a minimal distance to the key element
 // * the second value is the minimal distance
 std::unordered_map<size_t, std::pair<size_t, size_t>> minimalDistances;
-
-std::vector<std::string> splitLineAtSpaces(std::string line) {
-    std::vector<std::string> splitLine;
-    boost::split(splitLine, line, boost::is_any_of(" "));
-    return splitLine;
-}
-
-uint32_t stringToUint32t(const std::string &theString) {
-    uint32_t theInt;
-    std::istringstream iss(theString);
-    iss >> theInt;
-    return theInt;
-}
 
 /**
  * Parse a partition file and create its hypergraph.
@@ -247,11 +219,13 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
     std::sort(s.begin(), s.end());
 #endif
 
+#if DEBUG >= DEBUG_VERBOSE
     std::set<size_t> uniques;
     for (const sElem &currentS : s) {
         uniques.insert(currentS.coveredEElems.begin(), currentS.coveredEElems.end());
     }
-    std::cerr << "The >= 2 covering s elements cover " << uniques.size() << " unique elements of e" << std::endl;
+    DEBUG_LOG(DEBUG_VERBOSE, "The >= 2 covering s elements cover " + uniques.size() + " unique elements of e";
+#endif
 
     // As long as not all of e is covered, i.e. alreadyCovered and E differ
     // Because of how the loop works (adding diffsets), alreadyCovered and E are the same when they have the same number of elements
@@ -281,7 +255,7 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
     }
 
     int counter = 0;
-    std::cerr << "Elements not covered yet: " << (e.size() - alreadyCovered.size()) << std::endl;
+    DEBUG_LOG(DEBUG_VERBOSE, "Elements not covered yet: " + std::to_string(e.size() - alreadyCovered.size()));
 
     // Fill up coverage if needed
     if (alreadyCovered.size() != e.size()) {
@@ -310,7 +284,6 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
                 for (size_t checkEidx = 0; checkEidx < e.size(); checkEidx++) {
                     if ((e[checkEidx] & combination) == e[checkEidx]) {
                         assert(checkEidx >= eidx && "I didn't expect this to happen, there should be no coverage introduced to earlier elements");
-                        if (checkEidx != eidx) std::cerr << "This acutally did something!" << std::endl;
                         alreadyCovered.insert(checkEidx);
                     }
                 }
@@ -471,8 +444,6 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
                 std::vector<uint32_t> partition;
                 partition.reserve(hypernodes.size());
 
-                std::vector<size_t> coveredHypernodes;
-
             #ifdef FAKE_DETECTION
                 boost::dynamic_bitset<> expectedCombination(originalE[0].size());
             #endif
@@ -490,30 +461,42 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
                 #ifdef FAKE_DETECTION
                     // If the original E element is contained in the current element of S, OR it into the expected combination.
                     if ((originalE[i] & currentS) == originalE[i]) {
-                        coveredHypernodes.push_back(i);
                         expectedCombination |= originalE[i];
                     }
                 #endif
                 }
 
+            #ifdef FAKE_DETECTION
                 // Check for fake elements. A fake element is one that doesn't equal the result of ORing together
                 // all contained original e elements. It is only relevant if it was actually used for a partition though.
-            #ifdef FAKE_DETECTION
+                assert(!(expectedCombination != currentS && expectedCombination.count() == currentS.count()));
+                // TODO REMOVE IF
+                if (expectedCombination != currentS && expectedCombination.count() == currentS.count()) {
+                    std::cerr << "bitsets have same number of ones, but are different." << std::endl;
+                }
+
                 if (expectedCombination != currentS) {
-                    numberOfFakes++;
+                    assert(currentS.count() >= expectedCombination.count() && "The partition can't be smaller than the expected combination.");
+                    // TODO REMOVE IF
+                    if (currentS.count() < expectedCombination.count()) { std::cerr << "NOPE" << std::endl; exit(1); }
+
+                    // Check if only the partition bitstreams has ones where the expected combination has zeros and not the other way round.
+                    for (size_t i = 0; i < currentS.size(); i++) {
+                        // TODO REMOVE IF
+                        if (!currentS[i] && expectedCombination[i]) { std::cerr << "SHOULDN'T HAPPEN LOL" << std::endl; exit(1); }
+                        assert(!(!currentS[i] && expectedCombination[i]) && "The partition has a zero where the expected partition has a one, impossible!");
+                    }
+
+                    numberOfFakes += currentS.count() - expectedCombination.count();
                     fakes.push_back(partitions.size() + 1);
                 }
             #endif
 
-                std::stringstream s;
-                for (size_t &current : coveredHypernodes) {
-                    s << current << " ";
-                }
-                std::cout << "Covered by this subset element: " << s.str() << std::endl;
-
+            #ifndef NDEBUG
                 if (partition.empty()) {
-                    std::cout << currentS << std::endl;
+                    std::cout << "Not used for partitioning at all: " << currentS << std::endl;
                 }
+            #endif
 
                 assert(!partition.empty() && "A minimal subset element wasn't used for partitioning at all.");
                 partitions.push_back(partition);
@@ -536,7 +519,7 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
                 }
             }
 
-            assert(partitionsContainAllVerties(hypergraph, partitions));
+            assert(partitionsContainAllVertices(hypergraph, partitions));
             printDDF(element, partitions);
             listOfKs.pop_back();
 
