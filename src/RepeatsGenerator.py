@@ -3,27 +3,48 @@ import os
 import tempfile
 from subprocess import Popen
 
-partitionCount = 1
-innerNodeCount = 3
-siteCount = random.randint(3, 10)
+count = 0
 
-output = "{} {}\n".format(partitionCount, innerNodeCount)
-output += "partition_0 {}\n".format(siteCount)
-for innerNode in range(innerNodeCount):
-    repeatClassCount = random.randint(2, 5)
-    for site in range(siteCount):
-        output += "{} ".format(random.randint(0, repeatClassCount - 1))
-    output += "\n"
+while True:
+    partitionCount = 1
+    innerNodeCount = 3
+    siteCount = random.randint(3, 10)
 
-print(output)
+    finished = True
 
-with tempfile.NamedTemporaryFile(mode="w") as rfile:
-    rfile.write(output)
-    rfile.flush()
+    output = "{} {}\n".format(partitionCount, innerNodeCount)
+    output += "partition_0 {}\n".format(siteCount)
+    for innerNode in range(innerNodeCount):
+        repeatClassCount = random.randint(2, 5)
+        line = ""
+        for site in range(siteCount):
+            line += "{} ".format(random.randint(0, repeatClassCount - 1))
 
-    process = Popen(["../JudiciousCppOptimized/cmake-build-debug/JudiciousCpp", rfile.name, "2"])
-    process.communicate()
+        # Check if line is valid
+        linelist = list(map(int, list(filter(None, line.split(" ")))))
+        listmin = min(linelist)
+        listmax = max(linelist)
+        if listmin != 0 or set(linelist) != set(range(listmin, listmax + 1)):
+            print("INVALID, SKIPPING!")
+            finished = False
+            break
 
-    if "y" in input("Do you want to save the file?"):
-        with open(os.path.join(os.path.expanduser("~"), "output.repeats"), "w") as ofile:
+        output += line + "\n"
+
+    if not finished:
+        continue
+
+    print(output)
+    with tempfile.NamedTemporaryFile(mode="w") as rfile:
+        rfile.write(output)
+        rfile.flush()
+
+        process = Popen(["../JudiciousCppOptimized/cmake-build-debug/JudiciousCpp", rfile.name, "4,8,12,16,24,32,48,64"])
+        process.communicate()
+
+        if process.returncode and "y" in input("Do you want to save the file?"):
+            with open(os.path.join(os.path.expanduser("~"), "output.repeats"), "w") as ofile:
                 ofile.write(output)
+        else:
+            count += 1
+            print("[1;30mSuccessfully ran {} inputs.[0m".format(count))

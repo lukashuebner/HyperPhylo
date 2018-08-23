@@ -148,13 +148,14 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
                 newS.coveredEElems.insert(firstEidx);
                 newS.coveredEElems.insert(secondEidx);
                 #pragma omp critical
-                s.insert(newS);
+                auto result = s.insert(newS);
+                assert(result.second);
             } else { // else, add to the table of minimal distances
                 #pragma omp critical
                 {
                     // Store the mapping a --> b
-                    auto result = minimalDistances.insert(
-                            std::make_pair(firstEidx, std::make_pair(secondEidx, distance)));
+                    auto pair = std::make_pair(firstEidx, std::make_pair(secondEidx, distance));
+                    auto result = minimalDistances.insert(pair);
 
                     // If adding was not successful, there is already an entry for that element of e
                     if (!result.second) {
@@ -166,8 +167,8 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
                     }
 
                     // Store the mapping b --> a
-                    auto resultReverse = minimalDistances.insert(
-                            std::make_pair(secondEidx, std::make_pair(firstEidx, distance)));
+                    auto pairReverse = std::make_pair(secondEidx, std::make_pair(firstEidx, distance));
+                    auto resultReverse = minimalDistances.insert(pairReverse);
 
                     // If adding was not successful, there is already an entry for that element of e
                     if (!resultReverse.second) {
@@ -224,7 +225,7 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
     for (const sElem &currentS : s) {
         uniques.insert(currentS.coveredEElems.begin(), currentS.coveredEElems.end());
     }
-    DEBUG_LOG(DEBUG_VERBOSE, "The >= 2 covering s elements cover " + uniques.size() + " unique elements of e";
+    DEBUG_LOG(DEBUG_VERBOSE, "\nThe >= 2 covering s elements cover " + std::to_string(uniques.size()) + " unique elements of e\n");
 #endif
 
     // As long as not all of e is covered, i.e. alreadyCovered and E differ
@@ -255,13 +256,15 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
     }
 
     int counter = 0;
-    DEBUG_LOG(DEBUG_VERBOSE, "Elements not covered yet: " + std::to_string(e.size() - alreadyCovered.size()));
+    DEBUG_LOG(DEBUG_VERBOSE, "Elements not covered yet: " + std::to_string(e.size() - alreadyCovered.size()) + "\n");
 
     // Fill up coverage if needed
     if (alreadyCovered.size() != e.size()) {
         for (size_t eidx = 0; eidx < e.size(); eidx++) {
             // If the element of e is not already covered, generate a coverage element for it
             if (!alreadyCovered.count(eidx)) {
+                DEBUG_LOG(DEBUG_VERBOSE, "Filling element " + std::to_string(eidx) + "\r");
+
                 counter++;
                 // Get the minimalDistances entry for this element of e
                 std::unordered_map<size_t,std::pair<size_t, size_t>>::const_iterator elementIterator = minimalDistances.find(eidx);
@@ -274,7 +277,7 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
                 // Flip a bit that makes the combination approach towards the element that is closest to the combination
                 // by flipping a bit to 1 that is already a one in the other element
                 for (size_t i = 0; i < otherElement.size(); i++) {
-                    if (otherElement[i] == 1 && combination[i] == 0) {
+                    if (otherElement[i] && !combination[i]) {
                         combination[i] = true;
                         break;
                     }
@@ -284,26 +287,24 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
                 for (size_t checkEidx = 0; checkEidx < e.size(); checkEidx++) {
                     if ((e[checkEidx] & combination) == e[checkEidx]) {
                         assert(checkEidx >= eidx && "I didn't expect this to happen, there should be no coverage introduced to earlier elements");
-                        alreadyCovered.insert(checkEidx);
+                        auto result = alreadyCovered.insert(checkEidx);
+                        assert(result.second);
                     }
                 }
 
-                // Sanity Check: Does this element cover an element e that isn't already covered by a combination of other minimal subset elements?
+                // Sanity Check: Does this element cover an element e (the filled one) that isn't already covered by a combination of other minimal subset elements?
             #ifndef NDEBUG
-                boost::dynamic_bitset<> coveredSites;
-                bool test = true;
-                for (const boost::dynamic_bitset<> &current : minimalSubset) {
-                    if (!coveredSites.capacity()) {
-                        assert(test);
-                        test = false;
-                        coveredSites = boost::dynamic_bitset<>(current.size());
-                    }
-
-                    coveredSites |= current;
-                    if ((coveredSites & combination) == combination) {
-                        std::cerr << "Combination: " << combination << " is fully covered by elements already in the minimal subset" << std::endl;
+                std::set<size_t> coveredSites;
+                #pragma omp parallel for schedule(dynamic)
+                for (size_t cidx = 0; cidx < minimalSubset.size(); cidx++) {
+                    const boost::dynamic_bitset<> &current = minimalSubset[cidx];
+                    // Does it cover this element of e? If yes insert index into covered set.
+                    eElem eElement = e[eidx];
+                    if ((current & eElement) == eElement) {
+                        std::cerr << "Combination " << combination << " doesn't cover a new e element";
+                        std::cerr << ", especially the filled element is already covered by another element of the minimal subset." << std::endl;
                         std::cerr << "Combination contains of elements with " << e[eidx].count() << " and " << otherElement.count() << " ones." << std::endl;
-                        std::cerr << "This occured in filling element " << counter << std::endl;
+                        std::cerr << "This occured in filling element " << eidx << std::endl;
                         assert(false);
                     }
                 }
@@ -315,6 +316,7 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
         }
     }
 
+    DEBUG_LOG(DEBUG_VERBOSE, "\n");
     DEBUG_LOG(DEBUG_PROGRESS, ", Size: " + std::to_string(minimalSubset.size()) + "\n");
 
     return minimalSubset;
@@ -447,7 +449,7 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
             #ifdef FAKE_DETECTION
                 boost::dynamic_bitset<> expectedCombination(originalE[0].size());
             #endif
-
+                DEBUG_LOG(DEBUG_VERBOSE, "Covers:");
                 // If element e & element s == element e of the original set E, then the vertex is part of
                 // the partition that the element s represents because the vertex is fully contained in this partition
                 for (size_t i = 0; i < originalE.size(); i++) {
@@ -461,29 +463,21 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
                 #ifdef FAKE_DETECTION
                     // If the original E element is contained in the current element of S, OR it into the expected combination.
                     if ((originalE[i] & currentS) == originalE[i]) {
+                        DEBUG_LOG(DEBUG_VERBOSE, " " + std::to_string(i));
                         expectedCombination |= originalE[i];
                     }
                 #endif
                 }
+                DEBUG_LOG(DEBUG_VERBOSE, "\n");
 
             #ifdef FAKE_DETECTION
                 // Check for fake elements. A fake element is one that doesn't equal the result of ORing together
                 // all contained original e elements. It is only relevant if it was actually used for a partition though.
                 assert(!(expectedCombination != currentS && expectedCombination.count() == currentS.count()));
-                // TODO REMOVE IF
-                if (expectedCombination != currentS && expectedCombination.count() == currentS.count()) {
-                    std::cerr << "bitsets have same number of ones, but are different." << std::endl;
-                }
-
                 if (expectedCombination != currentS) {
                     assert(currentS.count() >= expectedCombination.count() && "The partition can't be smaller than the expected combination.");
-                    // TODO REMOVE IF
-                    if (currentS.count() < expectedCombination.count()) { std::cerr << "NOPE" << std::endl; exit(1); }
-
                     // Check if only the partition bitstreams has ones where the expected combination has zeros and not the other way round.
                     for (size_t i = 0; i < currentS.size(); i++) {
-                        // TODO REMOVE IF
-                        if (!currentS[i] && expectedCombination[i]) { std::cerr << "SHOULDN'T HAPPEN LOL" << std::endl; exit(1); }
                         assert(!(!currentS[i] && expectedCombination[i]) && "The partition has a zero where the expected partition has a one, impossible!");
                     }
 
@@ -494,11 +488,11 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
 
             #ifndef NDEBUG
                 if (partition.empty()) {
-                    std::cout << "Not used for partitioning at all: " << currentS << std::endl;
+                    std::cerr << "A partition element wasn't used for partitioning at all: " << currentS << std::endl;
+                    assert(!partition.empty());
                 }
             #endif
 
-                assert(!partition.empty() && "A minimal subset element wasn't used for partitioning at all.");
                 partitions.push_back(partition);
             }
 
