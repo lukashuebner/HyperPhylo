@@ -16,14 +16,15 @@
 // elems of the set of hyperedges: Hypernodes connected by this hyperedge
 typedef std::vector<uint32_t> hElem;
 
-// elems of the set E: sets of hyperedges for each hypernode that contain a hypernode and set S*, which
-// is just the set E of the next round
-typedef boost::dynamic_bitset<> eElem;
-
 // elems of the set S: maps a combination to the covered elements in E
 struct sElem {
     boost::dynamic_bitset<> combination;
+    // Elements of the e set in the current iteration that are covered by this combination.
     mutable std::set<size_t> coveredEElems;
+    // Elements of the original e set that are covered by this combination.
+    mutable std::set<size_t> coveredE0Elems;
+
+    sElem() = default;
 
     // Move combination set
     explicit sElem(boost::dynamic_bitset<> combination) : combination(std::move(combination)) {
@@ -55,6 +56,35 @@ struct sElem {
 
     friend bool operator>= (const sElem &lhs, const sElem &rhs) {
         return !(lhs < rhs);
+    }
+};
+
+
+// elems of the set E: sets of hyperedges for each hypernode that contain a hypernode and set S*, which
+// is just the set E of the next round
+struct eElem {
+    boost::dynamic_bitset<> combination;
+    // Elements of the original e set that are covered by this combination.
+    std::set<size_t> coveredE0Elems;
+
+    // Move combination set
+    explicit eElem(boost::dynamic_bitset<> combination, std::set<size_t> coveredE0Elems) :
+        combination(std::move(combination)),
+        coveredE0Elems(std::move(coveredE0Elems)) {
+    }
+
+    // Convert from sElem
+    explicit eElem(sElem original) {
+        combination = original.combination;
+        coveredE0Elems = original.coveredE0Elems;
+    }
+
+    friend bool operator== (const eElem &lhs, const eElem &rhs) {
+        return lhs.combination == rhs.combination;
+    }
+
+    friend bool operator!= (const eElem &lhs, const eElem &rhs) {
+        return !(lhs == rhs);
     }
 };
 

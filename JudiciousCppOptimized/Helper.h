@@ -16,7 +16,7 @@
 void startTM(std::string identifier);
 void endTM(std::string identifier);
 void printAllTM();
-bool partitionsContainAllVertices(Hypergraph, std::vector<std::vector<uint32_t>>);
+bool partitionsContainAllVertices(Hypergraph, std::vector<std::vector<size_t>>);
 std::vector<std::string> splitLineAtSpaces(std::string line);
 uint32_t stringToUint32t(const std::string &theString);
 

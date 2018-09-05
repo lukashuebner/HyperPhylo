@@ -93,10 +93,10 @@ Hypergraph getHypergraphFromPartitionFile(const std::string &filepath, int parti
 }
 
 
-void printDDF(size_t k, const std::vector<std::vector<uint32_t>> &partitions) {
+void printDDF(size_t k, const std::vector<std::vector<size_t>> &partitions) {
     std::cout << k << std::endl;
     size_t partitionCounter = 1;
-    for (const std::vector<uint32_t> &partition : partitions) {
+    for (const std::vector<size_t> &partition : partitions) {
         std::cout << "CPU" << partitionCounter++ << " 1" << std::endl;
         std::cout << "partition_0 " << partition.size();
         for (uint32_t hypernode : partition) {
@@ -135,21 +135,29 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
             const eElem &secondE = e[secondEidx];
 
             // Calculate distance
-            size_t distance = (firstE ^ secondE).count();
+            size_t distance = (firstE.combination ^ secondE.combination).count();
 
             // Add the representation if it is a valid cm + d combination
-            assert(distance >= 2);
+            assert(distance % 2 == 0 && distance >= 2 && distance <= e[0].combination.size());
             if (distance == 2) {
                 assert(firstE != secondE);
-                boost::dynamic_bitset<> combination = firstE | secondE;
+                boost::dynamic_bitset<> combination = firstE.combination | secondE.combination;
                 assert(combination.count() == cmPlusD);
 
                 sElem newS(combination);
                 newS.coveredEElems.insert(firstEidx);
                 newS.coveredEElems.insert(secondEidx);
+                newS.coveredE0Elems.insert(firstE.coveredE0Elems.begin(), firstE.coveredE0Elems.end());
+                newS.coveredE0Elems.insert(secondE.coveredE0Elems.begin(), secondE.coveredE0Elems.end());
                 #pragma omp critical
-                auto result = s.insert(newS);
-                assert(result.second);
+                {
+                    auto result = s.insert(newS);
+                    // Merge together if this element already exists
+                    if (!result.second) {
+                        result.first->coveredEElems.insert(newS.coveredEElems.begin(), newS.coveredEElems.end());
+                        result.first->coveredE0Elems.insert(newS.coveredE0Elems.begin(), newS.coveredE0Elems.end());
+                    }
+                };
             } else { // else, add to the table of minimal distances
                 #pragma omp critical
                 {
@@ -188,9 +196,11 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
     for (size_t eidx = 0; eidx < e.size(); eidx++) {
         DEBUG_LOG(DEBUG_VERBOSE, "Fitting element " + std::to_string(eidx + 1) + "\r");
-        for (const sElem &currentS : s) {
-            if ((e[eidx] & currentS.combination) == e[eidx]) {
+        for (sElem currentS : s) {
+            const eElem &currentE = e[eidx];
+            if ((currentE.combination & currentS.combination) == currentE.combination) {
                 currentS.coveredEElems.insert(eidx);
+                currentS.coveredE0Elems.insert(currentE.coveredE0Elems.begin(), currentE.coveredE0Elems.end());
             }
         }
     }
@@ -208,11 +218,12 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
  * @param s The set S as input.
  * @return The found minimal subset.
  */
-std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> &e, std::vector<sElem> &s) {
+std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sElem> &s) {
     DEBUG_LOG(DEBUG_PROGRESS, "Searching for minimal subset");
 
     std::set<size_t> alreadyCovered;
-    std::vector<boost::dynamic_bitset<>> minimalSubset;
+    std::set<size_t> alreadyCoveredE0;
+    std::vector<eElem> minimalSubset;
     minimalSubset.reserve(e.size());
 
     // Only for determinism. Not actually needed.
@@ -233,13 +244,13 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
     while (alreadyCovered.size() != e.size()) {
         // findest longest difference set
         std::set<size_t> longestDiffset;
-        boost::dynamic_bitset<> combinationOfLongestDiffset;
+        sElem sElemOfLongestDiffset;
         for (const sElem &currentS : s) {
             std::set<size_t> diff;
             boost::range::set_difference(currentS.coveredEElems, alreadyCovered, std::inserter(diff, diff.end()));
             if (diff.size() > longestDiffset.size()) {
                 longestDiffset = diff;
-                combinationOfLongestDiffset = currentS.combination;
+                sElemOfLongestDiffset = currentS;
             }
         }
 
@@ -249,10 +260,18 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
         }
 
         // Add all elements of the found longest diffset to the already covered elements of e
-        std::copy(longestDiffset.begin(), longestDiffset.end(), std::inserter(alreadyCovered, alreadyCovered.end()));
+        alreadyCovered.insert(longestDiffset.begin(), longestDiffset.end());
 
         // add found longest diffset combination to the resulting minimal subset
-        minimalSubset.push_back(combinationOfLongestDiffset);
+        // skip original e elements that are already covered by other mininmal subset elements
+        std::set<size_t> allCoveredE0 = sElemOfLongestDiffset.coveredE0Elems;
+        sElemOfLongestDiffset.coveredE0Elems.clear();
+        boost::set_difference(allCoveredE0, alreadyCoveredE0,
+                std::inserter(sElemOfLongestDiffset.coveredE0Elems, sElemOfLongestDiffset.coveredE0Elems.end()));
+        minimalSubset.emplace_back(eElem(sElemOfLongestDiffset));
+
+        // Add all newly covered original e elements in the already covered original e elements
+        alreadyCoveredE0.insert(sElemOfLongestDiffset.coveredE0Elems.begin(), sElemOfLongestDiffset.coveredE0Elems.end());
     }
 
     int counter = 0;
@@ -271,8 +290,8 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
                 assert(elementIterator != minimalDistances.end());
                 assert(elementIterator->second.second > 2);
 
-                boost::dynamic_bitset<> combination = e[eidx];
-                const eElem &otherElement = e[elementIterator->second.first];
+                boost::dynamic_bitset<> combination = e[eidx].combination;
+                const boost::dynamic_bitset<> &otherElement = e[elementIterator->second.first].combination;
 
                 // Flip a bit that makes the combination approach towards the element that is closest to the combination
                 // by flipping a bit to 1 that is already a one in the other element
@@ -285,7 +304,8 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
 
                 // Mark all uncovered elements of e that are covered by the created filler as covered
                 for (size_t checkEidx = 0; checkEidx < e.size(); checkEidx++) {
-                    if ((e[checkEidx] & combination) == e[checkEidx]) {
+                    const eElem &checkEElem = e[checkEidx];
+                    if ((checkEElem.combination & combination) == checkEElem.combination) {
                         assert(checkEidx >= eidx && "I didn't expect this to happen, there should be no coverage introduced to earlier elements");
                         auto result = alreadyCovered.insert(checkEidx);
                         assert(result.second);
@@ -297,13 +317,13 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
                 std::set<size_t> coveredSites;
                 #pragma omp parallel for schedule(dynamic)
                 for (size_t cidx = 0; cidx < minimalSubset.size(); cidx++) {
-                    const boost::dynamic_bitset<> &current = minimalSubset[cidx];
+                    const boost::dynamic_bitset<> &current = minimalSubset[cidx].combination;
                     // Does it cover this element of e? If yes insert index into covered set.
-                    eElem eElement = e[eidx];
+                    const boost::dynamic_bitset<> &eElement = e[eidx].combination;
                     if ((current & eElement) == eElement) {
                         std::cerr << "Combination " << combination << " doesn't cover a new e element";
                         std::cerr << ", especially the filled element is already covered by another element of the minimal subset." << std::endl;
-                        std::cerr << "Combination contains of elements with " << e[eidx].count() << " and " << otherElement.count() << " ones." << std::endl;
+                        std::cerr << "Combination contains of elements with " << eElement.count() << " and " << otherElement.count() << " ones." << std::endl;
                         std::cerr << "This occured in filling element " << eidx << std::endl;
                         assert(false);
                     }
@@ -311,10 +331,20 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
             #endif
 
                 // Insert the covering element
-                minimalSubset.push_back(combination);
+                minimalSubset.emplace_back(eElem(combination, e[eidx].coveredE0Elems));
             }
         }
     }
+
+#ifndef NDEBUG
+    // Check if each original e element only occures once
+    std::set<size_t> coverage;
+    for (auto &current : minimalSubset) {
+        for (auto &coveredEElem : current.coveredE0Elems) {
+            assert(coverage.insert(coveredEElem).second && "A original e element is covered more than once!");
+        }
+    }
+#endif
 
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
     DEBUG_LOG(DEBUG_PROGRESS, ", Size: " + std::to_string(minimalSubset.size()) + "\n");
@@ -329,7 +359,7 @@ std::vector<boost::dynamic_bitset<>> findMinimalSubset(const std::vector<eElem> 
  * @param e The set E as described in generateE.
  * @return The found minimal set. The size of the minimal set is the value k.
  */
-std::vector<boost::dynamic_bitset<>> minimumKAndD(size_t cmPlusD, const std::vector<eElem> &e) {
+std::vector<eElem> minimumKAndD(size_t cmPlusD, const std::vector<eElem> &e) {
     DEBUG_LOG(DEBUG_PROGRESS, "Running minKD\n");
     std::vector<sElem> s = generateS(cmPlusD, e);
     return findMinimalSubset(e, s);
@@ -348,23 +378,30 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph, bool generateDuplicat
     std::vector<hElem> hyperedges = hypergraph.getHyperEdges();
     std::reverse(hyperedges.begin(), hyperedges.end());
 
-    std::vector<boost::dynamic_bitset<>> e;
+    std::vector<eElem> e;
     e.reserve(hypernodes.size());
 
+    size_t insertedElements = 0;
     for (uint32_t hnode : hypernodes) {
-        eElem curE;
-        curE.reserve(hyperedges.size());
+        boost::dynamic_bitset<> curECombination;
+        curECombination.reserve(hyperedges.size());
         for (const hElem &hedge : hyperedges) {
             // If hypernode is in hyperedge set 1, else 0
-            curE.push_back(std::find(hedge.begin(), hedge.end(), hnode) != hedge.end());
+            curECombination.push_back(std::find(hedge.begin(), hedge.end(), hnode) != hedge.end());
         }
 
+        eElem curE(curECombination, { insertedElements++ });
         if (generateDuplicates) {
-            e.push_back(curE);
+            e.emplace_back(curE);
         } else {
+            auto it = std::find(e.begin(), e.end(), curE);
+
             // If element wasn't found (there is no duplicate), insert it
-            if (std::find(e.begin(), e.end(), curE) == e.end()) {
-                e.push_back(curE);
+            if (it == e.end()) {
+                e.emplace_back(curE);
+            } else {
+                // Else, add the current e element to the covered elements
+                it->coveredE0Elems.insert(hnode);
             }
         }
     }
@@ -390,11 +427,11 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
 
     // calulate hyperdegree of the hypergraph
     // We assume, that all hypernodes have the same degree
-    size_t cm = e[0].count();
+    size_t cm = e[0].combination.count();
 
 #ifndef NDEBUG
     for (const eElem &curE : e) {
-        assert(curE.count() == cm);
+        assert(curE.combination.count() == cm);
     }
 #endif
 
@@ -410,12 +447,12 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
     // Can skip the first cycle because that results in E = S* anyway
     for (size_t d = 1; d < m - cm; d++) {
         DEBUG_LOG(DEBUG_PROGRESS, "Running with cm+d " + std::to_string(cm + d) + "\n");
-        std::vector<boost::dynamic_bitset<>> sStar = minimumKAndD(cm + d, e);
+        std::vector<eElem> sStar = minimumKAndD(cm + d, e);
 
     #ifndef NDEBUG
-        size_t numberOfOnes = sStar[0].count();
-        for (const boost::dynamic_bitset<> &currentSStarElem : sStar) {
-            assert(currentSStarElem.count() == numberOfOnes);
+        size_t numberOfOnes = sStar[0].combination.count();
+        for (const eElem &currentSStarElem : sStar) {
+            assert(currentSStarElem.combination.count() == numberOfOnes);
         }
     #endif
 
@@ -431,69 +468,54 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
         element = listOfKs.back();
         while (element >= k) {
             // Extract partitions
-            std::vector<std::vector<uint32_t>> partitions;
-            std::vector<uint32_t> hypernodes = hypergraph.getHypernodes();
-
-            std::vector<uint32_t> assignedHypernodes;
-            assignedHypernodes.reserve(hypernodes.size());
+            std::vector<std::vector<size_t>> partitions;
 
         #ifdef FAKE_DETECTION
             size_t numberOfFakes = 0;
             std::vector<size_t> fakes;
         #endif
 
-            for (const boost::dynamic_bitset<> &currentS : sStar) {
-                std::vector<uint32_t> partition;
-                partition.reserve(hypernodes.size());
-
-            #ifdef FAKE_DETECTION
-                boost::dynamic_bitset<> expectedCombination(originalE[0].size());
-            #endif
-                DEBUG_LOG(DEBUG_VERBOSE, "Covers:");
-                // If element e & element s == element e of the original set E, then the vertex is part of
-                // the partition that the element s represents because the vertex is fully contained in this partition
-                for (size_t i = 0; i < originalE.size(); i++) {
-                    // Additionally check if a node already is in a partition, if yes don't assign it again
-                    if ((originalE[i] & currentS) == originalE[i]
-                        && std::find(assignedHypernodes.begin(), assignedHypernodes.end(), hypernodes[i]) == assignedHypernodes.end()) {
-                        partition.push_back(hypernodes[i]);
-                        assignedHypernodes.push_back(hypernodes[i]);
-                    }
-
-                #ifdef FAKE_DETECTION
-                    // If the original E element is contained in the current element of S, OR it into the expected combination.
-                    if ((originalE[i] & currentS) == originalE[i]) {
-                        DEBUG_LOG(DEBUG_VERBOSE, " " + std::to_string(i));
-                        expectedCombination |= originalE[i];
-                    }
-                #endif
-                }
-                DEBUG_LOG(DEBUG_VERBOSE, "\n");
-
-            #ifdef FAKE_DETECTION
-                // Check for fake elements. A fake element is one that doesn't equal the result of ORing together
-                // all contained original e elements. It is only relevant if it was actually used for a partition though.
-                assert(!(expectedCombination != currentS && expectedCombination.count() == currentS.count()));
-                if (expectedCombination != currentS) {
-                    assert(currentS.count() >= expectedCombination.count() && "The partition can't be smaller than the expected combination.");
-                    // Check if only the partition bitstreams has ones where the expected combination has zeros and not the other way round.
-                    for (size_t i = 0; i < currentS.size(); i++) {
-                        assert(!(!currentS[i] && expectedCombination[i]) && "The partition has a zero where the expected partition has a one, impossible!");
-                    }
-
-                    numberOfFakes += currentS.count() - expectedCombination.count();
-                    fakes.push_back(partitions.size() + 1);
-                }
-            #endif
+            for (const eElem &currentSStarElem : sStar) {
+                // Convert covered elements to partition
+                std::vector<size_t> partition(currentSStarElem.coveredE0Elems.begin(), currentSStarElem.coveredE0Elems.end());
 
             #ifndef NDEBUG
                 if (partition.empty()) {
-                    std::cerr << "A partition element wasn't used for partitioning at all: " << currentS << std::endl;
+                    std::cerr << "A partition element wasn't used for partitioning at all: " << currentSStarElem.combination << std::endl;
                     assert(!partition.empty());
                 }
             #endif
 
                 partitions.push_back(partition);
+
+            #ifdef FAKE_DETECTION
+                boost::dynamic_bitset<> expectedCombination(e[0].combination.size());
+
+                DEBUG_LOG(DEBUG_VERBOSE, "Covers:");
+                size_t currentEElemIdx = 0;
+                for (const auto &currentEElem : originalE) {
+                    // If the original E element is contained in the current element of S, OR it into the expected combination.
+                    if ((currentEElem.combination & currentSStarElem.combination) == currentEElem.combination) {
+                        DEBUG_LOG(DEBUG_VERBOSE, " " + std::to_string(currentEElemIdx));
+                        expectedCombination |= currentEElem.combination;
+                    }
+                    currentEElemIdx++;
+                }
+
+                // Check for fake elements. A fake element is one that doesn't equal the result of ORing together
+                // all contained original e elements. It is only relevant if it was actually used for a partition though.
+                assert(!(expectedCombination != currentSStarElem.combination && expectedCombination.count() == currentSStarElem.combination.count()));
+                if (expectedCombination != currentSStarElem.combination) {
+                    assert(currentSStarElem.combination.count() >= expectedCombination.count() && "The partition can't be smaller than the expected combination.");
+                    // Check if only the partition bitstreams has ones where the expected combination has zeros and not the other way round.
+                    for (size_t i = 0; i < currentSStarElem.combination.size(); i++) {
+                        assert(!(!currentSStarElem.combination[i] && expectedCombination[i]) && "The partition has a zero where the expected partition has a one, impossible!");
+                    }
+
+                    numberOfFakes += currentSStarElem.combination.count() - expectedCombination.count();
+                    fakes.push_back(partitions.size() + 1);
+                }
+            #endif
             }
 
         #ifdef FAKE_DETECTION

@@ -8,8 +8,9 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Split one partition of a MSA to k CPUs just by splitting the sites "
                                                  "into k blocks.")
 
-    parser.add_argument('partition_file', nargs=1, help="the partition file you want to split")
-    parser.add_argument('k', nargs=1, type=int, help="the number of blocks you want to split the partition into")
+    parser.add_argument('partition_file', help="the partition file you want to split")
+    parser.add_argument('list_of_block_sizes', type=str,
+                        help="a comma separated list of block numbers to produce output for")
 
     args = parser.parse_args()
     return args
@@ -49,9 +50,12 @@ def print_split(split, k):
 
 def main():
     args = parse_arguments()
-    number_of_sites = get_number_of_sites_from_partition_file(args.partition_file[0])
-    split = split_very_naive(number_of_sites, args.k[0])
-    print_split(split, args.k[0])
+    number_of_sites = get_number_of_sites_from_partition_file(args.partition_file)
+    list_of_ks = sorted([int(x) for x in args.list_of_block_sizes.split(",")], reverse=True)
+
+    for k in list_of_ks:
+        split = split_very_naive(number_of_sites, k)
+        print_split(split, k)
 
 
 if __name__ == "__main__":

@@ -43,7 +43,7 @@ void printAllTM() {
 	}
 }
 
-bool partitionsContainAllVertices(Hypergraph hypergraph, std::vector<std::vector<uint32_t>> partitions) {
+bool partitionsContainAllVertices(Hypergraph hypergraph, std::vector<std::vector<size_t>> partitions) {
 	std::vector<bool> nodeCovered(hypergraph.getHypernodes().size(), false);
 	for (auto partition : partitions) {
 		for (auto node : partition) {
