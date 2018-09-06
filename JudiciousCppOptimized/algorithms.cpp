@@ -260,6 +260,12 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
     // Fill up coverage if needed
     if (alreadyCovered.size() != e.size()) {
         std::sort(distances.begin(), distances.end(), [](const distTriple &a, const distTriple &b) -> bool {
+            if (std::get<2>(a) == std::get<2>(b)) {
+                if (std::get<0>(a) == std::get<0>(b)) {
+                    return std::get<1>(a) < std::get<1>(b);
+                }
+                return std::get<0>(a) == std::get<0>(b);
+            }
             return std::get<2>(a) < std::get<2>(b);
         });
         std::vector<size_t> paired;
