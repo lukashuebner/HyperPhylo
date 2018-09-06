@@ -2,11 +2,7 @@
 #include "algorithms.h"
 #include "Helper.h"
 
-// Key is the index of the element e that maps to the minimal distance element
-// Value is a pair where
-// * the first value is the index of the element if e with a minimal distance to the key element
-// * the second value is the minimal distance
-std::unordered_map<size_t, std::pair<size_t, size_t>> minimalDistances;
+std::vector<distTriple> distances;
 
 /**
  * Parse a partition file and create its hypergraph.
@@ -123,7 +119,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
     // TODO maybe figure out max size and reserve?
     std::unordered_set<sElem> s;
 
-    minimalDistances.clear();
+    distances.clear();
 
     // Run over all possible pairs in E and check if they build a possible combination
     #pragma omp parallel for schedule(dynamic)
@@ -158,39 +154,14 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
                         result.first->coveredE0Elems.insert(newS.coveredE0Elems.begin(), newS.coveredE0Elems.end());
                     }
                 };
-            } else { // else, add to the table of minimal distances
+            } else { // else, add to the distances list
                 #pragma omp critical
-                {
-                    // Store the mapping a --> b
-                    auto pair = std::make_pair(firstEidx, std::make_pair(secondEidx, distance));
-                    auto result = minimalDistances.insert(pair);
-
-                    // If adding was not successful, there is already an entry for that element of e
-                    if (!result.second) {
-                        // If the currently stored minimal distance is greater than this one, replace it
-                        if (result.first->second.second > distance) {
-                            result.first->second.first = secondEidx;
-                            result.first->second.second = distance;
-                        }
-                    }
-
-                    // Store the mapping b --> a
-                    auto pairReverse = std::make_pair(secondEidx, std::make_pair(firstEidx, distance));
-                    auto resultReverse = minimalDistances.insert(pairReverse);
-
-                    // If adding was not successful, there is already an entry for that element of e
-                    if (!resultReverse.second) {
-                        // If the currently stored minimal distance is greater than this one, replace it
-                        if (resultReverse.first->second.second > distance) {
-                            resultReverse.first->second.first = firstEidx;
-                            resultReverse.first->second.second = distance;
-                        }
-                    }
-                }
+                distances.emplace_back(distTriple(firstEidx, secondEidx, distance));
             }
         }
     }
 
+    // TODO I'm pretty sure this doesn't actually do something ever. Can probably be romved.
     // Run over E and check for each element if it fits into one of the generated combinations
     // TODO This will obviously also add the initial elements of e that created the combination, so maybe we can try to avoid that?
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
@@ -199,8 +170,17 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
         for (sElem currentS : s) {
             const eElem &currentE = e[eidx];
             if ((currentE.combination & currentS.combination) == currentE.combination) {
-                currentS.coveredEElems.insert(eidx);
+                auto result = currentS.coveredEElems.insert(eidx);
+                if (result.second) {
+                    std::cout << "THIS ACTUALLY DID SOMETHING; WOW" << std::endl;
+                    assert(false);
+                }
+                size_t prev = currentS.coveredE0Elems.size();
                 currentS.coveredE0Elems.insert(currentE.coveredE0Elems.begin(), currentE.coveredE0Elems.end());
+                if (prev != currentS.coveredE0Elems.size()) {
+                    std::cout << "THIS ACTUALLY DID SOMETHING; AMAZING" << std::endl;
+                    assert(false);
+                }
             }
         }
     }
@@ -279,6 +259,11 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
 
     // Fill up coverage if needed
     if (alreadyCovered.size() != e.size()) {
+        std::sort(distances.begin(), distances.end(), [](const distTriple &a, const distTriple &b) -> bool {
+            return std::get<2>(a) < std::get<2>(b);
+        });
+        std::vector<size_t> paired;
+
         for (size_t eidx = 0; eidx < e.size(); eidx++) {
             // If the element of e is not already covered, generate a coverage element for it
             if (!alreadyCovered.count(eidx)) {
@@ -286,12 +271,54 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
 
                 counter++;
                 // Get the minimalDistances entry for this element of e
-                std::unordered_map<size_t,std::pair<size_t, size_t>>::const_iterator elementIterator = minimalDistances.find(eidx);
-                assert(elementIterator != minimalDistances.end());
-                assert(elementIterator->second.second > 2);
+                bool found = false;
+                distTriple distanceTriple;
+                size_t otherIdx = 0;
+                for (const auto &currentDistance : distances) {
+                    size_t from = std::get<0>(currentDistance);
+                    size_t to = std::get<1>(currentDistance);
+                    if ((from == eidx || to == eidx) && !containedIn(paired, from) && !containedIn(paired, to)) {
+                        if (from == eidx) {
+                            otherIdx = to;
+                        } else {
+                            otherIdx = from;
+                        }
+
+                        distanceTriple = currentDistance;
+                        paired.push_back(from);
+                        paired.push_back(to);
+                        found = true;
+                        break;
+                    }
+                }
+
+                // If there was no free pair, use an already paired partner
+                if (!found) {
+                    for (const auto &currentDistance : distances) {
+                        size_t from = std::get<0>(currentDistance);
+                        size_t to = std::get<1>(currentDistance);
+                        if ((from == eidx || to == eidx)) {
+                            if (from == eidx) {
+                                otherIdx = to;
+                            } else {
+                                otherIdx = from;
+                            }
+
+                            distanceTriple = currentDistance;
+                            if (!containedIn(paired, from)) {
+                                paired.push_back(from);
+                            }
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+
+                assert(found); // Always assert
+                assert(std::get<2>(distanceTriple) > 2);
 
                 boost::dynamic_bitset<> combination = e[eidx].combination;
-                const boost::dynamic_bitset<> &otherElement = e[elementIterator->second.first].combination;
+                const boost::dynamic_bitset<> &otherElement = e[otherIdx].combination;
 
                 // Flip a bit that makes the combination approach towards the element that is closest to the combination
                 // by flipping a bit to 1 that is already a one in the other element
@@ -303,12 +330,15 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
                 }
 
                 // Mark all uncovered elements of e that are covered by the created filler as covered
+                // TODO Pretty sure that never happens as well
                 for (size_t checkEidx = 0; checkEidx < e.size(); checkEidx++) {
                     const eElem &checkEElem = e[checkEidx];
-                    if ((checkEElem.combination & combination) == checkEElem.combination) {
+                    if ((checkEElem.combination & combination) == checkEElem.combination && checkEidx != eidx) {
                         assert(checkEidx >= eidx && "I didn't expect this to happen, there should be no coverage introduced to earlier elements");
                         auto result = alreadyCovered.insert(checkEidx);
                         assert(result.second);
+                        std::cout << "HAPPENED" << std::endl;
+                        assert(false);
                     }
                 }
 
