@@ -264,7 +264,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
                 if (std::get<0>(a) == std::get<0>(b)) {
                     return std::get<1>(a) < std::get<1>(b);
                 }
-                return std::get<0>(a) == std::get<0>(b);
+                return std::get<0>(a) < std::get<0>(b);
             }
             return std::get<2>(a) < std::get<2>(b);
         });
