@@ -269,20 +269,40 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
             return std::get<2>(a) < std::get<2>(b);
         });
         std::vector<size_t> paired;
+        std::vector<distTriple> pairs;
 
         for (size_t eidx = 0; eidx < e.size(); eidx++) {
             // If the element of e is not already covered, generate a coverage element for it
             if (!alreadyCovered.count(eidx)) {
+                counter++;
                 DEBUG_LOG(DEBUG_VERBOSE, "Filling element " + std::to_string(eidx) + "\r");
 
-                counter++;
-                // Get the minimalDistances entry for this element of e
                 bool found = false;
                 distTriple distanceTriple;
                 size_t otherIdx = 0;
+
+                // If the element is already paired, move towards the partner
+                for (const auto &currentPair : pairs) {
+                    size_t from = std::get<0>(currentPair);
+                    size_t to = std::get<1>(currentPair);
+                    if (from == eidx) {
+                        found = true;
+                        otherIdx = to;
+                        distanceTriple = currentPair;
+                        break;
+                    } else if (to == eidx) {
+                        found = true;
+                        otherIdx = from;
+                        distanceTriple = currentPair;
+                        break;
+                    }
+                }
+
+                // If not, get the minimalDistances entry for this element of e
                 for (const auto &currentDistance : distances) {
                     size_t from = std::get<0>(currentDistance);
                     size_t to = std::get<1>(currentDistance);
+
                     if ((from == eidx || to == eidx) && !containedIn(paired, from) && !containedIn(paired, to)) {
                         if (from == eidx) {
                             otherIdx = to;
@@ -293,6 +313,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
                         distanceTriple = currentDistance;
                         paired.push_back(from);
                         paired.push_back(to);
+                        pairs.emplace_back(currentDistance);
                         found = true;
                         break;
                     }
@@ -313,6 +334,9 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
                             distanceTriple = currentDistance;
                             if (!containedIn(paired, from)) {
                                 paired.push_back(from);
+                            }
+                            if (!containedIn(paired, to)) {
+                                paired.push_back(to);
                             }
                             found = true;
                             break;
