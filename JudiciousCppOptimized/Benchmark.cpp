@@ -136,15 +136,15 @@ static void memaligned_simd512_or(benchmark::State &state) {
     if(posix_memalign(reinterpret_cast<void**>(&c), 64, neededInts * sizeof(uint64_t)) != 0)
         assert(false);
 
-    for (size_t i = 0; i < neededInts; i++) {
-        a[i] = 0x5454545454545454;
-        b[i] = 0xAAAAAAAAAAAAAAAA;
-    }
-
-    for (size_t i = 0; i < (SIZE / 64.0 - SIZE / 64) * 64; i++) {
-        a[SIZE / 64] &= ~(1UL << i);
-        b[SIZE / 64] &= ~(1UL << i);
-    }
+//    for (size_t i = 0; i < neededInts; i++) {
+//        a[i] = 0x5454545454545454;
+//        b[i] = 0xAAAAAAAAAAAAAAAA;
+//    }
+//
+//    for (size_t i = 0; i < (SIZE / 64.0 - SIZE / 64) * 64; i++) {
+//        a[SIZE / 64] &= ~(1UL << i);
+//        b[SIZE / 64] &= ~(1UL << i);
+//    }
 
     for (auto _ : state) {
         size_t I = 0;
@@ -167,10 +167,10 @@ static void memaligned_simd512_or(benchmark::State &state) {
         }
     }
 
-    for (size_t i = 0; i < neededInts; i++) {
-        std::cout << std::bitset<64>(c[i]);
-    }
-    std::cout << std::endl;
+//    for (size_t i = 0; i < neededInts; i++) {
+//        std::cout << std::bitset<64>(c[i]);
+//    }
+//    std::cout << std::endl;
 }
 BENCHMARK(memaligned_simd512_or);
 #endif
