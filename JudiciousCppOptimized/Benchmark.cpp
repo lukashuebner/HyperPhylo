@@ -6,6 +6,8 @@
 #include <iostream>
 #include <random>
 #include <bitset>
+#include <immintrin.h>
+#include <emmintrin.h>
 
 static const int SIZE = 5000000;
 
@@ -54,6 +56,57 @@ static void bool_vector_or(benchmark::State &state) {
 	}
 }
 BENCHMARK(bool_vector_or);
+
+static void memaligned_simd_or(benchmark::State &state) {
+    uint64_t * a, *b, *c;
+    const size_t neededInts = SIZE / 64;
+    if(posix_memalign(reinterpret_cast<void**>(&a), 32, neededInts * sizeof(uint64_t)) != 0)
+        assert(false);
+    if(posix_memalign(reinterpret_cast<void**>(&b), 32, neededInts * sizeof(uint64_t)) != 0)
+        assert(false);
+    if(posix_memalign(reinterpret_cast<void**>(&c), 32, neededInts * sizeof(uint64_t)) != 0)
+        assert(false);
+
+	for (auto _ : state) {
+        size_t I = 0;
+        const uint32_t elementsPerIteration = 2;
+        for (I = 0; I + elementsPerIteration < neededInts; I += elementsPerIteration) {
+            // Load data into ymmm register
+            __m128i vec_a = _mm_load_si128(reinterpret_cast<__m128i*>(&a[I]));
+            __m128i vec_b = _mm_load_si128(reinterpret_cast<__m128i*>(&b[I]));
+
+            // bitwise logical or
+            __m128i vec_c = _mm_or_si128(vec_a, vec_b);
+
+            // Store back the results
+            _mm_store_si128(reinterpret_cast<__m128i*>(&c[I]), vec_c);
+        }
+
+        // Finish sequentialy
+        for (; I < neededInts; I++) {
+            c[I] = a[I] | b[I];
+        }
+	}
+}
+BENCHMARK(memaligned_simd_or);
+
+static void memaligned_or(benchmark::State &state) {
+    uint64_t * a, *b, *c;
+    const size_t neededInts = SIZE / 64;
+    if(posix_memalign(reinterpret_cast<void**>(&a), 32, neededInts * sizeof(uint64_t)) != 0)
+        assert(false);
+    if(posix_memalign(reinterpret_cast<void**>(&b), 32, neededInts * sizeof(uint64_t)) != 0)
+        assert(false);
+    if(posix_memalign(reinterpret_cast<void**>(&c), 32, neededInts * sizeof(uint64_t)) != 0)
+        assert(false);
+
+    for (auto _ : state) {
+        for (size_t I = 0; I < neededInts; I++) {
+            c[I] = a[I] | b[I];
+        }
+    }
+}
+BENCHMARK(memaligned_or);
 
 static void bool_vector_or_stupid(benchmark::State &state) {
 	std::vector<bool> a(SIZE);
