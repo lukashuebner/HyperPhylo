@@ -91,4 +91,4 @@ target_link_libraries(unittest
         libgtest
         libgmock)
 
-target_link_libraries(benchmarks benchmark)
+target_link_libraries(benchmarks benchmark sdsl)
