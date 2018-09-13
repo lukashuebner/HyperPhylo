@@ -4,6 +4,7 @@ project(JudiciousCppOptimized)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall")
 
+
 find_package(OpenMP)
 
 # Change to TRUE to activate OpenMP
@@ -82,6 +83,12 @@ add_executable(unittest
         unittests.cpp
         algorithms.cpp)
 
+add_executable(benchmarks
+        Benchmark.cpp
+        Helper.cpp)
+
 target_link_libraries(unittest
         libgtest
         libgmock)
+
+target_link_libraries(benchmarks benchmark sdsl)

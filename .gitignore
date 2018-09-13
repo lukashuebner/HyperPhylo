@@ -253,15 +253,14 @@ CTestTestfile.cmake
 
 ############### Own Stuff
 HypergraphRepresentation/*.pdf
-.idea
+.idea/
 *.iml
-cmake-build-debug
-cmake-build-release
-__pycache__
+cmake-build-debug/
+cmake-build-release/
+__pycache__/
 JudiciousCppOptimized/JudiciousCppOptimized
 JudiciousCppOptimized/unittest
 JudiciousCppOptimized/JudiciousCppOptimized.cbp
 rc
 JudiciousCppOptimized/gtest
-RepeatsCounter/build/RepeatsCounter
 JudiciousCppOptimized/fakedata
