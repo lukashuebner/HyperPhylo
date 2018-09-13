@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(JudiciousCppOptimized)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall -mavx2")
 
 
 find_package(OpenMP)
@@ -72,12 +72,6 @@ add_executable(JudiciousCpp
         algorithms.cpp
         Helper.h
         Helper.cpp)
-
-#add_executable(JudiciousCppDebugOn
-#        Hypergraph.h
-#        main.cpp
-#        algorithms.cpp)
-
 
 add_executable(unittest
         unittests.cpp

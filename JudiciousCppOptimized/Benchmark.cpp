@@ -9,7 +9,7 @@
 #include <immintrin.h>
 #include <emmintrin.h>
 
-static const int SIZE = 5000000;
+static const int SIZE = 50000;
 
 static void bool_vector_create(benchmark::State &state) {
 	for (auto _ : state) {
@@ -59,12 +59,12 @@ BENCHMARK(bool_vector_or);
 
 static void memaligned_simd_or(benchmark::State &state) {
     uint64_t * a, *b, *c;
-    const size_t neededInts = SIZE / 64;
-    if(posix_memalign(reinterpret_cast<void**>(&a), 32, neededInts * sizeof(uint64_t)) != 0)
+    const size_t neededInts = SIZE / 64 + 1;
+    if(posix_memalign(reinterpret_cast<void**>(&a), 16, neededInts * sizeof(uint64_t)) != 0)
         assert(false);
-    if(posix_memalign(reinterpret_cast<void**>(&b), 32, neededInts * sizeof(uint64_t)) != 0)
+    if(posix_memalign(reinterpret_cast<void**>(&b), 16, neededInts * sizeof(uint64_t)) != 0)
         assert(false);
-    if(posix_memalign(reinterpret_cast<void**>(&c), 32, neededInts * sizeof(uint64_t)) != 0)
+    if(posix_memalign(reinterpret_cast<void**>(&c), 16, neededInts * sizeof(uint64_t)) != 0)
         assert(false);
 
 	for (auto _ : state) {
@@ -90,14 +90,99 @@ static void memaligned_simd_or(benchmark::State &state) {
 }
 BENCHMARK(memaligned_simd_or);
 
-static void memaligned_or(benchmark::State &state) {
+#ifdef __AVX2__
+static void memaligned_simd256_or(benchmark::State &state) {
     uint64_t * a, *b, *c;
-    const size_t neededInts = SIZE / 64;
+    const size_t neededInts = SIZE / 64 + 1;
     if(posix_memalign(reinterpret_cast<void**>(&a), 32, neededInts * sizeof(uint64_t)) != 0)
         assert(false);
     if(posix_memalign(reinterpret_cast<void**>(&b), 32, neededInts * sizeof(uint64_t)) != 0)
         assert(false);
     if(posix_memalign(reinterpret_cast<void**>(&c), 32, neededInts * sizeof(uint64_t)) != 0)
+        assert(false);
+
+    for (auto _ : state) {
+        size_t I = 0;
+        const uint32_t elementsPerIteration = 4;
+        for (I = 0; I + elementsPerIteration < neededInts; I += elementsPerIteration) {
+            // Load data into ymmm register
+            __m256i vec_a = _mm256_load_si256(reinterpret_cast<__m256i*>(&a[I]));
+            __m256i vec_b = _mm256_load_si256(reinterpret_cast<__m256i*>(&b[I]));
+
+            // bitwise logical or
+            __m256i vec_c = _mm256_or_si256(vec_a, vec_b);
+
+            // Store back the results
+            _mm256_store_si256(reinterpret_cast<__m256i*>(&c[I]), vec_c);
+        }
+
+        // Finish sequentialy
+        for (; I < neededInts; I++) {
+            c[I] = a[I] | b[I];
+        }
+    }
+}
+BENCHMARK(memaligned_simd256_or);
+#endif
+
+#ifdef __AVX512F__
+static void memaligned_simd512_or(benchmark::State &state) {
+    uint64_t * a, *b, *c;
+    const size_t neededInts = SIZE / 64 + 1;
+    if(posix_memalign(reinterpret_cast<void**>(&a), 64, neededInts * sizeof(uint64_t)) != 0)
+        assert(false);
+    if(posix_memalign(reinterpret_cast<void**>(&b), 64, neededInts * sizeof(uint64_t)) != 0)
+        assert(false);
+    if(posix_memalign(reinterpret_cast<void**>(&c), 64, neededInts * sizeof(uint64_t)) != 0)
+        assert(false);
+
+    for (size_t i = 0; i < neededInts; i++) {
+        a[i] = 0x5454545454545454;
+        b[i] = 0xAAAAAAAAAAAAAAAA;
+    }
+
+    for (size_t i = 0; i < (SIZE / 64.0 - SIZE / 64) * 64; i++) {
+        a[SIZE / 64] &= ~(1UL << i);
+        b[SIZE / 64] &= ~(1UL << i);
+    }
+
+    for (auto _ : state) {
+        size_t I = 0;
+        const uint32_t elementsPerIteration = 8;
+        for (I = 0; I + elementsPerIteration < neededInts; I += elementsPerIteration) {
+            // Load data into ymmm register
+            __m512i vec_b = _mm512_load_si512(reinterpret_cast<__m512i*>(&b[I]));
+            __m512i vec_a = _mm512_load_si512(reinterpret_cast<__m512i*>(&a[I]));
+
+            // bitwise logical or
+            __m512i vec_c = _mm512_or_si512(vec_a, vec_b);
+
+            // Store back the results
+            _mm512_store_si512(reinterpret_cast<__m512i*>(&c[I]), vec_c);
+        }
+
+        // Finish sequentialy
+        for (; I < neededInts; I++) {
+            c[I] = a[I] | b[I];
+        }
+    }
+
+    for (size_t i = 0; i < neededInts; i++) {
+        std::cout << std::bitset<64>(c[i]);
+    }
+    std::cout << std::endl;
+}
+BENCHMARK(memaligned_simd512_or);
+#endif
+
+static void memaligned_or(benchmark::State &state) {
+    uint64_t * a, *b, *c;
+    const size_t neededInts = SIZE / 64 + 1;
+    if(posix_memalign(reinterpret_cast<void**>(&a), 64, neededInts * sizeof(uint64_t)) != 0)
+        assert(false);
+    if(posix_memalign(reinterpret_cast<void**>(&b), 64, neededInts * sizeof(uint64_t)) != 0)
+        assert(false);
+    if(posix_memalign(reinterpret_cast<void**>(&c), 64, neededInts * sizeof(uint64_t)) != 0)
         assert(false);
 
     for (auto _ : state) {
@@ -107,6 +192,24 @@ static void memaligned_or(benchmark::State &state) {
     }
 }
 BENCHMARK(memaligned_or);
+
+static void malloced_or(benchmark::State &state) {
+    uint64_t *a, *b, *c;
+    const size_t neededInts = SIZE / 64 + 1;
+    if ((a = reinterpret_cast<uint64_t*>(malloc(neededInts * sizeof(uint64_t)))) == nullptr)
+        assert(false);
+    if ((b = reinterpret_cast<uint64_t*>(malloc(neededInts * sizeof(uint64_t)))) == nullptr)
+        assert(false);
+    if ((c = reinterpret_cast<uint64_t*>(malloc(neededInts * sizeof(uint64_t)))) == nullptr)
+        assert(false);
+
+    for (auto _ : state) {
+        for (size_t I = 0; I < neededInts; I++) {
+            c[I] = a[I] | b[I];
+        }
+    }
+}
+BENCHMARK(malloced_or);
 
 static void bool_vector_or_stupid(benchmark::State &state) {
 	std::vector<bool> a(SIZE);
