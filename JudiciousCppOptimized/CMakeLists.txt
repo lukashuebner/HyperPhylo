@@ -6,12 +6,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall")
 
 execute_process(COMMAND cat /proc/cpuinfo OUTPUT_VARIABLE result)
 if ("${result}" MATCHES "avx2")
-    message("YAY")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
 endif()
 
 if ("${result}" MATCHES "avx512f")
-    message("YAY2")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=skylake-avx512")
 endif()
 
