@@ -205,7 +205,7 @@ static void malloced_or(benchmark::State &state) {
 
     for (auto _ : state) {
         for (size_t I = 0; I < neededInts; I++) {
-            c[I] = a[I] | b[I];
+            benchmark::DoNotOptimize(c[I] = a[I] | b[I]);
         }
     }
 }

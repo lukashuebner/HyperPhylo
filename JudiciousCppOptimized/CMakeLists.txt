@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(JudiciousCppOptimized)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall")
 
 execute_process(COMMAND cat /proc/cpuinfo OUTPUT_VARIABLE result)
 if ("${result}" MATCHES "avx2")
