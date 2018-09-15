@@ -9,7 +9,7 @@
 #include <immintrin.h>
 #include <emmintrin.h>
 
-static const int SIZE = 5000000;
+static const int SIZE = 50000;
 
 static void bool_vector_create(benchmark::State &state) {
 	for (auto _ : state) {
