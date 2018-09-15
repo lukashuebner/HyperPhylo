@@ -28,6 +28,7 @@ Hypergraph getHypergraphFromPartitionFile(const std::string &filepath, int parti
     std::vector<std::vector<uint32_t>> partition;
     std::string line;
     bool curPartitionIsWantedPartition = false;
+    uint32_t numberOfSitesFromFile = 0;
     int i = -2;
     while (std::getline(input_file, line)) {
         std::vector<std::string> splitLine = splitLineAtSpaces(line);
@@ -39,6 +40,7 @@ Hypergraph getHypergraphFromPartitionFile(const std::string &filepath, int parti
                 uint32_t curPartitionNumber = stringToUint32t(splitLine[0].substr(10));
                 if (curPartitionNumber == partitionNumber) {
                     curPartitionIsWantedPartition = true;
+                    numberOfSitesFromFile = stringToUint32t(splitLine[1]);
                     i++;
                 } else {
                     curPartitionIsWantedPartition = false;
@@ -64,6 +66,8 @@ Hypergraph getHypergraphFromPartitionFile(const std::string &filepath, int parti
     std::vector<hElem> hyperedges;
 
     unsigned long numberOfSites = partition[0].size();
+    assert(numberOfSites == numberOfSitesFromFile);
+
 
     // Fill the hypernodes
     for (uint32_t j = 0; j < numberOfSites; j++) {
@@ -87,6 +91,8 @@ Hypergraph getHypergraphFromPartitionFile(const std::string &filepath, int parti
             }
         }
     }
+
+    assert(hypernodes.size() == numberOfSitesFromFile);
 
     Hypergraph hypergraph(hypernodes, hyperedges);
     return hypergraph;
