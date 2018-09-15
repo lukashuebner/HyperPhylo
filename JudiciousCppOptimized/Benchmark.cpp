@@ -9,7 +9,7 @@
 #include <immintrin.h>
 #include <emmintrin.h>
 
-static const int SIZE = 50000;
+static const int SIZE = 5000000;
 
 static void bool_vector_create(benchmark::State &state) {
 	for (auto _ : state) {
@@ -40,13 +40,39 @@ static void sdsl_rrrvector_create(benchmark::State &state) {
 }
 BENCHMARK(sdsl_rrrvector_create);
 
-static void bool_vector_or(benchmark::State &state) {
+static void uint64_vector_or(benchmark::State &state) {
+    const size_t neededInts = SIZE / 64 + 1;
+    std::vector<uint64_t> a(neededInts);
+    std::vector<uint64_t> b(neededInts);
+    std::vector<uint64_t> c(neededInts);
+
+    for (auto _ : state) {
+        for (size_t i = 0; i < a.size(); i++) {
+            c[i] = a[i] | b[i];
+        }
+    }
+}
+BENCHMARK(uint64_vector_or);
+
+static void bool_vector_or_stupid(benchmark::State &state) {
+    std::vector<bool> a(SIZE);
+    std::vector<bool> b(SIZE);
+    std::vector<bool> c(SIZE);
+
+    for (auto _ : state) {
+        std::transform(a.begin(), a.end(),
+                       b.begin(), c.begin(), std::logical_or<>());
+    }
+}
+BENCHMARK(bool_vector_or_stupid);
+
+static void bool_vector_or_specific(benchmark::State &state) {
 	std::vector<bool> a(SIZE);
 	std::vector<bool> b(SIZE);
 	std::vector<bool> c(SIZE);
 
 	for (auto _ : state) {
-		std::vector<bool>::iterator itC = c.begin();
+		auto itC = c.begin();
 		std::vector<bool>::const_iterator itA = a.begin();
 		std::vector<bool>::const_iterator itB = b.begin();
 
@@ -55,7 +81,7 @@ static void bool_vector_or(benchmark::State &state) {
 			*(itC._M_p ++) = *(itA._M_p ++) | *(itB._M_p ++); // word-at-a-time bitwise operation
 	}
 }
-BENCHMARK(bool_vector_or);
+BENCHMARK(bool_vector_or_specific);
 
 static void memaligned_simd_or(benchmark::State &state) {
     uint64_t * a, *b, *c;
@@ -141,7 +167,7 @@ static void memaligned_simd512_or(benchmark::State &state) {
 //        b[i] = 0xAAAAAAAAAAAAAAAA;
 //    }
 //
-//    for (size_t i = 0; i < (SIZE / 64.0 - SIZE / 64) * 64; i++) {
+//    for (size_t i = 0; i < 64 - (SIZE / 64.0 - SIZE / 64) * 64; i++) {
 //        a[SIZE / 64] &= ~(1UL << i);
 //        b[SIZE / 64] &= ~(1UL << i);
 //    }
@@ -211,18 +237,6 @@ static void malloced_or(benchmark::State &state) {
 }
 BENCHMARK(malloced_or);
 
-static void bool_vector_or_stupid(benchmark::State &state) {
-	std::vector<bool> a(SIZE);
-	std::vector<bool> b(SIZE);
-	std::vector<bool> c(SIZE);
-
-	for (auto _ : state) {
-		std::transform(a.begin(), a.end(),
-					   b.begin(), c.begin(), std::logical_or<bool>());
-	}
-}
-BENCHMARK(bool_vector_or_stupid);
-
 static void boost_dynamic_bitset_or(benchmark::State &state) {
 	boost::dynamic_bitset<> a(SIZE, 0);
 	boost::dynamic_bitset<> b(SIZE, 0);
@@ -269,5 +283,41 @@ static void sdsl_bitvector_rrr_or(benchmark::State &state) {
 	}
 }
 BENCHMARK(sdsl_bitvector_rrr_or);
+
+static void boost_dynamic_bitset_count(benchmark::State &state) {
+    boost::dynamic_bitset<> a(SIZE, 0);
+    for (size_t i = 0; i < a.size(); i++) {
+        if (i % 2 == 0) {
+            a[i] = true;
+        }
+    }
+
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(a.count());
+    }
+}
+BENCHMARK(boost_dynamic_bitset_count);
+
+static void memaligned_count_builtin(benchmark::State &state) {
+    uint64_t * a;
+    const size_t neededInts = SIZE / 64 + 1;
+    if(posix_memalign(reinterpret_cast<void**>(&a), 64, neededInts * sizeof(uint64_t)) != 0)
+        assert(false);
+
+    for (size_t i = 0; i < neededInts; i++) {
+        a[i] = 0xAAAAAAAAAAAAAAAA;
+    }
+
+    for (size_t i = 0; i < 64 - (SIZE / 64.0 - SIZE / 64) * 64; i++) {
+        a[SIZE / 64] &= ~(1UL << i);
+    }
+
+    for (auto _ : state) {
+        for (size_t I = 0; I < neededInts; I++) {
+            benchmark::DoNotOptimize(__builtin_popcountll(a[I]));
+        }
+    }
+}
+BENCHMARK(memaligned_count_builtin);
 
 BENCHMARK_MAIN();
