@@ -5,10 +5,12 @@ import re
 import os
 from datetime import datetime
 import tempfile
+import shlex
 
 programs = {
-    "naive":        "./very_naive_split.py",
-    "judicious":    "../JudiciousCppOptimized/cmake-build-debug/JudiciousCpp",
+    "naive":        "./very_naive_split.py {input_file} {corelist}",
+    "judicious":    "../JudiciousCppOptimized/cmake-build-debug/JudiciousCpp {input_file} {corelist}",
+    "lpp":          "./lpp_runner.py {input_file} {corelist}"
 }
 
 input_files = {
@@ -30,9 +32,9 @@ os.mkdir("../results/{}".format(folder_name))
 for prog_nick, prog in programs.items():
     for input_nick, input_file in input_files.items():
         print("Running {} with {}...".format(prog_nick, input_nick), end="", flush=True)
-        process = subprocess.Popen([prog, input_file, ",".join(str(x) for x in cores)],
-                                   stdout=subprocess.PIPE,
-                                   universal_newlines=True)
+
+        cmd = shlex.split(prog.format(input_file=input_file, corelist=",".join(str(x) for x in cores)))
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
         stdout, _ = process.communicate()
 
         outputs = {}
