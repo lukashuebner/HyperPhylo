@@ -31,7 +31,7 @@
 #define DEBUG_LOG(level, message)
 #endif
 
-Hypergraph getHypergraphFromPartitionFile(const std::string &filepath, int partitionNumber);
+Hypergraph getHypergraphFromPartitionFile(const std::string &filepath, uint32_t partitionNumber);
 
 void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs);
 

@@ -43,7 +43,7 @@ std::set<size_t> getKSetFromKString(std::string kString) {
 
 int main(int argc, char **argv) {
     std::string filepath;
-    int partitionNumber = 0;
+    uint32_t partitionNumber = 0;
     std::set<size_t> kSet;
 
     // Parse arguments

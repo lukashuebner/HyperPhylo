@@ -15,7 +15,7 @@ std::unordered_map<size_t, std::pair<size_t, size_t>> minimalDistances;
  * When in doubt, use 0 :)
  * @return The hypergraph that represents the partition described in the input file.
  */
-Hypergraph getHypergraphFromPartitionFile(const std::string &filepath, int partitionNumber) {
+Hypergraph getHypergraphFromPartitionFile(const std::string &filepath, uint32_t partitionNumber) {
     // Read the file
     std::ifstream input_file(filepath);
 
