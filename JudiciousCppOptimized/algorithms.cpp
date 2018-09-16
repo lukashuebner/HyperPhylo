@@ -204,7 +204,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
         DEBUG_LOG(DEBUG_VERBOSE, "Fitting element " + std::to_string(eidx + 1) + "\r");
         for (sElem currentS : s) {
             const eElem &currentE = e[eidx];
-            if ((currentE.combination & currentS.combination) == currentE.combination) {
+            if (currentS.combination.covers(currentE.combination)) {
                 currentS.coveredEElems.insert(eidx);
                 currentS.coveredE0Elems.insert(currentE.coveredE0Elems.begin(), currentE.coveredE0Elems.end());
             }
