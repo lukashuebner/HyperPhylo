@@ -8,8 +8,9 @@
 #include <bitset>
 #include <immintrin.h>
 #include <emmintrin.h>
+#include "structures.h"
 
-static const int SIZE = 50000;
+static const int SIZE = 500;
 
 static void bool_vector_create(benchmark::State &state) {
 	for (auto _ : state) {
@@ -219,6 +220,17 @@ static void memaligned_or(benchmark::State &state) {
 }
 BENCHMARK(memaligned_or);
 
+static void memaligned_or_struct(benchmark::State &state) {
+    AlignedBitArray a(SIZE);
+    AlignedBitArray b(SIZE);
+    AlignedBitArray c;
+
+    for (auto _ : state) {
+        c = a | b;
+    }
+}
+BENCHMARK(memaligned_or_struct);
+
 static void malloced_or(benchmark::State &state) {
     uint64_t *a, *b, *c;
     const size_t neededInts = SIZE / 64 + 1;
@@ -319,5 +331,27 @@ static void memaligned_count_builtin(benchmark::State &state) {
     }
 }
 BENCHMARK(memaligned_count_builtin);
+
+//static void memaligned_count_builtin_struct(benchmark::State &state) {
+//    uint64_t * a;
+//    const size_t neededInts = SIZE / 64 + 1;
+//    if(posix_memalign(reinterpret_cast<void**>(&a), 64, neededInts * sizeof(uint64_t)) != 0)
+//        assert(false);
+//
+//    for (size_t i = 0; i < neededInts; i++) {
+//        a[i] = 0xAAAAAAAAAAAAAAAA;
+//    }
+//
+//    for (size_t i = 0; i < 64 - (SIZE / 64.0 - SIZE / 64) * 64; i++) {
+//        a[SIZE / 64] &= ~(1UL << i);
+//    }
+//
+//    for (auto _ : state) {
+//        for (size_t I = 0; I < neededInts; I++) {
+//            benchmark::DoNotOptimize(__builtin_popcountll(a[I]));
+//        }
+//    }
+//}
+//BENCHMARK(memaligned_count_builtin_struct);
 
 BENCHMARK_MAIN();
