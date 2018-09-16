@@ -23,8 +23,8 @@ struct sElem {
 
     sElem() = default;
 
-    // Move combination set
-    explicit sElem(AlignedBitArray combination) : combination(combination) {
+    // Construct sElem from combination
+    explicit sElem(const AlignedBitArray &combination) : combination(combination) {
     }
 
     bool operator==(const sElem &rhs) const {
@@ -64,9 +64,9 @@ struct eElem {
     // Elements of the original e set that are covered by this combination.
     std::set<size_t> coveredE0Elems;
 
-    // Move combination set
+    // Create new from combination and covering
     explicit eElem(AlignedBitArray combination, std::set<size_t> coveredE0Elems) :
-        combination(combination),
+        combination(std::move(combination)),
         coveredE0Elems(std::move(coveredE0Elems)) {
     }
 

@@ -10,7 +10,7 @@
 #include <emmintrin.h>
 #include "structures.h"
 
-static const int SIZE = 500;
+static const int SIZE = 50000;
 
 static void bool_vector_create(benchmark::State &state) {
 	for (auto _ : state) {

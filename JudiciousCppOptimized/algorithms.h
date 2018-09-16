@@ -9,12 +9,16 @@
 #include <algorithm>
 #include <cassert>
 #include <unordered_set>
+#include <unordered_map>
+#include <omp.h>
 
 #include <boost/range/algorithm/set_algorithm.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/predicate.hpp>
-#include <unordered_map>
+
+#include <tbb/concurrent_unordered_set.h>
+#include <tbb/concurrent_unordered_map.h>
 
 #include "Hypergraph.h"
 

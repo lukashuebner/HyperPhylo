@@ -5,9 +5,18 @@
 #include <stdlib.h>
 #include <cassert>
 #include <boost/functional/hash.hpp>
+#include <immintrin.h>
+
+#ifdef __AVX512F__
+#define ALIGNMENT 64
+#elif __AVX2__
+#define ALIGNMENT 32
+#else
+#define ALIGNMENT 16
+#endif
 
 struct AlignedBitArray {
-    uint64_t *bitarray;
+    std::shared_ptr<uint64_t[]> bitarray;
     size_t numBits;
     size_t numInts;
 
@@ -17,21 +26,18 @@ struct AlignedBitArray {
     AlignedBitArray() = default;
 
     explicit AlignedBitArray(size_t numBits) : numBits(numBits), numInts(numBits / 64 + 1) {
-        if(posix_memalign(reinterpret_cast<void**>(&bitarray), 64, numInts * sizeof(uint64_t)) != 0) {
+        uint64_t *raw = nullptr;
+        if(posix_memalign(reinterpret_cast<void**>(&raw), ALIGNMENT, numInts * sizeof(uint64_t)) != 0) {
             std::cerr << "Aligned malloc failed!" << std::endl;
-            assert(false);
-        #ifdef NDEBUG
-            exit(1)
-        #endif
+            throw std::bad_alloc();
         }
+        bitarray = std::shared_ptr<uint64_t[]>(raw, [=](uint64_t *data) {
+            free(data);
+        });
 
         for (size_t i = 0; i < numInts; i++) {
             bitarray[i] = 0;
         }
-    }
-
-    ~AlignedBitArray() {
-        free(bitarray);
     }
 
     size_t countOnes() const {

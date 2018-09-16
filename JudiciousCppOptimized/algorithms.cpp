@@ -6,7 +6,7 @@
 // Value is a pair where
 // * the first value is the index of the element if e with a minimal distance to the key element
 // * the second value is the minimal distance
-std::unordered_map<size_t, std::pair<size_t, size_t>> minimalDistances;
+tbb::concurrent_unordered_map<size_t, std::pair<size_t, size_t>> minimalDistances;
 
 /**
  * Parse a partition file and create its hypergraph.
@@ -126,9 +126,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
 
     DEBUG_LOG(DEBUG_PROGRESS, "Generating S with only size >= 2 elements\n");
 
-    // TODO maybe figure out max size and reserve?
-    std::unordered_set<sElem> s;
-
+    tbb::concurrent_unordered_set<sElem, std::hash<sElem>> s;
     minimalDistances.clear();
 
     // Run over all possible pairs in E and check if they build a possible combination
@@ -155,65 +153,69 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
                 newS.coveredEElems.insert(secondEidx);
                 newS.coveredE0Elems.insert(firstE.coveredE0Elems.begin(), firstE.coveredE0Elems.end());
                 newS.coveredE0Elems.insert(secondE.coveredE0Elems.begin(), secondE.coveredE0Elems.end());
-                #pragma omp critical
-                {
-                    auto result = s.insert(newS);
-                    // Merge together if this element already exists
-                    if (!result.second) {
-                        result.first->coveredEElems.insert(newS.coveredEElems.begin(), newS.coveredEElems.end());
-                        result.first->coveredE0Elems.insert(newS.coveredE0Elems.begin(), newS.coveredE0Elems.end());
-                    }
-                };
+
+                auto result = s.insert(newS);
+                // Merge together if this element already exists
+                if (!result.second) {
+                    result.first->coveredEElems.insert(newS.coveredEElems.begin(), newS.coveredEElems.end());
+                    result.first->coveredE0Elems.insert(newS.coveredE0Elems.begin(), newS.coveredE0Elems.end());
+                }
             } else { // else, add to the table of minimal distances
-                #pragma omp critical
-                {
-                    // Store the mapping a --> b
-                    auto pair = std::make_pair(firstEidx, std::make_pair(secondEidx, distance));
-                    auto result = minimalDistances.insert(pair);
+                // Store the mapping a --> b
+                auto pair = std::make_pair(firstEidx, std::make_pair(secondEidx, distance));
+                auto result = minimalDistances.insert(pair);
 
-                    // If adding was not successful, there is already an entry for that element of e
-                    if (!result.second) {
-                        // If the currently stored minimal distance is greater than this one, replace it
-                        if (result.first->second.second > distance) {
-                            result.first->second.first = secondEidx;
-                            result.first->second.second = distance;
-                        }
+                // If adding was not successful, there is already an entry for that element of e
+                if (!result.second) {
+                    // If the currently stored minimal distance is greater than this one, replace it
+                    if (result.first->second.second > distance) {
+                        result.first->second.first = secondEidx;
+                        result.first->second.second = distance;
                     }
+                }
 
-                    // Store the mapping b --> a
-                    auto pairReverse = std::make_pair(secondEidx, std::make_pair(firstEidx, distance));
-                    auto resultReverse = minimalDistances.insert(pairReverse);
+                // Store the mapping b --> a
+                auto pairReverse = std::make_pair(secondEidx, std::make_pair(firstEidx, distance));
+                auto resultReverse = minimalDistances.insert(pairReverse);
 
-                    // If adding was not successful, there is already an entry for that element of e
-                    if (!resultReverse.second) {
-                        // If the currently stored minimal distance is greater than this one, replace it
-                        if (resultReverse.first->second.second > distance) {
-                            resultReverse.first->second.first = firstEidx;
-                            resultReverse.first->second.second = distance;
-                        }
+                // If adding was not successful, there is already an entry for that element of e
+                if (!resultReverse.second) {
+                    // If the currently stored minimal distance is greater than this one, replace it
+                    if (resultReverse.first->second.second > distance) {
+                        resultReverse.first->second.first = firstEidx;
+                        resultReverse.first->second.second = distance;
                     }
                 }
             }
         }
     }
 
+    // TODO I'm pretty sure this doesn't actually do something ever. Can probably be romved.
     // Run over E and check for each element if it fits into one of the generated combinations
     // TODO This will obviously also add the initial elements of e that created the combination, so maybe we can try to avoid that?
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
     for (size_t eidx = 0; eidx < e.size(); eidx++) {
         DEBUG_LOG(DEBUG_VERBOSE, "Fitting element " + std::to_string(eidx + 1) + "\r");
-        for (sElem currentS : s) {
+        for (const sElem &currentS : s) {
             const eElem &currentE = e[eidx];
             if (currentS.combination.covers(currentE.combination)) {
-                currentS.coveredEElems.insert(eidx);
+                auto result = currentS.coveredEElems.insert(eidx);
+                if (result.second) {
+                    std::cout << "THIS ACTUALLY DID SOMETHING; WOW" << std::endl;
+                    assert(false);
+                }
+                size_t prev = currentS.coveredE0Elems.size();
                 currentS.coveredE0Elems.insert(currentE.coveredE0Elems.begin(), currentE.coveredE0Elems.end());
+                if (prev != currentS.coveredE0Elems.size()) {
+                    std::cout << "THIS ACTUALLY DID SOMETHING; AMAZING" << std::endl;
+                    assert(false);
+                }
             }
         }
     }
 
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
-    DEBUG_LOG(DEBUG_PROGRESS, "Size: " + std::to_string(s.size()) + "\n");
-
+    DEBUG_LOG(DEBUG_PROGRESS, "Size: " + std::to_string(s_parts.size()) + "\n");
     return std::vector<sElem>(s.begin(), s.end());
 }
 
@@ -292,7 +294,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
 
                 counter++;
                 // Get the minimalDistances entry for this element of e
-                std::unordered_map<size_t,std::pair<size_t, size_t>>::const_iterator elementIterator = minimalDistances.find(eidx);
+                auto elementIterator = minimalDistances.find(eidx);
                 assert(elementIterator != minimalDistances.end());
                 assert(elementIterator->second.second > 2);
 
@@ -319,22 +321,22 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
                 }
 
                 // Sanity Check: Does this element cover an element e (the filled one) that isn't already covered by a combination of other minimal subset elements?
-            #ifndef NDEBUG
-                std::set<size_t> coveredSites;
-                #pragma omp parallel for schedule(dynamic)
-                for (size_t cidx = 0; cidx < minimalSubset.size(); cidx++) {
-                    const AlignedBitArray &current = minimalSubset[cidx].combination;
-                    // Does it cover this element of e? If yes insert index into covered set.
-                    const AlignedBitArray &eElement = e[eidx].combination;
-                    if (current.covers(eElement)) {
-                        std::cerr << "Combination " << combination << " doesn't cover a new e element";
-                        std::cerr << ", especially the filled element is already covered by another element of the minimal subset." << std::endl;
-                        std::cerr << "Combination contains of elements with " << eElement.countOnes() << " and " << otherElement.countOnes() << " ones." << std::endl;
-                        std::cerr << "This occured in filling element " << eidx << std::endl;
-                        assert(false);
-                    }
-                }
-            #endif
+//            #ifndef NDEBUG
+//                std::set<size_t> coveredSites;
+//                #pragma omp parallel for schedule(dynamic)
+//                for (size_t i = 0; i < minimalSubset.size(); i++) {
+//                    const AlignedBitArray &current = minimalSubset[i].combination;
+//                    // Does it cover this element of e? If yes insert index into covered set.
+//                    const AlignedBitArray &eElement = e[eidx].combination;
+//                    if (current.covers(eElement)) {
+//                        std::cerr << "Combination " << combination << " doesn't cover a new e element";
+//                        std::cerr << ", especially the filled element is already covered by another element of the minimal subset." << std::endl;
+//                        std::cerr << "Combination contains of elements with " << eElement.countOnes() << " and " << otherElement.countOnes() << " ones." << std::endl;
+//                        std::cerr << "This occured in filling element " << eidx << std::endl;
+//                        assert(false);
+//                    }
+//                }
+//            #endif
 
                 // Insert the covering element
                 minimalSubset.emplace_back(eElem(combination, e[eidx].coveredE0Elems));
