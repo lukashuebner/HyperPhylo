@@ -215,7 +215,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
     }
 
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
-    DEBUG_LOG(DEBUG_PROGRESS, "Size: " + std::to_string(s_parts.size()) + "\n");
+    DEBUG_LOG(DEBUG_PROGRESS, "Size: " + std::to_string(s.size()) + "\n");
     return std::vector<sElem>(s.begin(), s.end());
 }
 

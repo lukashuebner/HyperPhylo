@@ -1,12 +1,12 @@
+#include <utility>
+
 #ifndef JUDICIOUSCPP_HYPERGAPH_H
 #define JUDICIOUSCPP_HYPERGAPH_H
-
-#define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 
 #include <iostream>
 #include <set>
 #include <vector>
-#include <boost/dynamic_bitset.hpp>
+#include <algorithm>
 #include <boost/functional/hash.hpp>
 #include "structures.h"
 
@@ -24,7 +24,7 @@ struct sElem {
     sElem() = default;
 
     // Construct sElem from combination
-    explicit sElem(const AlignedBitArray &combination) : combination(combination) {
+    explicit sElem(AlignedBitArray combination) : combination(std::move(combination)) {
     }
 
     bool operator==(const sElem &rhs) const {
