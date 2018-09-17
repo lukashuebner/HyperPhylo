@@ -75,10 +75,11 @@ Hypergraph getHypergraphFromPartitionFile(const std::string &filepath, uint32_t 
     }
 
     // Fill the hyperedges
+    hElem curHyperedge;
     for (std::vector<uint32_t> curLine : partition) {  // Traverse all lines (rows in the partition)
         // Can have a maximum of numberOfSites repeat classes per row:
         for (uint32_t curRepeatClass = 0; curRepeatClass < numberOfSites; curRepeatClass++) {
-            hElem curHyperedge;
+            curHyperedge.clear();
             for (uint32_t k = 0; k < numberOfSites; k++) {  // Traverse all sites (columns in the partition)
                 if (curLine[k] == curRepeatClass) {
                     curHyperedge.push_back(k);
@@ -380,7 +381,7 @@ std::vector<eElem> minimumKAndD(size_t cmPlusD, const std::vector<eElem> &e) {
  * @param hypergraph The input hypergraph
  * @return the set E
  */
-std::vector<eElem> generateE(const Hypergraph &hypergraph, bool generateDuplicates) {
+std::vector<eElem> generateE(const Hypergraph &hypergraph, std::vector<eElem> &noDuplicates) {
     DEBUG_LOG(DEBUG_PROGRESS, "Generating E");
     const std::vector<uint32_t> &hypernodes = hypergraph.getHypernodes();
     std::vector<hElem> hyperedges = hypergraph.getHyperEdges();
@@ -400,18 +401,15 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph, bool generateDuplicat
         }
 
         eElem curE(curECombination, { insertedElements++ });
-        if (generateDuplicates) {
-            e.emplace_back(curE);
-        } else {
-            auto it = std::find(e.begin(), e.end(), curE);
+        e.emplace_back(curE);
 
-            // If element wasn't found (there is no duplicate), insert it
-            if (it == e.end()) {
-                e.emplace_back(curE);
-            } else {
-                // Else, add the current e element to the covered elements
-                it->coveredE0Elems.insert(hnode);
-            }
+        // If element wasn't found (there is no duplicate), insert it into the noDuplicates list
+        auto it = std::find(noDuplicates.begin(), noDuplicates.end(), curE);
+        if (it == noDuplicates.end()) {
+            noDuplicates.emplace_back(curE);
+        } else {
+            // Else, add the current e element to the covered elements
+            it->coveredE0Elems.insert(hnode);
         }
     }
 
@@ -431,8 +429,8 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
     DEBUG_LOG(DEBUG_PROGRESS, "Hyperedges: " + std::to_string(hypergraph.getHyperEdges().size()) + " Hypernodes: " + std::to_string(hypergraph.getHypernodes().size()) + "\n");
 
     // Generate set E according to the paper
-    std::vector<eElem> originalE = generateE(hypergraph, true);
-    std::vector<eElem> e = generateE(hypergraph, false);
+    std::vector<eElem> e;
+    std::vector<eElem> originalE = generateE(hypergraph, e);
 
     // calulate hyperdegree of the hypergraph
     // We assume that all hypernodes have the same degree
