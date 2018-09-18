@@ -19,6 +19,7 @@
 
 #include <tbb/concurrent_unordered_set.h>
 #include <tbb/concurrent_unordered_map.h>
+#include <tbb/concurrent_vector.h>
 
 #include "Hypergraph.h"
 

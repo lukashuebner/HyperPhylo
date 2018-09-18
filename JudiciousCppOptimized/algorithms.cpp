@@ -191,29 +191,35 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
         }
     }
 
-    // TODO I'm pretty sure this doesn't actually do something ever. Can probably be romved.
+#ifndef NDEBUG
+    // TODO I'm pretty sure this doesn't actually do something ever. Can probably be removed. For now, writes are commented out.
     // Run over E and check for each element if it fits into one of the generated combinations
     // TODO This will obviously also add the initial elements of e that created the combination, so maybe we can try to avoid that?
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
+    #pragma omp parallel for schedule(dynamic)
     for (size_t eidx = 0; eidx < e.size(); eidx++) {
         DEBUG_LOG(DEBUG_VERBOSE, "Fitting element " + std::to_string(eidx + 1) + "\r");
         for (const sElem &currentS : s) {
             const eElem &currentE = e[eidx];
             if (currentS.combination.covers(currentE.combination)) {
-                auto result = currentS.coveredEElems.insert(eidx);
-                if (result.second) {
-                    std::cout << "THIS ACTUALLY DID SOMETHING; WOW" << std::endl;
-                    assert(false);
+//                auto result = currentS.coveredEElems.insert(eidx);
+//                if (result.second) {
+//                    std::cout << "THIS ACTUALLY DID SOMETHING; WOW" << std::endl;
+//                    assert(false);
+//                }
+                if (!currentS.coveredEElems.count(eidx)) {
+                    assert(false && "There was an uncovered element that is covered by a created combination, we thought that never happens.");
                 }
-                size_t prev = currentS.coveredE0Elems.size();
-                currentS.coveredE0Elems.insert(currentE.coveredE0Elems.begin(), currentE.coveredE0Elems.end());
-                if (prev != currentS.coveredE0Elems.size()) {
-                    std::cout << "THIS ACTUALLY DID SOMETHING; AMAZING" << std::endl;
-                    assert(false);
-                }
+//                size_t prev = currentS.coveredE0Elems.size();
+//                currentS.coveredE0Elems.insert(currentE.coveredE0Elems.begin(), currentE.coveredE0Elems.end());
+//                if (prev != currentS.coveredE0Elems.size()) {
+//                    std::cout << "THIS ACTUALLY DID SOMETHING; AMAZING" << std::endl;
+//                    assert(false);
+//                }
             }
         }
     }
+#endif
 
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
     DEBUG_LOG(DEBUG_PROGRESS, "Size: " + std::to_string(s.size()) + "\n");
@@ -232,7 +238,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
 
     std::set<size_t> alreadyCovered;
     std::set<size_t> alreadyCoveredE0;
-    std::vector<eElem> minimalSubset;
+    tbb::concurrent_vector<eElem> minimalSubset;
     minimalSubset.reserve(e.size());
 
     // Only for determinism. Not actually needed.
@@ -277,7 +283,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
         sElemOfLongestDiffset.coveredE0Elems.clear();
         boost::set_difference(allCoveredE0, alreadyCoveredE0,
                 std::inserter(sElemOfLongestDiffset.coveredE0Elems, sElemOfLongestDiffset.coveredE0Elems.end()));
-        minimalSubset.emplace_back(eElem(sElemOfLongestDiffset));
+        minimalSubset.push_back(eElem(sElemOfLongestDiffset));
 
         // Add all newly covered original e elements in the already covered original e elements
         alreadyCoveredE0.insert(sElemOfLongestDiffset.coveredE0Elems.begin(), sElemOfLongestDiffset.coveredE0Elems.end());
@@ -288,6 +294,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
 
     // Fill up coverage if needed
     if (alreadyCovered.size() != e.size()) {
+        #pragma omp parallel for schedule(dynamic)
         for (size_t eidx = 0; eidx < e.size(); eidx++) {
             // If the element of e is not already covered, generate a coverage element for it
             if (!alreadyCovered.count(eidx)) {
@@ -311,16 +318,20 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
                     }
                 }
 
+            #ifndef NDEBUG
                 // Mark all uncovered elements of e that are covered by the created filler as covered
+                // TODO Pretty sure that never happens as well, commented out writes.
+                #pragma omp parallel for schedule(dynamic)
                 for (size_t checkEidx = 0; checkEidx < e.size(); checkEidx++) {
                     const eElem &checkEElem = e[checkEidx];
-                    if (combination.covers(checkEElem.combination)) {
-                        assert(checkEidx >= eidx && "I didn't expect this to happen, there should be no coverage introduced to earlier elements");
-                        auto result = alreadyCovered.insert(checkEidx);
-                        assert(result.second);
+                    if (combination.covers(checkEElem.combination) && checkEidx != eidx) {
+//                        assert(checkEidx >= eidx && "I didn't expect this to happen, there should be no coverage introduced to earlier elements");
+//                        auto result = alreadyCovered.insert(checkEidx);
+//                        assert(result.second);
+                        assert(false && "There was an uncovered element that is now covered by a filler, we thought that never happens.");
                     }
                 }
-
+            #endif
                 // Sanity Check: Does this element cover an element e (the filled one) that isn't already covered by a combination of other minimal subset elements?
 //            #ifndef NDEBUG
 //                std::set<size_t> coveredSites;
@@ -340,7 +351,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
 //            #endif
 
                 // Insert the covering element
-                minimalSubset.emplace_back(eElem(combination, e[eidx].coveredE0Elems));
+                minimalSubset.push_back(eElem(combination, e[eidx].coveredE0Elems));
             }
         }
     }
@@ -348,9 +359,9 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
 #ifndef NDEBUG
     // Check if each original e element only occures once
     std::set<size_t> coverage;
-    for (auto &current : minimalSubset) {
-        for (auto &coveredEElem : current.coveredE0Elems) {
-            assert(coverage.insert(coveredEElem).second && "A original e element is covered more than once!");
+    for (const auto &current : minimalSubset) {
+        for (const auto &coveredE0Elem : current.coveredE0Elems) {
+            assert(coverage.insert(coveredE0Elem).second && "An original e element is covered more than once!");
         }
     }
 #endif
@@ -358,7 +369,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
     DEBUG_LOG(DEBUG_PROGRESS, ", Size: " + std::to_string(minimalSubset.size()) + "\n");
 
-    return minimalSubset;
+    return std::vector<eElem>(minimalSubset.begin(), minimalSubset.end());
 }
 
 /**
