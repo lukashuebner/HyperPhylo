@@ -5,6 +5,8 @@
 #include <vector>
 #include <set>
 
+#include <sys/stat.h>
+
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string.hpp>
@@ -49,12 +51,19 @@ int main(int argc, char **argv) {
     // Parse arguments
     if (argc == 3 || argc == 4) {
         filepath = argv[1];
+
+        struct stat buffer;
+        if (stat(filepath.c_str(), &buffer) != 0) {
+            std::cerr << "The provided repeats file doesn't exist." << std::endl;
+            return 1;
+        }
+
         std::string k_string(argv[2]);
         kSet = getKSetFromKString(k_string);
 
         for (size_t k : kSet) {
             if (k < 2) {
-                std::cout << "The number of CPUs k can't be smaller than 2" << std::endl;
+                std::cerr << "The number of CPUs k can't be smaller than 2" << std::endl;
                 return 1;
             }
         }
