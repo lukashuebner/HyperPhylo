@@ -264,3 +264,8 @@ JudiciousCppOptimized/JudiciousCppOptimized.cbp
 rc
 JudiciousCppOptimized/gtest
 JudiciousCppOptimized/fakedata
+datasets/supermatrix_all.repeats
+src/results*.txt
+src/timings*.txt
+*.LPP
+*.hgr
