@@ -4,44 +4,103 @@ import subprocess
 import re
 import os
 from datetime import datetime
+import time
 import tempfile
 import shlex
+import sys
 
-programs = {
-    "naive":        "./very_naive_split.py {input_file} {corelist}",
-    "judicious":    "../JudiciousCppOptimized/cmake-build-debug/JudiciousCpp {input_file} {corelist}",
-    "lpp":          "./lpp_runner.py {input_file} {corelist}"
-}
+check_only = False
+output_file = "result.ddf"
 
-input_files = {
-    "59s":  "../datasets/extracted/59-s.repeats",
-    "128s": "../datasets/extracted/128-s.repeats",
-    "404s": "../datasets/extracted/404-s.repeats",
-    "59l":  "../datasets/extracted/59-l.repeats",
-    "128l": "../datasets/extracted/128-l.repeats",
-    "404l": "../datasets/extracted/404-l.repeats",
-}
+cmdlines = []
+
+input_files_single_partition = [
+    "../datasets/extracted/59-s.repeats",
+    "../datasets/extracted/404-s.repeats",
+    "../datasets/extracted/128-s.repeats",
+    "../datasets/extracted/59-l.repeats",
+    "../datasets/extracted/404-l.repeats",
+    "../datasets/extracted/128-l.repeats",
+    "../datasets/59_single.repeats",
+    "../datasets/404_single.repeats",
+    "../datasets/128_single.repeats",
+]
+
+input_files_multiple_partitions = [
+    "../datasets/59.repeats",
+    "../datasets/404.repeats",
+    "../datasets/128.repeats",
+]
 
 rccc_path = "../RepeatsCounter/RepeatsCounter/build/RepeatsCounter"
 
-cores = [2, 4, 8, 12, 16, 24, 32, 48, 64]
+block_numbers = [2, 4, 8, 12, 16, 24, 32, 48, 64]
+
+# Generate cmdlines for naive
+for input_file in input_files_single_partition:
+    m = re.search(".*/(.*)\.repeats", input_file)
+    if not m:
+        print("Mismatch in filename!", file=sys.stderr)
+        exit(1)
+
+    cmdlines.append([
+        "./very_naive_split.py {} {}".format(input_file, ",".join(str(x) for x in block_numbers)),
+        "split",
+        input_file,
+        "naive_{}".format(m.group(1).replace("-", ""))
+    ])
+
+# Generate cmdlines for JudiciousCpp
+for input_file in input_files_single_partition:
+    m = re.search(".*/(.*)\.repeats", input_file)
+    if not m:
+        print("Mismatch in filename!", file=sys.stderr)
+        exit(1)
+
+    cmdlines.append([
+        "../JudiciousCppOptimized/build/JudiciousCpp {} {}".format(input_file, ",".join(str(x) for x in block_numbers)),
+        "split",
+        input_file,
+        "judicious_{}".format(m.group(1).replace("-", ""))
+    ])
+
+# Generate cmdlines for RDDA
+for input_file in input_files_multiple_partitions:
+    m = re.search(".*/(.*)\.repeats", input_file)
+    if not m:
+        print("Mismatch in filename!", file=sys.stderr)
+        exit(1)
+
+    for numberOfBlocks in block_numbers:
+        cmdlines.append([
+            "../RepeatsCounter/RDDA/build/rdda {} {} {}".format(input_file, numberOfBlocks, output_file),
+            "file",
+            input_file,
+            "rdda_{}_{}.rcccount".format(m.group(1), numberOfBlocks)
+        ])
 
 folder_name = datetime.now().strftime("%y-%m-%d_%H-%M-%S")
 os.mkdir("../results/{}".format(folder_name))
 
-for prog_nick, prog in programs.items():
-    for input_nick, input_file in input_files.items():
-        print("Running {} with {}...".format(prog_nick, input_nick), end="", flush=True)
+for cmdline in cmdlines:
+    print("Running \"{}\"...".format(cmdline[0]), end="", flush=True)
 
-        cmd = shlex.split(prog.format(input_file=input_file, corelist=",".join(str(x) for x in cores)))
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
+    process = subprocess.Popen(shlex.split(cmdline[0]), stdout=subprocess.PIPE, universal_newlines=True)
+    if check_only:
+        time.sleep(1)
+        process.terminate()
         stdout, _ = process.communicate()
+        print(stdout)
+        continue
 
+    stdout, _ = process.communicate()
+
+    if cmdline[1] is "split":
         outputs = {}
         currentOutput = ""
         output_nick = ""
         for line in stdout.split("\n"):
-            if re.match("\d+", line) and int(line) in cores:
+            if re.match("\d+", line) and int(line) in block_numbers:
                 if currentOutput:
                     outputs[output_nick] = currentOutput
                 currentOutput = line
@@ -56,7 +115,11 @@ for prog_nick, prog in programs.items():
             with tempfile.NamedTemporaryFile("w") as ddf_file:
                 ddf_file.write(output)
                 ddf_file.flush()
-                filename = "../results/{}/{}_{}_{}.rcccout".format(folder_name, prog_nick, input_nick, output_nick)
-                subprocess.call([rccc_path, input_file, ddf_file.name], stdout=open(filename, "w"))
-        
-        print(" Done")
+                filename = "../results/" + folder_name + "/" + cmdline[3] + "_" + output_nick + ".rcccout"
+                subprocess.call([rccc_path, cmdline[2], ddf_file.name], stdout=open(filename, "w"))
+    elif cmdline[1] is "file":
+        filename = "../results/" + folder_name + "/" + cmdline[3]
+        subprocess.call([rccc_path, cmdline[2], output_file], stdout=open(filename, "w"))
+        os.remove(output_file)
+
+    print(" Done")
