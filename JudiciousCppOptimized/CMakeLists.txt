@@ -80,20 +80,24 @@ link_directories(/opt/intel/tbb/lib/intel64/gcc4.7)
 add_executable(JudiciousCpp
         main.cpp
         algorithms.cpp
-        Helper.cpp)
+        Helper.cpp
+        structures.cpp)
 
 add_executable(unittest
         unittests.cpp
-        algorithms.cpp)
+        algorithms.cpp
+        structures.cpp)
 
 add_executable(benchmarks
         Benchmark.cpp
-        Helper.cpp)
+        Helper.cpp
+        structures.cpp)
 
 target_link_libraries(JudiciousCpp tbb)
 
 target_link_libraries(unittest
         libgtest
-        libgmock)
+        libgmock
+        tbb)
 
 target_link_libraries(benchmarks benchmark sdsl)

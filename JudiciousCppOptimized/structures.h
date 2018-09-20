@@ -2,10 +2,12 @@
 #define JUDICIOUSCPPOPTIMIZED_STRUCTURES_H
 
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
 #include <cassert>
 #include <boost/functional/hash.hpp>
 #include <immintrin.h>
+
+#include "Helper.h"
 
 #ifdef __AVX512F__
 #define ALIGNMENT 64
@@ -15,38 +17,41 @@
 #define ALIGNMENT 16
 #endif
 
+
 struct AlignedBitArray {
-    std::shared_ptr<uint64_t[]> bitarray;
-    size_t numBits;
-    size_t numInts;
+    struct Deleter {
+        void operator()(uint64_t *data) const {
+            free(data);
+        };
+    };
+
+    using ptr_type = std::unique_ptr<uint64_t[], Deleter>;
+    size_t numBits{};
+    size_t numInts{};
+    ptr_type bitarray;
+
 
     /**
      * Constructs a broken state, only use for local variables that get assigned over!
      */
     AlignedBitArray() = default;
 
-    explicit AlignedBitArray(size_t numBits) : numBits(numBits), numInts(numBits / 64 + 1) {
-        uint64_t *raw = nullptr;
-        if(posix_memalign(reinterpret_cast<void**>(&raw), ALIGNMENT, numInts * sizeof(uint64_t)) != 0) {
-            std::cerr << "Aligned malloc failed!" << std::endl;
-            throw std::bad_alloc();
-        }
-        bitarray = std::shared_ptr<uint64_t[]>(raw, [=](uint64_t *data) {
-            free(data);
-        });
+    explicit AlignedBitArray(size_t numBits);
 
-        for (size_t i = 0; i < numInts; i++) {
-            bitarray[i] = 0;
-        }
+    AlignedBitArray(const AlignedBitArray &other);
+
+    AlignedBitArray(AlignedBitArray &&other) noexcept;
+
+    AlignedBitArray &operator=(AlignedBitArray &&other) noexcept {
+        numBits = other.numBits;
+        numInts = other.numInts;
+        bitarray = std::move(other.bitarray);
+        return *this;
     }
 
-    size_t countOnes() const {
-        size_t result = 0;
-        for (size_t i = 0; i < numInts; i++) {
-            result += __builtin_popcountll(bitarray[i]);
-        }
-        return result;
-    }
+    static ptr_type malloc_aligned(size_t numInts);
+
+    size_t countOnes() const;
 
     /**
      * Gets the bit at index i. 0 is the LSB, numBits-1 is the MSB.
@@ -54,41 +59,18 @@ struct AlignedBitArray {
      * @param i The bits index.
      * @return The bit value.
      */
-    bool getBit(size_t i) const {
-        assert(i < numBits);
-        size_t diff = numBits - i - 1;
-        return static_cast<bool>((bitarray[diff / 64] << diff % 64) & 0x8000000000000000);
-    }
+    bool getBit(size_t i) const;
 
     /**
      * Sets the bit at index i to 1. 0 is the LSB, numBits-1 is the MSB.
      *
      * @param i The bits index.
      */
-    void setBit(size_t i) const {
-        assert(i < numBits);
-        size_t diff = numBits - i - 1;
-        bitarray[diff / 64] |= 0x8000000000000000 >> diff % 64;
-    }
+    void setBit(size_t i) const;
 
-    bool covers(const AlignedBitArray &rhs) const {
-        assert(numInts == rhs.numInts && numBits == rhs.numBits);
-        for (size_t i = 0; i < numInts; i++) {
-            if ((bitarray[i] & rhs[i]) != rhs[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
+    bool covers(const AlignedBitArray &rhs) const;
 
-    size_t calculateDistance(const AlignedBitArray &rhs) const {
-        assert(numInts == rhs.numInts && numBits == rhs.numBits);
-        size_t result = 0;
-        for (size_t i = 0; i < numInts; i++) {
-            result += __builtin_popcountll(bitarray[i] ^ rhs[i]);
-        }
-        return result;
-    }
+    size_t calculateDistance(const AlignedBitArray &rhs) const;
 
     uint64_t &operator[](const size_t i) {
         return bitarray[i];
@@ -98,58 +80,15 @@ struct AlignedBitArray {
         return bitarray[i];
     }
 
-    AlignedBitArray operator|(const AlignedBitArray &rhs) const {
-        assert(numInts == rhs.numInts && numBits == rhs.numBits);
-        AlignedBitArray result(numBits);
-        for (size_t i = 0; i < numInts; i++) {
-            result[i] = bitarray[i] | rhs[i];
-        }
-        return result;
-    }
+    AlignedBitArray operator|(const AlignedBitArray &rhs) const;
 
-    AlignedBitArray operator^(const AlignedBitArray &rhs) const {
-        assert(numInts == rhs.numInts && numBits == rhs.numBits);
-        AlignedBitArray result(numBits);
-        for (size_t i = 0; i < numInts; i++) {
-            result[i] = bitarray[i] ^ rhs[i];
-        }
-        return result;
-    }
-
-    AlignedBitArray operator&(const AlignedBitArray &rhs) const {
-        assert(numInts == rhs.numInts && numBits == rhs.numBits);
-        AlignedBitArray result(numBits);
-        for (size_t i = 0; i < numInts; i++) {
-            result[i] = bitarray[i] & rhs[i];
-        }
-        return result;
-    }
-
-    bool operator==(const AlignedBitArray &rhs) const {
-        assert(numInts == rhs.numInts && numBits == rhs.numBits);
-        for (size_t i = 0; i < numInts; i++) {
-            if (bitarray[i] != rhs[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
+    bool operator==(const AlignedBitArray &rhs) const;
 
     bool operator!=(const AlignedBitArray &rhs) const {
         return !(*this == rhs);
     }
 
-    bool operator<(const AlignedBitArray &rhs) const {
-        assert(numInts == rhs.numInts && numBits == rhs.numBits);
-        for (size_t i = 0; i < numInts; i++) {
-            if (bitarray[i] < rhs[i]) {
-                return true;
-            } else if (bitarray[i] > rhs[i]) {
-                return false;
-            }
-        }
-        return false;
-    }
+    bool operator<(const AlignedBitArray &rhs) const;
 
     bool operator>(const AlignedBitArray &rhs) const {
         return rhs < *this;
@@ -162,15 +101,9 @@ struct AlignedBitArray {
     bool operator>=(const AlignedBitArray &rhs) const {
         return !(*this < rhs);
     }
-
-    friend std::ostream &operator<<(std::ostream &stream, const AlignedBitArray &array) {
-        for (size_t i = array.numBits; i > 0; i--) {
-            stream << array.getBit(i - 1);
-        }
-        stream << std::endl;
-        return stream;
-    }
 };
+
+std::ostream &operator<<(std::ostream &stream, const AlignedBitArray &array);
 
 namespace std {
     template <> struct hash<AlignedBitArray> {
@@ -180,6 +113,84 @@ namespace std {
                 boost::hash_combine(result, std::hash<uint64_t>{}(array.bitarray[i]));
             }
             return result;
+        }
+    };
+}
+
+// elems of the set S: maps a combination to the covered elements in E
+struct sElem {
+    AlignedBitArray combination;
+    // Elements of the e set in the current iteration that are covered by this combination.
+    mutable std::set<size_t> coveredEElems;
+    // Elements of the original e set that are covered by this combination.
+    mutable std::set<size_t> coveredE0Elems;
+
+    sElem() = default;
+
+    // Construct from AlignedBitArray
+    explicit sElem(AlignedBitArray &&combination) : combination(std::move(combination)) {
+    }
+
+    bool operator==(const sElem &rhs) const {
+        return this->combination == rhs.combination;
+    }
+
+    bool operator!=(const sElem &rhs) const {
+        return !(*this == rhs);
+    }
+
+    bool operator<(const sElem &rhs) const {
+        if (this->coveredEElems.size() == rhs.coveredEElems.size()) {
+            return this->combination < rhs.combination;
+        }
+
+        return this->coveredEElems.size() < rhs.coveredEElems.size();
+    }
+
+    bool operator>(const sElem &rhs) const {
+        return rhs < *this;
+    }
+
+    bool operator<=(const sElem &rhs) const {
+        return !(*this > rhs);
+    }
+
+    bool operator>=(const sElem &rhs) const {
+        return !(*this < rhs);
+    }
+};
+
+
+// elems of the set E: sets of hyperedges for each hypernode that contain a hypernode and set S*, which
+// is just the set E of the next round
+struct eElem {
+    AlignedBitArray combination;
+    // Elements of the original e set that are covered by this combination.
+    std::set<size_t> coveredE0Elems;
+
+    // Create new from combination and covering
+    explicit eElem(AlignedBitArray combination, std::set<size_t> coveredE0Elems) :
+            combination(std::move(combination)),
+            coveredE0Elems(std::move(coveredE0Elems)) {
+    }
+
+    // Convert from sElem
+    explicit eElem(sElem &&original) : combination(std::move(original.combination)), coveredE0Elems(std::move(original.coveredE0Elems)) {
+    }
+
+    friend bool operator== (const eElem &lhs, const eElem &rhs) {
+        return lhs.combination == rhs.combination;
+    }
+
+    friend bool operator!= (const eElem &lhs, const eElem &rhs) {
+        return !(lhs == rhs);
+    }
+};
+
+namespace std {
+    template <> struct hash<sElem> {
+        size_t operator()(const sElem &s) const {
+            return std::hash<AlignedBitArray>{}(s.combination);
         }
     };
 }

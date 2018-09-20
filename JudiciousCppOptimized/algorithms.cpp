@@ -1,4 +1,5 @@
 #include "Hypergraph.h"
+#include "structures.h"
 #include "algorithms.h"
 #include "Helper.h"
 
@@ -95,8 +96,7 @@ Hypergraph getHypergraphFromPartitionFile(const std::string &filepath, uint32_t 
 
     assert(hypernodes.size() == numberOfSitesFromFile);
 
-    Hypergraph hypergraph(hypernodes, hyperedges);
-    return hypergraph;
+    return Hypergraph(std::move(hypernodes), std::move(hyperedges));
 }
 
 
@@ -149,7 +149,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
                 AlignedBitArray combination = firstE.combination | secondE.combination;
                 assert(combination.countOnes() == cmPlusD);
 
-                sElem newS(combination);
+                sElem newS(std::move(combination));
                 newS.coveredEElems.insert(firstEidx);
                 newS.coveredEElems.insert(secondEidx);
                 newS.coveredE0Elems.insert(firstE.coveredE0Elems.begin(), firstE.coveredE0Elems.end());
@@ -223,7 +223,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
 
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
     DEBUG_LOG(DEBUG_PROGRESS, "Size: " + std::to_string(s.size()) + "\n");
-    return std::vector<sElem>(s.begin(), s.end());
+    return std::vector<sElem>(std::make_move_iterator(s.begin()), std::make_move_iterator(s.end()));
 }
 
 /**
@@ -233,7 +233,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
  * @param s The set S as input.
  * @return The found minimal subset.
  */
-std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sElem> &s) {
+std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sElem> &&s) {
     DEBUG_LOG(DEBUG_PROGRESS, "Searching for minimal subset");
 
     std::set<size_t> alreadyCovered;
@@ -260,12 +260,12 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
         // findest longest difference set
         std::set<size_t> longestDiffset;
         sElem sElemOfLongestDiffset;
-        for (const sElem &currentS : s) {
+        for (sElem &currentS : s) {
             std::set<size_t> diff;
             boost::range::set_difference(currentS.coveredEElems, alreadyCovered, std::inserter(diff, diff.end()));
             if (diff.size() > longestDiffset.size()) {
                 longestDiffset = diff;
-                sElemOfLongestDiffset = currentS;
+                sElemOfLongestDiffset = std::move(currentS);
             }
         }
 
@@ -283,10 +283,11 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
         sElemOfLongestDiffset.coveredE0Elems.clear();
         boost::set_difference(allCoveredE0, alreadyCoveredE0,
                 std::inserter(sElemOfLongestDiffset.coveredE0Elems, sElemOfLongestDiffset.coveredE0Elems.end()));
-        minimalSubset.push_back(eElem(sElemOfLongestDiffset));
 
         // Add all newly covered original e elements in the already covered original e elements
         alreadyCoveredE0.insert(sElemOfLongestDiffset.coveredE0Elems.begin(), sElemOfLongestDiffset.coveredE0Elems.end());
+
+        minimalSubset.push_back(eElem(std::move(sElemOfLongestDiffset)));
     }
 
     int counter = 0;
@@ -294,10 +295,13 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
 
     // Fill up coverage if needed
     if (alreadyCovered.size() != e.size()) {
+        // Convert alreadyCovered to concurrent set
+        tbb::concurrent_unordered_set<size_t> alreadyCoveredConcurrent(alreadyCovered.begin(), alreadyCovered.end());
+
         #pragma omp parallel for schedule(dynamic)
         for (size_t eidx = 0; eidx < e.size(); eidx++) {
             // If the element of e is not already covered, generate a coverage element for it
-            if (!alreadyCovered.count(eidx)) {
+            if (!alreadyCoveredConcurrent.count(eidx)) {
                 DEBUG_LOG(DEBUG_VERBOSE, "Filling element " + std::to_string(eidx) + "\r");
 
                 counter++;
@@ -311,27 +315,23 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
 
                 // Flip a bit that makes the combination approach towards the element that is closest to the combination
                 // by flipping a bit to 1 that is already a one in the other element
-                for (size_t i = 0; i < otherElement.numBits; i++) {
-                    if (otherElement.getBit(i) && !combination.getBit(i)) {
-                        combination.setBit(i);
+                for (size_t i = otherElement.numInts - 1; i >= 0; i--) {
+                    uint64_t rightmost = otherElement[i] & ~combination[i];
+                    if (rightmost) {
+                        combination[i] |= (rightmost & -rightmost);
                         break;
                     }
+                    assert(i != 0);
                 }
 
-            #ifndef NDEBUG
                 // Mark all uncovered elements of e that are covered by the created filler as covered
-                // TODO Pretty sure that never happens as well, commented out writes.
-                #pragma omp parallel for schedule(dynamic)
                 for (size_t checkEidx = 0; checkEidx < e.size(); checkEidx++) {
                     const eElem &checkEElem = e[checkEidx];
                     if (combination.covers(checkEElem.combination) && checkEidx != eidx) {
-//                        assert(checkEidx >= eidx && "I didn't expect this to happen, there should be no coverage introduced to earlier elements");
-//                        auto result = alreadyCovered.insert(checkEidx);
-//                        assert(result.second);
-                        assert(false && "There was an uncovered element that is now covered by a filler, we thought that never happens.");
+                        alreadyCoveredConcurrent.insert(checkEidx);
                     }
                 }
-            #endif
+
                 // Sanity Check: Does this element cover an element e (the filled one) that isn't already covered by a combination of other minimal subset elements?
 //            #ifndef NDEBUG
 //                std::set<size_t> coveredSites;
@@ -351,7 +351,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
 //            #endif
 
                 // Insert the covering element
-                minimalSubset.push_back(eElem(combination, e[eidx].coveredE0Elems));
+                minimalSubset.push_back(eElem(std::move(combination), e[eidx].coveredE0Elems));
             }
         }
     }
@@ -369,7 +369,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
     DEBUG_LOG(DEBUG_PROGRESS, ", Size: " + std::to_string(minimalSubset.size()) + "\n");
 
-    return std::vector<eElem>(minimalSubset.begin(), minimalSubset.end());
+    return std::vector<eElem>(std::make_move_iterator(minimalSubset.begin()), std::make_move_iterator(minimalSubset.end()));
 }
 
 /**
@@ -381,8 +381,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
  */
 std::vector<eElem> minimumKAndD(size_t cmPlusD, const std::vector<eElem> &e) {
     DEBUG_LOG(DEBUG_PROGRESS, "Running minKD\n");
-    std::vector<sElem> s = generateS(cmPlusD, e);
-    return findMinimalSubset(e, s);
+    return findMinimalSubset(e, generateS(cmPlusD, e));
 }
 
 /**
@@ -411,17 +410,17 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph, std::vector<eElem> &n
             }
         }
 
-        eElem curE(curECombination, { insertedElements++ });
-        e.emplace_back(curE);
+        eElem curE(std::move(curECombination), { insertedElements++ });
 
         // If element wasn't found (there is no duplicate), insert it into the noDuplicates list
         auto it = std::find(noDuplicates.begin(), noDuplicates.end(), curE);
         if (it == noDuplicates.end()) {
-            noDuplicates.emplace_back(curE);
+            noDuplicates.push_back(curE);
         } else {
             // Else, add the current e element to the covered elements
             it->coveredE0Elems.insert(hnode);
         }
+        e.push_back(std::move(curE));
     }
 
     DEBUG_LOG(DEBUG_PROGRESS, " Size: " + std::to_string(e.size()) + "\n");
@@ -441,7 +440,7 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
 
     // Generate set E according to the paper
     std::vector<eElem> e;
-    std::vector<eElem> originalE = generateE(hypergraph, e);
+    const std::vector<eElem> originalE = generateE(hypergraph, e);
 
     // calulate hyperdegree of the hypergraph
     // We assume that all hypernodes have the same degree
@@ -459,11 +458,11 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
     DEBUG_LOG(DEBUG_PROGRESS, "Hyperdegree: " + std::to_string(cm) + "\n");
 
     std::vector<size_t> listOfKs(setOfKs.begin(), setOfKs.end());
-
+    std::vector<eElem> sStar;
     // Can skip the first cycle because that results in E = S* anyway
     for (size_t d = 1; d < m - cm; d++) {
         DEBUG_LOG(DEBUG_PROGRESS, "Running with cm+d " + std::to_string(cm + d) + "\n");
-        std::vector<eElem> sStar = minimumKAndD(cm + d, e);
+        sStar = minimumKAndD(cm + d, e);
 
     #ifndef NDEBUG
         size_t numberOfOnes = sStar[0].combination.countOnes();
@@ -475,7 +474,7 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
         size_t k = sStar.size();
         if (!listOfKs.empty()) {
             // Replace e with sStar
-            e = sStar;
+            e = std::move(sStar);
         } else {
             return;
         }
@@ -491,7 +490,7 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
             std::vector<size_t> fakes;
         #endif
 
-            for (const eElem &currentSStarElem : sStar) {
+            for (const eElem &currentSStarElem : e) {
                 // Convert covered elements to partition
                 std::vector<size_t> partition(currentSStarElem.coveredE0Elems.begin(), currentSStarElem.coveredE0Elems.end());
 
@@ -502,7 +501,7 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
                 }
             #endif
 
-                partitions.push_back(partition);
+                partitions.push_back(std::move(partition));
 
             #ifdef FAKE_DETECTION
                 AlignedBitArray expectedCombination(e[0].combination.numBits);

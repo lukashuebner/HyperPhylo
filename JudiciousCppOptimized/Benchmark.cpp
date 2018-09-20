@@ -1,8 +1,8 @@
 #include <benchmark/benchmark.h>
 #include <boost/dynamic_bitset.hpp>
 #include <sdsl/bit_vectors.hpp>
-#include <stdlib.h>
-#include <time.h>
+#include <cstdlib>
+#include <ctime>
 #include <iostream>
 #include <random>
 #include <bitset>

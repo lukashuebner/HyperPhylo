@@ -8,88 +8,9 @@
 #include <vector>
 #include <algorithm>
 #include <boost/functional/hash.hpp>
-#include "structures.h"
 
 // elems of the set of hyperedges: Hypernodes connected by this hyperedge
 typedef std::vector<uint32_t> hElem;
-
-// elems of the set S: maps a combination to the covered elements in E
-struct sElem {
-    AlignedBitArray combination;
-    // Elements of the e set in the current iteration that are covered by this combination.
-    mutable std::set<size_t> coveredEElems;
-    // Elements of the original e set that are covered by this combination.
-    mutable std::set<size_t> coveredE0Elems;
-
-    sElem() = default;
-
-    // Construct sElem from combination
-    explicit sElem(AlignedBitArray combination) : combination(std::move(combination)) {
-    }
-
-    bool operator==(const sElem &rhs) const {
-        return this->combination == rhs.combination;
-    }
-
-    bool operator!=(const sElem &rhs) const {
-        return !(*this == rhs);
-    }
-
-    bool operator<(const sElem &rhs) const {
-        if (this->coveredEElems.size() == rhs.coveredEElems.size()) {
-            return this->combination < rhs.combination;
-        }
-
-        return this->coveredEElems.size() < rhs.coveredEElems.size();
-    }
-
-    bool operator>(const sElem &rhs) const {
-        return rhs < *this;
-    }
-
-    bool operator<=(const sElem &rhs) const {
-        return !(*this > rhs);
-    }
-
-    bool operator>=(const sElem &rhs) const {
-        return !(*this < rhs);
-    }
-};
-
-
-// elems of the set E: sets of hyperedges for each hypernode that contain a hypernode and set S*, which
-// is just the set E of the next round
-struct eElem {
-    AlignedBitArray combination;
-    // Elements of the original e set that are covered by this combination.
-    std::set<size_t> coveredE0Elems;
-
-    // Create new from combination and covering
-    explicit eElem(AlignedBitArray combination, std::set<size_t> coveredE0Elems) :
-        combination(std::move(combination)),
-        coveredE0Elems(std::move(coveredE0Elems)) {
-    }
-
-    // Convert from sElem
-    explicit eElem(sElem original) : combination(original.combination), coveredE0Elems(original.coveredE0Elems) {
-    }
-
-    friend bool operator== (const eElem &lhs, const eElem &rhs) {
-        return lhs.combination == rhs.combination;
-    }
-
-    friend bool operator!= (const eElem &lhs, const eElem &rhs) {
-        return !(lhs == rhs);
-    }
-};
-
-namespace std {
-    template <> struct hash<sElem> {
-        size_t operator()(const sElem &s) const {
-            return std::hash<AlignedBitArray>{}(s.combination);
-        }
-    };
-}
 
 class Hypergraph {
 private:

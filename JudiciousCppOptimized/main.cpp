@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
     if (argc == 3 || argc == 4) {
         filepath = argv[1];
 
-        struct stat buffer;
+        struct stat buffer{};
         if (stat(filepath.c_str(), &buffer) != 0) {
             std::cerr << "The provided repeats file doesn't exist." << std::endl;
             return 1;

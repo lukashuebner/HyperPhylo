@@ -56,7 +56,7 @@ TEST(PartitionFileReadin, invalid_partition) {
 /* #### Partition function
 */
 
-bool partitionsContainAllVertices(Hypergraph hypergraph, std::vector<std::vector<uint32_t>> partitions) {
+bool partitionsContainAllVertices(const Hypergraph &hypergraph, std::vector<std::vector<uint32_t>> partitions) {
     std::vector<bool> nodeCovered(hypergraph.getHypernodes().size(), false);
     for (auto partition: partitions) {
         for (auto node: partition) {
@@ -64,11 +64,7 @@ bool partitionsContainAllVertices(Hypergraph hypergraph, std::vector<std::vector
         }
     }
 
-    if(std::find(nodeCovered.begin(), nodeCovered.end(), false) != nodeCovered.end()) {
-        return false;
-    } else {
-        return true;
-    }
+    return !(std::find(nodeCovered.begin(), nodeCovered.end(), false) != nodeCovered.end());
 }
 
 class PartitionFunction : public ::testing::TestWithParam<const char*> {};

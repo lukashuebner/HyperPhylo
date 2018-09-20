@@ -1,7 +1,6 @@
-#ifndef STEREOMATCHING_HELPER_H
-#define STEREOMATCHING_HELPER_H
+#ifndef JUDICIOUSCPPOPTIMIZED_HELPER_H
+#define JUDICIOUSCPPOPTIMIZED_HELPER_H
 
-#define _USE_MATH_DEFINES
 #include <chrono>
 #include <string>
 #include <map>
@@ -13,11 +12,11 @@
 
 #include "Hypergraph.h"
 
-void startTM(std::string identifier);
-void endTM(std::string identifier);
+void startTM(const std::string &identifier);
+void endTM(const std::string &identifier);
 void printAllTM();
-bool partitionsContainAllVertices(Hypergraph, std::vector<std::vector<size_t>>);
-std::vector<std::string> splitLineAtSpaces(std::string line);
+bool partitionsContainAllVertices(const Hypergraph &hypergraph, const std::vector<std::vector<size_t>> &line);
+std::vector<std::string> splitLineAtSpaces(const std::string &line);
 uint32_t stringToUint32t(const std::string &theString);
 
-#endif //STEREOMATCHING_HELPER_H
+#endif //JUDICIOUSCPPOPTIMIZED_HELPER_H
