@@ -252,6 +252,7 @@ install_manifest.txt
 CTestTestfile.cmake
 
 ############### Own Stuff
+build/
 HypergraphRepresentation/*.pdf
 .idea/
 *.iml
