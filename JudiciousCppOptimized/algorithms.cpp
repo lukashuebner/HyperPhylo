@@ -425,6 +425,7 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph) {
     size_t entryIdx = 0;
 #endif
 
+    DEBUG_LOG(DEBUG_VERBOSE, "Removing Duplicates...\n");
     std::set<eElem> tempSet;
     for (auto &entry : e) {
         DEBUG_LOG(DEBUG_VERBOSE, "Checking entry ID " + std::to_string(entryIdx++) + "\r");
