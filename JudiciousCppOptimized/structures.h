@@ -139,6 +139,7 @@ struct sElem {
         return !(*this == rhs);
     }
 
+    // Made for determinism sort in findMinimalSubset
     bool operator<(const sElem &rhs) const {
         if (this->coveredEElems.size() == rhs.coveredEElems.size()) {
             return this->combination < rhs.combination;
@@ -160,13 +161,20 @@ struct sElem {
     }
 };
 
+namespace std {
+    template <> struct hash<sElem> {
+        size_t operator()(const sElem &s) const {
+            return std::hash<AlignedBitArray>{}(s.combination);
+        }
+    };
+}
 
 // elems of the set E: sets of hyperedges for each hypernode that contain a hypernode and set S*, which
 // is just the set E of the next round
 struct eElem {
     AlignedBitArray combination;
     // Elements of the original e set that are covered by this combination.
-    std::set<size_t> coveredE0Elems;
+    mutable std::set<size_t> coveredE0Elems;
 
     // Create with a specific width and empty covering
     explicit eElem(size_t numBits) : combination(AlignedBitArray(numBits)) {
@@ -189,12 +197,29 @@ struct eElem {
     friend bool operator!= (const eElem &lhs, const eElem &rhs) {
         return !(lhs == rhs);
     }
+
+    // Made for duplicate removal in generateE
+    bool operator<(const eElem &rhs) const {
+        return this->combination < rhs.combination;
+    }
+
+    bool operator>(const eElem &rhs) const {
+        return rhs < *this;
+    }
+
+    bool operator<=(const eElem &rhs) const {
+        return !(*this > rhs);
+    }
+
+    bool operator>=(const eElem &rhs) const {
+        return !(*this < rhs);
+    }
 };
 
 namespace std {
-    template <> struct hash<sElem> {
-        size_t operator()(const sElem &s) const {
-            return std::hash<AlignedBitArray>{}(s.combination);
+    template <> struct hash<eElem> {
+        size_t operator()(const eElem &e) const {
+            return std::hash<AlignedBitArray>{}(e.combination);
         }
     };
 }
