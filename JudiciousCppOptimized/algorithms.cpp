@@ -3,8 +3,6 @@
 #include "algorithms.h"
 #include "Helper.h"
 
-#include <functional>
-
 // Key is the index of the element e that maps to the minimal distance element
 // Value is a pair where
 // * the first value is the index of the element if e with a minimal distance to the key element
@@ -423,143 +421,21 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph) {
     originalE = e;
 #endif
 
-
 #if DEBUG >= DEBUG_VERBOSE
     size_t entryIdx = 0;
 #endif
 
-    // Create second version without duplicates
-    // If element wasn't found (there is no duplicate), insert it into the noDuplicates list
-    DEBUG_LOG(DEBUG_VERBOSE, "Removing Duplicates...\n");
-    startTM("duplicatesOld");
-    std::vector<eElem> noDuplicates;
-    noDuplicates.reserve(e.size());
-    for (const auto &entry : e) {
-        DEBUG_LOG(DEBUG_VERBOSE, "Checking entry ID " + std::to_string(entryIdx++) + "\r");
-        auto it = std::find(noDuplicates.begin(), noDuplicates.end(), entry);
-        if (it == noDuplicates.end()) {
-            noDuplicates.push_back(entry);
-        } else {
-            // Else, add the current e element to the covered elements
-            it->coveredE0Elems.insert(entry.coveredE0Elems.begin(), entry.coveredE0Elems.end());
-        }
-    }
-    endTM("duplicatesOld");
-    DEBUG_LOG(DEBUG_VERBOSE, "\nDone.\n");
-
-#if DEBUG >= DEBUG_VERBOSE
-    entryIdx = 0;
-#endif
-
-    startTM("duplicates");
-    std::vector<eElem> noDuplicatesNew;
-    noDuplicatesNew.reserve(e.size());
-    std::set<size_t> alreadyContained;
-    for (const auto &entry : e) {
-        DEBUG_LOG(DEBUG_VERBOSE, "Checking entry ID " + std::to_string(entryIdx++) + "\r");
-        auto result = alreadyContained.insert(std::hash<eElem>{}(entry));
-        if (!result.second) {
-            std::find(noDuplicatesNew.begin(), noDuplicatesNew.end(), entry)->coveredE0Elems.insert(entry.coveredE0Elems.begin(), entry.coveredE0Elems.end());
-        } else {
-            noDuplicatesNew.push_back(entry);
-        }
-    }
-    endTM("duplicates");
-    DEBUG_LOG(DEBUG_VERBOSE, "\nDone.\n");
-    for (size_t i = 0; i < noDuplicates.size(); i++) {
-        assert(noDuplicates[i].combination == noDuplicatesNew[i].combination);
-        assert(noDuplicates[i].coveredE0Elems == noDuplicatesNew[i].coveredE0Elems);
-    }
-
-#if DEBUG >= DEBUG_VERBOSE
-    entryIdx = 1;
-#endif
-
-    startTM("duplicatesSortAndIterate");
-    noDuplicatesNew = std::vector<eElem>();
-    noDuplicatesNew.reserve(e.size());
-    std::vector<eElem> tempE = e;
-    std::sort(tempE.begin(), tempE.end(), [](const eElem &lhs, const eElem &rhs) {
-        if (lhs.combination == rhs.combination) {
-            return lhs.coveredE0Elems < rhs.coveredE0Elems;
-        }
-        return lhs.combination < rhs.combination;
-    });
-    assert(!tempE.empty());
-    noDuplicatesNew.push_back(tempE[0]);
-    for (size_t i = 1; i < tempE.size(); i++) {
-        DEBUG_LOG(DEBUG_VERBOSE, "Checking entry ID " + std::to_string(entryIdx++) + "\r");
-        const auto &previous = tempE[i - 1];
-        const auto &entry = tempE[i];
-        if (previous != entry) {
-            noDuplicatesNew.push_back(entry);
-        } else {
-            noDuplicatesNew[noDuplicatesNew.size() - 1].coveredE0Elems.insert(entry.coveredE0Elems.begin(), entry.coveredE0Elems.end());
-        }
-    }
-    endTM("duplicatesSortAndIterate");
-    DEBUG_LOG(DEBUG_VERBOSE, "\nDone.\n");
-    for (auto &noDuplicate : noDuplicates) {
-        bool found = false;
-        for (const auto &entry : noDuplicatesNew) {
-            if (noDuplicate.combination == entry.combination && noDuplicate.coveredE0Elems == entry.coveredE0Elems) {
-                found = true;
-            }
-        }
-        assert(found);
-    }
-
-#if DEBUG >= DEBUG_VERBOSE
-    entryIdx = 0;
-#endif
-
-    startTM("duplicatesUnorderedSetAndBack");
-    std::unordered_set<eElem> temp;
-    for (const auto &entry : e) {
-        DEBUG_LOG(DEBUG_VERBOSE, "Checking entry ID " + std::to_string(entryIdx++) + "\r");
-        auto result = temp.insert(entry);
-        if (!result.second) {
-            result.first->coveredE0Elems.insert(entry.coveredE0Elems.begin(), entry.coveredE0Elems.end());
-        }
-    }
-    noDuplicatesNew = std::vector<eElem>(std::make_move_iterator(temp.begin()), std::make_move_iterator(temp.end()));
-    endTM("duplicatesUnorderedSetAndBack");
-    DEBUG_LOG(DEBUG_VERBOSE, "\nDone.\n");
-    for (auto &noDuplicate : noDuplicates) {
-        bool found = false;
-        for (const auto &entry : noDuplicatesNew) {
-            if (noDuplicate.combination == entry.combination && noDuplicate.coveredE0Elems == entry.coveredE0Elems) {
-                found = true;
-            }
-        }
-        assert(found);
-    }
-
-#if DEBUG >= DEBUG_VERBOSE
-    entryIdx = 0;
-#endif
-
-    startTM("duplicatesSetAndBack");
     std::set<eElem> tempSet;
-    for (const auto &entry : e) {
+    for (auto &entry : e) {
         DEBUG_LOG(DEBUG_VERBOSE, "Checking entry ID " + std::to_string(entryIdx++) + "\r");
-        auto result = tempSet.insert(entry);
+        // Move is fine here because entry is only used again if the insert failed --> no move happened
+        auto result = tempSet.insert(std::move(entry));
         if (!result.second) {
             result.first->coveredE0Elems.insert(entry.coveredE0Elems.begin(), entry.coveredE0Elems.end());
         }
     }
-    noDuplicatesNew = std::vector<eElem>(std::make_move_iterator(tempSet.begin()), std::make_move_iterator(tempSet.end()));
-    endTM("duplicatesSetAndBack");
+    std::vector<eElem> noDuplicates(std::make_move_iterator(tempSet.begin()), std::make_move_iterator(tempSet.end()));
     DEBUG_LOG(DEBUG_VERBOSE, "\nDone.\n");
-    for (auto &noDuplicate : noDuplicates) {
-        bool found = false;
-        for (const auto &entry : noDuplicatesNew) {
-            if (noDuplicate.combination == entry.combination && noDuplicate.coveredE0Elems == entry.coveredE0Elems) {
-                found = true;
-            }
-        }
-        assert(found);
-    }
 
     DEBUG_LOG(DEBUG_PROGRESS, "Size E: " + std::to_string(e.size()) + ", Size E(nodups): " + std::to_string(noDuplicates.size()) + "\n");
     return noDuplicates;
@@ -577,7 +453,6 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
 
     // Generate set E according to the paper
     std::vector<eElem> e = generateE(hypergraph);
-    return;
 
     // calulate hyperdegree of the hypergraph
     // We assume that all hypernodes have the same degree
