@@ -78,7 +78,9 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    DEBUG_LOG(DEBUG_PROGRESS, "Reading graph from file...");
     Hypergraph hypergraph = getHypergraphFromPartitionFile(filepath, partitionNumber);
+    DEBUG_LOG(DEBUG_PROGRESS, " Done\n");
 
     startTM("Runtime");
     partition(hypergraph, kSet);

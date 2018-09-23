@@ -397,33 +397,32 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph, std::vector<eElem> &n
     std::vector<hElem> hyperedges = hypergraph.getHyperEdges();
     std::reverse(hyperedges.begin(), hyperedges.end());
 
-    std::vector<eElem> e;
-    e.reserve(hypernodes.size());
-
-    size_t insertedElements = 0;
-    for (uint32_t hnode : hypernodes) {
-        AlignedBitArray curECombination(hyperedges.size());
-        for (size_t i = 0; i < hyperedges.size(); i++) {
-            // If hypernode is in hyperedge set 1, else 0
-            if (std::find(hyperedges[i].begin(), hyperedges[i].end(), hnode) != hyperedges[i].end()) {
-                curECombination.setBit(i);
-            }
-        }
-
-        eElem curE(std::move(curECombination), { insertedElements++ });
-
-        // If element wasn't found (there is no duplicate), insert it into the noDuplicates list
-        auto it = std::find(noDuplicates.begin(), noDuplicates.end(), curE);
-        if (it == noDuplicates.end()) {
-            noDuplicates.push_back(curE);
-        } else {
-            // Else, add the current e element to the covered elements
-            it->coveredE0Elems.insert(hnode);
-        }
-        e.push_back(std::move(curE));
+    // Set covered e element for each entry
+    std::vector<eElem> e(hypernodes.size(), eElem(hyperedges.size()));
+    for (size_t i = 0; i < e.size(); i++) {
+        e[i].coveredE0Elems.insert(i);
     }
 
-    DEBUG_LOG(DEBUG_PROGRESS, " Size: " + std::to_string(e.size()) + "\n");
+    // Set all combinations accordingly
+    for (size_t hyperedgeIdx = 0; hyperedgeIdx < hyperedges.size(); hyperedgeIdx++) {
+        for (uint32_t node : hyperedges[hyperedgeIdx]) {
+            e[node].combination.setBit(hyperedgeIdx);
+        }
+    }
+
+    // Create second version without duplicates
+    // If element wasn't found (there is no duplicate), insert it into the noDuplicates list
+    for (const auto &entry : e) {
+        auto it = std::find(noDuplicates.begin(), noDuplicates.end(), entry);
+        if (it == noDuplicates.end()) {
+            noDuplicates.push_back(entry);
+        } else {
+            // Else, add the current e element to the covered elements
+            it->coveredE0Elems.insert(entry.coveredE0Elems.begin(), entry.coveredE0Elems.end());
+        }
+    }
+
+    DEBUG_LOG(DEBUG_PROGRESS, " Size: " + std::to_string(eOld.size()) + "\n");
 
     return e;
 }

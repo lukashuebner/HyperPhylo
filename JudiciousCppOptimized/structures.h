@@ -168,8 +168,12 @@ struct eElem {
     // Elements of the original e set that are covered by this combination.
     std::set<size_t> coveredE0Elems;
 
+    // Create with a specific width and empty covering
+    explicit eElem(size_t numBits) : combination(AlignedBitArray(numBits)) {
+    }
+
     // Create new from combination and covering
-    explicit eElem(AlignedBitArray combination, std::set<size_t> coveredE0Elems) :
+    eElem(AlignedBitArray combination, std::set<size_t> coveredE0Elems) :
             combination(std::move(combination)),
             coveredE0Elems(std::move(coveredE0Elems)) {
     }
