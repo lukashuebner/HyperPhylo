@@ -393,6 +393,7 @@ std::vector<eElem> minimumKAndD(size_t cmPlusD, const std::vector<eElem> &e) {
  */
 std::vector<eElem> generateE(const Hypergraph &hypergraph, std::vector<eElem> &noDuplicates) {
     DEBUG_LOG(DEBUG_PROGRESS, "Generating E");
+    DEBUG_LOG(DEBUG_VERBOSE, "\n");
     const std::vector<uint32_t> &hypernodes = hypergraph.getHypernodes();
     std::vector<hElem> hyperedges = hypergraph.getHyperEdges();
     std::reverse(hyperedges.begin(), hyperedges.end());
@@ -405,13 +406,16 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph, std::vector<eElem> &n
 
     // Set all combinations accordingly
     for (size_t hyperedgeIdx = 0; hyperedgeIdx < hyperedges.size(); hyperedgeIdx++) {
+        DEBUG_LOG(DEBUG_VERBOSE, "Generating entry for hyperedge ID " + std::to_string(hyperedgeIdx) + "\r");
         for (uint32_t node : hyperedges[hyperedgeIdx]) {
             e[node].combination.setBit(hyperedgeIdx);
         }
     }
+    DEBUG_LOG(DEBUG_VERBOSE, "\nDone.\n");
 
     // Create second version without duplicates
     // If element wasn't found (there is no duplicate), insert it into the noDuplicates list
+    DEBUG_LOG(DEBUG_VERBOSE, "Removing Duplicates... ");
     for (const auto &entry : e) {
         auto it = std::find(noDuplicates.begin(), noDuplicates.end(), entry);
         if (it == noDuplicates.end()) {
@@ -421,8 +425,8 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph, std::vector<eElem> &n
             it->coveredE0Elems.insert(entry.coveredE0Elems.begin(), entry.coveredE0Elems.end());
         }
     }
-
-    DEBUG_LOG(DEBUG_PROGRESS, " Size: " + std::to_string(eOld.size()) + "\n");
+    DEBUG_LOG(DEBUG_VERBOSE, "Done.\n");
+    DEBUG_LOG(DEBUG_PROGRESS, " Size: " + std::to_string(e.size()) + "\n");
 
     return e;
 }
