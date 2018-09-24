@@ -130,6 +130,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
     assert(!e.empty());
 
     DEBUG_LOG(DEBUG_PROGRESS, "Generating S with only size >= 2 elements... ");
+    DEBUG_LOG(DEBUG_VERBOSE, "\n");
 
     tbb::concurrent_unordered_set<sElem, std::hash<sElem>> s;
     minimalDistances.clear();
@@ -137,7 +138,6 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
     // Run over all possible pairs in E and check if they build a possible combination
     #pragma omp parallel for schedule(dynamic)
     for (size_t firstEidx = 0; firstEidx < e.size(); firstEidx++) {
-        DEBUG_LOG(DEBUG_VERBOSE, "\n");
     #if DEBUG >= DEBUG_VERBOSE && _OPENMP
         if (omp_get_thread_num() == 0) DEBUG_LOG(DEBUG_PROGRESS, "Running loop for firstEidx " + std::to_string(firstEidx) + "\r");
     #elif DEBUG >= DEBUG_VERBOSE
