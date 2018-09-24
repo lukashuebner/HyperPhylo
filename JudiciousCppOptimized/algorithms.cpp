@@ -245,7 +245,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
  * @return The found minimal subset.
  */
 std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sElem> &&s) {
-    DEBUG_LOG(DEBUG_PROGRESS, "Searching for minimal subset... ");
+    DEBUG_LOG(DEBUG_PROGRESS, "Searching for minimal subset (S*)... ");
 
     std::set<size_t> alreadyCovered;
     std::set<size_t> alreadyCoveredE0;
@@ -383,7 +383,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
 #endif
 
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
-    DEBUG_LOG(DEBUG_PROGRESS, "Size minSubSet: " + std::to_string(minimalSubset.size()) + "\n");
+    DEBUG_LOG(DEBUG_PROGRESS, "Size S*: " + std::to_string(minimalSubset.size()) + "\n");
 
     return std::vector<eElem>(std::make_move_iterator(minimalSubset.begin()), std::make_move_iterator(minimalSubset.end()));
 }
