@@ -433,7 +433,10 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph) {
     originalE = e;
 #endif
 
+#if DEBUG > 0
     size_t entryIdx = 0;
+#endif
+
     DEBUG_LOG(DEBUG_VERBOSE, "Removing Duplicates...\n");
     std::set<eElem> tempSet;
     for (auto &entry : e) {
