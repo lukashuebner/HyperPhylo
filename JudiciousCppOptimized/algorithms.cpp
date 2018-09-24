@@ -263,7 +263,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
     for (const sElem &currentS : s) {
         uniques.insert(currentS.coveredEElems.begin(), currentS.coveredEElems.end());
     }
-    DEBUG_LOG(DEBUG_VERBOSE, "\nThe >= 2 covering s elements cover " + std::to_string(uniques.size()) + " unique elements of e\n");
+    DEBUG_LOG(DEBUG_VERBOSE, "\nS(>=2) covers " + std::to_string(uniques.size()) + " unique elements of e\n");
 #endif
 
     // As long as not all of e is covered, i.e. alreadyCovered and E differ
