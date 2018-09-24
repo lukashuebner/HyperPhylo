@@ -129,7 +129,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
     assert(cmPlusD < INT32_MAX);
     assert(!e.empty());
 
-    DEBUG_LOG(DEBUG_PROGRESS, "Generating S with only size >= 2 elements\n");
+    DEBUG_LOG(DEBUG_PROGRESS, "Generating S with only size >= 2 elements... ");
 
     tbb::concurrent_unordered_set<sElem, std::hash<sElem>> s;
     minimalDistances.clear();
@@ -233,7 +233,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
 #endif
 
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
-    DEBUG_LOG(DEBUG_PROGRESS, "Size: " + std::to_string(s.size()) + "\n");
+    DEBUG_LOG(DEBUG_PROGRESS, "Size S(>=2): " + std::to_string(s.size()) + "\n");
     return std::vector<sElem>(std::make_move_iterator(s.begin()), std::make_move_iterator(s.end()));
 }
 
@@ -383,7 +383,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
 #endif
 
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
-    DEBUG_LOG(DEBUG_PROGRESS, "Size: " + std::to_string(minimalSubset.size()) + "\n");
+    DEBUG_LOG(DEBUG_PROGRESS, "Size minSubSet: " + std::to_string(minimalSubset.size()) + "\n");
 
     return std::vector<eElem>(std::make_move_iterator(minimalSubset.begin()), std::make_move_iterator(minimalSubset.end()));
 }
