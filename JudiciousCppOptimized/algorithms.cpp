@@ -137,9 +137,12 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
     // Run over all possible pairs in E and check if they build a possible combination
     #pragma omp parallel for schedule(dynamic)
     for (size_t firstEidx = 0; firstEidx < e.size(); firstEidx++) {
+    #if DEBUG >= DEBUG_VERBOSE && _OPENMP
+        if (omp_get_thread_num() == 0) DEBUG_LOG(DEBUG_PROGRESS, "Running loop for firstEidx " + std::to_string(firstEidx) + "\r");
+    #elif DEBUG >= DEBUG_VERBOSE
+        if (firstEidx % 10 == 0) DEBUG_LOG(DEBUG_PROGRESS, "Running loop for firstEidx " + std::to_string(firstEidx) + "\r");
+    #endif
         for (size_t secondEidx = firstEidx + 1; secondEidx < e.size(); secondEidx++) {
-            DEBUG_LOG(DEBUG_VERBOSE, "First element " + std::to_string(firstEidx + 1) + ", second element " + std::to_string(secondEidx + 1) + "\r");
-
             const eElem &firstE = e[firstEidx];
             const eElem &secondE = e[secondEidx];
 
@@ -202,9 +205,13 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
     #pragma omp parallel for schedule(dynamic)
     for (size_t eidx = 0; eidx < e.size(); eidx++) {
-        DEBUG_LOG(DEBUG_VERBOSE, "Fitting element " + std::to_string(eidx + 1) + "\r");
+    #if DEBUG >= DEBUG_VERBOSE && _OPENMP
+        if (omp_get_thread_num() == 0) DEBUG_LOG(DEBUG_VERBOSE, "Fitting element " + std::to_string(eidx + 1) + "\r");
+    #elif DEBUG >= DEBUG_VERBOSE
+        if (eidx % 10 == 0) DEBUG_LOG(DEBUG_VERBOSE, "Fitting element " + std::to_string(eidx + 1) + "\r");
+    #endif
+        const eElem &currentE = e[eidx];
         for (const sElem &currentS : s) {
-            const eElem &currentE = e[eidx];
             if (currentS.combination.covers(currentE.combination)) {
 //                auto result = currentS.coveredEElems.insert(eidx);
 //                if (result.second) {
@@ -238,7 +245,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
  * @return The found minimal subset.
  */
 std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sElem> &&s) {
-    DEBUG_LOG(DEBUG_PROGRESS, "Searching for minimal subset");
+    DEBUG_LOG(DEBUG_PROGRESS, "Searching for minimal subset... ");
 
     std::set<size_t> alreadyCovered;
     std::set<size_t> alreadyCoveredE0;
@@ -300,14 +307,19 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
     // Fill up coverage if needed
     if (alreadyCovered.size() != e.size()) {
         // Convert alreadyCovered to concurrent set
-        tbb::concurrent_unordered_set<size_t> alreadyCoveredConcurrent(alreadyCovered.begin(), alreadyCovered.end());
+        tbb::concurrent_unordered_set<size_t> alreadyCoveredConcurrent(
+                std::make_move_iterator(alreadyCovered.begin()), std::make_move_iterator(alreadyCovered.end()));
 
         #pragma omp parallel for schedule(dynamic)
         for (size_t eidx = 0; eidx < e.size(); eidx++) {
+        #if DEBUG >= DEBUG_VERBOSE && _OPENMP
+            if (omp_get_thread_num() == 0) DEBUG_LOG(DEBUG_VERBOSE, "Filling element " + std::to_string(eidx) + "\r");
+        #elif DEBUG >= DEBUG_VERBOSE
+            if (eidx % 10 == 0) DEBUG_LOG(DEBUG_VERBOSE, "Filling element " + std::to_string(eidx) + "\r");
+        #endif
+
             // If the element of e is not already covered, generate a coverage element for it
             if (!alreadyCoveredConcurrent.count(eidx)) {
-                DEBUG_LOG(DEBUG_VERBOSE, "Filling element " + std::to_string(eidx) + "\r");
-
                 counter++;
                 // Get the minimalDistances entry for this element of e
                 auto elementIterator = minimalDistances.find(eidx);
@@ -371,7 +383,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
 #endif
 
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
-    DEBUG_LOG(DEBUG_PROGRESS, ", Size: " + std::to_string(minimalSubset.size()) + "\n");
+    DEBUG_LOG(DEBUG_PROGRESS, "Size: " + std::to_string(minimalSubset.size()) + "\n");
 
     return std::vector<eElem>(std::make_move_iterator(minimalSubset.begin()), std::make_move_iterator(minimalSubset.end()));
 }
