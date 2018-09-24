@@ -129,7 +129,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
     assert(cmPlusD < INT32_MAX);
     assert(!e.empty());
 
-    DEBUG_LOG(DEBUG_PROGRESS, "Generating S with only size >= 2 elements... ");
+    DEBUG_LOG(DEBUG_PROGRESS, "Generating S(>=2)... ");
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
 
     tbb::concurrent_unordered_set<sElem, std::hash<sElem>> s;
