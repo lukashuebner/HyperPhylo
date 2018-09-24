@@ -137,6 +137,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
     // Run over all possible pairs in E and check if they build a possible combination
     #pragma omp parallel for schedule(dynamic)
     for (size_t firstEidx = 0; firstEidx < e.size(); firstEidx++) {
+        DEBUG_LOG(DEBUG_VERBOSE, "\n");
     #if DEBUG >= DEBUG_VERBOSE && _OPENMP
         if (omp_get_thread_num() == 0) DEBUG_LOG(DEBUG_PROGRESS, "Running loop for firstEidx " + std::to_string(firstEidx) + "\r");
     #elif DEBUG >= DEBUG_VERBOSE
@@ -245,7 +246,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
  * @return The found minimal subset.
  */
 std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sElem> &&s) {
-    DEBUG_LOG(DEBUG_PROGRESS, "Searching for minimal subset (S*)... ");
+    DEBUG_LOG(DEBUG_PROGRESS, "Searching for minimal subset (S*)K... ");
 
     std::set<size_t> alreadyCovered;
     std::set<size_t> alreadyCoveredE0;
