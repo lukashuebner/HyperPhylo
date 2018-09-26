@@ -98,9 +98,9 @@ add_executable(benchmarks
         Helper.cpp
         structures.cpp)
 
-target_link_libraries(JudiciousCpp tbb)
+target_link_libraries(JudiciousCpp tbb tlx)
 
-target_link_libraries(pooltest tbb)
+target_link_libraries(pooltest tbb tlx)
 
 target_link_libraries(unittest
         libgtest
