@@ -354,4 +354,38 @@ BENCHMARK(memaligned_count_builtin);
 //}
 //BENCHMARK(memaligned_count_builtin_struct);
 
+//static void distance_alignedbitarray(benchmark::State &state) {
+//    AlignedBitArray a(SIZE);
+//    AlignedBitArray b(SIZE);
+//
+//    std::default_random_engine gen; //Standard mersenne_twister_engine seeded with rd()
+//    std::uniform_int_distribution<> dis(0, SIZE - 1);
+//    for (size_t i = 0; i < SIZE * 0.01; i++) {
+//        a.setBit(static_cast<size_t>(dis(gen)));
+//        b.setBit(static_cast<size_t>(dis(gen)));
+//    }
+//
+//    for (auto _ : state) {
+//        benchmark::DoNotOptimize(a.calculateDistance(b));
+//    }
+//}
+//BENCHMARK(distance_alignedbitarray);
+//
+//static void distance_sparsebitvector(benchmark::State &state) {
+//    AlignedBitArray a(SIZE);
+//    AlignedBitArray b(SIZE);
+//
+//    std::default_random_engine gen; //Standard mersenne_twister_engine seeded with rd()
+//    std::uniform_int_distribution<> dis(0, SIZE - 1);
+//    for (size_t i = 0; i < SIZE * 0.01; i++) {
+//        a.setBit(static_cast<size_t>(dis(gen)));
+//        b.setBit(static_cast<size_t>(dis(gen)));
+//    }
+//
+//    for (auto _ : state) {
+//        benchmark::DoNotOptimize(a.calculateDistance(b));
+//    }
+//}
+//BENCHMARK(distance_sparsebitvector);
+
 BENCHMARK_MAIN();
