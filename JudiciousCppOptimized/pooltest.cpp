@@ -1,16 +1,19 @@
 #include <zconf.h>
 #include <tbb/concurrent_vector.h>
+#include <cstdlib>
 #include "tlx/thread_pool.cpp"
 #include "structures.h"
 
-// Global Threadpool
-#ifndef OMP_NUM_THREADS
-tlx::ThreadPool pool;
-#else
-tlx::ThreadPool pool(OMP_NUM_THREADS);
-#endif
-
 int main(int argc, char **argv) {
+    // Global Threadpool
+    size_t numThreads;
+    if (std::getenv("OMP_NUM_THREADS") == nullptr) {
+        numThreads = std::thread::hardware_concurrency();
+    } else {
+        numThreads = std::strtoul(std::getenv("OMP_NUM_THREADS"), nullptr, 0);
+    }
+    tlx::ThreadPool pool(numThreads);
+
     std::vector<AlignedBitArray> bitsets;
     const int numberOfBitsAndBitarrays = 5000;
     for (size_t i = 0; i < numberOfBitsAndBitarrays; i++) {
