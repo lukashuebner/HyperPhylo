@@ -75,7 +75,7 @@ include_directories("${source_dir}/googletest/include"
 #)
 
 include_directories(. /opt/intel/tbb/include /home/peet/GitRepos/tlx)
-link_directories(/opt/intel/tbb/lib/intel64/gcc4.7)
+link_directories(/opt/intel/tbb/lib/intel64/gcc4.7 /home/peet/GitRepos/tlx/build/tlx)
 
 add_executable(JudiciousCpp
         main.cpp
