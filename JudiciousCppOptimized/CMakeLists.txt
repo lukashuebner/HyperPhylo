@@ -74,7 +74,7 @@ include_directories("${source_dir}/googletest/include"
 #    ${GMOCK_INCLUDE_DIRS}
 #)
 
-include_directories(. /opt/intel/tbb/include)
+include_directories(. /opt/intel/tbb/include /home/peet/GitRepos/tlx)
 link_directories(/opt/intel/tbb/lib/intel64/gcc4.7)
 
 add_executable(JudiciousCpp
@@ -82,6 +82,11 @@ add_executable(JudiciousCpp
         algorithms.cpp
         Helper.cpp
         structures.cpp)
+
+add_executable(test
+        structures.cpp
+        Helper.cpp
+        pooltest.cpp)
 
 add_executable(unittest
         unittests.cpp
@@ -94,6 +99,8 @@ add_executable(benchmarks
         structures.cpp)
 
 target_link_libraries(JudiciousCpp tbb)
+
+target_link_libraries(test tbb)
 
 target_link_libraries(unittest
         libgtest

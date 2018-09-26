@@ -37,8 +37,10 @@ void printAllTM() {
 	for (const auto &entry : measurements) {
 		if (entry.second < 10'000'000) {
 			std::cout << entry.first << ": " << entry.second / 1000.0 << "µs" << std::endl;
-		} else {
+		} else if (entry.second < 10'000){
 			std::cout << entry.first << ": " << entry.second / 1000.0 / 1000.0 << "ms" << std::endl;
+		} else {
+            std::cout << entry.first << ": " << entry.second / 1000.0 / 1000.0 / 1000.0 << "s" << std::endl;
 		}
 	}
 }

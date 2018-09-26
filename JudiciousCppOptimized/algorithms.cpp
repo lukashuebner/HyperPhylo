@@ -2,12 +2,20 @@
 #include "structures.h"
 #include "algorithms.h"
 #include "Helper.h"
+#include "tlx/thread_pool.hpp"
 
 // Key is the index of the element e that maps to the minimal distance element
 // Value is a pair where
 // * the first value is the index of the element if e with a minimal distance to the key element
 // * the second value is the minimal distance
 tbb::concurrent_unordered_map<size_t, std::pair<size_t, size_t>> minimalDistances;
+
+// Global Threadpool
+#ifndef OMP_NUM_THREADS
+    tlx::ThreadPool pool;
+#else
+    ThreadPool pool(OMP_NUM_THREADS);
+#endif
 
 #ifdef FAKE_DETECTION
 std::vector<eElem> originalE;
