@@ -74,24 +74,25 @@ include_directories("${source_dir}/googletest/include"
 #    ${GMOCK_INCLUDE_DIRS}
 #)
 
-include_directories(. /opt/intel/tbb/include)
+include_directories(include /opt/intel/tbb/include)
 link_directories(/opt/intel/tbb/lib/intel64/gcc4.7)
+file(GLOB_RECURSE ds src/datastructures/*.cpp)
 
 add_executable(JudiciousCpp
-        main.cpp
-        algorithms.cpp
-        Helper.cpp
-        structures.cpp)
+        ${ds}
+        src/main.cpp
+        src/Algorithms.cpp
+        src/Helper.cpp)
 
 add_executable(unittest
-        unittests.cpp
-        algorithms.cpp
-        structures.cpp)
+        ${ds}
+        test/unittests.cpp
+        src/Algorithms.cpp)
 
 add_executable(benchmarks
-        Benchmark.cpp
-        Helper.cpp
-        structures.cpp)
+        ${ds}
+        src/Benchmark.cpp
+        src/Helper.cpp)
 
 target_link_libraries(JudiciousCpp tbb)
 

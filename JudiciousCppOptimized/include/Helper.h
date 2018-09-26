@@ -1,15 +1,7 @@
 #ifndef JUDICIOUSCPPOPTIMIZED_HELPER_H
 #define JUDICIOUSCPPOPTIMIZED_HELPER_H
 
-#include <chrono>
 #include <string>
-#include <map>
-#include <iostream>
-#include <vector>
-
-#include <boost/algorithm/string/split.hpp>
-#include <boost/algorithm/string/classification.hpp>
-
 #include "Hypergraph.h"
 
 void startTM(const std::string &identifier);

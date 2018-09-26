@@ -1,8 +1,8 @@
 #include <string>
 #include "gtest/gtest.h"
 
-#include "Hypergraph.h"
-#include "algorithms.h"
+#include "datastructures/Hypergraph.h"
+#include "Algorithms.h"
 
 const std::string DATASET_PTH = "../datasets/";
 

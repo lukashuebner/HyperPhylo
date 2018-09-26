@@ -12,7 +12,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include "Hypergraph.h"
-#include "algorithms.h"
+#include "Algorithms.h"
 #include "Helper.h"
 
 

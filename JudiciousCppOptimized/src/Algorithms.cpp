@@ -1,7 +1,17 @@
+#include <iostream>
+#include <fstream>
+#include <tbb/concurrent_unordered_map.h>
+#include <tbb/concurrent_unordered_set.h>
+#include <tbb/concurrent_vector.h>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/range/algorithm/set_algorithm.hpp>
+
 #include "Hypergraph.h"
-#include "structures.h"
-#include "algorithms.h"
+#include "SElem.h"
+#include "EElem.h"
+#include "AlignedBitArray.h"
 #include "Helper.h"
+#include "Algorithms.h"
 
 // Key is the index of the element e that maps to the minimal distance element
 // Value is a pair where
@@ -125,14 +135,14 @@ void printDDF(size_t k, const std::vector<std::vector<size_t>> &partitions) {
  * @param e The set e as described in generateE.
  * @return The set S.
  */
-std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
+std::vector<SElem> generateS(size_t cmPlusD, const std::vector<EElem> &e) {
     assert(cmPlusD < INT32_MAX);
     assert(!e.empty());
 
     DEBUG_LOG(DEBUG_PROGRESS, "Generating S(>=2)... ");
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
 
-    tbb::concurrent_unordered_set<sElem, std::hash<sElem>> s;
+    tbb::concurrent_unordered_set<SElem, std::hash<SElem>> s;
     minimalDistances.clear();
 
     // Run over all possible pairs in E and check if they build a possible combination
@@ -144,30 +154,26 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
         if (firstEidx % 10 == 0) DEBUG_LOG(DEBUG_PROGRESS, "Running loop for firstEidx " + std::to_string(firstEidx) + "\r");
     #endif
         for (size_t secondEidx = firstEidx + 1; secondEidx < e.size(); secondEidx++) {
-            const eElem &firstE = e[firstEidx];
-            const eElem &secondE = e[secondEidx];
+            const EElem &firstE = e[firstEidx];
+            const EElem &secondE = e[secondEidx];
 
             // Calculate distance
-            size_t distance = firstE.combination.calculateDistance(secondE.combination);
+            size_t distance = firstE.getCombination().calculateDistance(secondE.getCombination());
 
             // Add the representation if it is a valid cm + d combination
-            assert(distance % 2 == 0 && distance >= 2 && distance <= e[0].combination.numBits);
+            assert(distance % 2 == 0 && distance >= 2 && distance <= e[0].getCombination().getNumBits());
             if (distance == 2) {
                 assert(firstE != secondE);
-                AlignedBitArray combination = firstE.combination | secondE.combination;
+                AlignedBitArray combination = firstE.getCombination() | secondE.getCombination();
                 assert(combination.countOnes() == cmPlusD);
 
-                sElem newS(std::move(combination));
-                newS.coveredEElems.insert(firstEidx);
-                newS.coveredEElems.insert(secondEidx);
-                newS.coveredE0Elems.insert(firstE.coveredE0Elems.begin(), firstE.coveredE0Elems.end());
-                newS.coveredE0Elems.insert(secondE.coveredE0Elems.begin(), secondE.coveredE0Elems.end());
-
+                SElem newS(std::move(combination), firstEidx, secondEidx, firstE.getCoveredE0Elems(), secondE.getCoveredE0Elems());
+                // TODO Move instead of copy
                 auto result = s.insert(newS);
                 // Merge together if this element already exists
                 if (!result.second) {
-                    result.first->coveredEElems.insert(newS.coveredEElems.begin(), newS.coveredEElems.end());
-                    result.first->coveredE0Elems.insert(newS.coveredE0Elems.begin(), newS.coveredE0Elems.end());
+                    result.first->getCoveredEElems().insert(newS.getCoveredEElems().begin(), newS.getCoveredEElems().end());
+                    result.first->getCoveredE0Elems().insert(newS.getCoveredE0Elems().begin(), newS.getCoveredE0Elems().end());
                 }
             } else { // else, add to the table of minimal distances
                 // Store the mapping a --> b
@@ -211,15 +217,15 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
     #elif DEBUG >= DEBUG_VERBOSE
         if (eidx % 10 == 0) DEBUG_LOG(DEBUG_VERBOSE, "Fitting element " + std::to_string(eidx + 1) + "\r");
     #endif
-        const eElem &currentE = e[eidx];
-        for (const sElem &currentS : s) {
-            if (currentS.combination.covers(currentE.combination)) {
+        const EElem &currentE = e[eidx];
+        for (const SElem &currentS : s) {
+            if (currentS.covers(currentE.getCombination())) {
 //                auto result = currentS.coveredEElems.insert(eidx);
 //                if (result.second) {
 //                    std::cout << "THIS ACTUALLY DID SOMETHING; WOW" << std::endl;
 //                    assert(false);
 //                }
-                if (!currentS.coveredEElems.count(eidx)) {
+                if (!currentS.getCoveredEElems().count(eidx)) {
                     assert(false && "There was an uncovered element that is covered by a created combination, we thought that never happens.");
                 }
 //                size_t prev = currentS.coveredE0Elems.size();
@@ -235,7 +241,7 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
 
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
     DEBUG_LOG(DEBUG_PROGRESS, "Size S(>=2): " + std::to_string(s.size()) + "\n");
-    return std::vector<sElem>(std::make_move_iterator(s.begin()), std::make_move_iterator(s.end()));
+    return std::vector<SElem>(std::make_move_iterator(s.begin()), std::make_move_iterator(s.end()));
 }
 
 /**
@@ -245,12 +251,12 @@ std::vector<sElem> generateS(size_t cmPlusD, const std::vector<eElem> &e) {
  * @param s The set S as input.
  * @return The found minimal subset.
  */
-std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sElem> &&s) {
+std::vector<EElem> findMinimalSubset(const std::vector<EElem> &e, std::vector<SElem> &&s) {
     DEBUG_LOG(DEBUG_PROGRESS, "Searching for minimal subset S*... ");
 
     std::set<size_t> alreadyCovered;
     std::set<size_t> alreadyCoveredE0;
-    tbb::concurrent_vector<eElem> minimalSubset;
+    tbb::concurrent_vector<EElem> minimalSubset;
     minimalSubset.reserve(e.size());
 
     // Only for determinism. Not actually needed.
@@ -260,7 +266,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
 
 #if DEBUG >= DEBUG_VERBOSE
     std::set<size_t> uniques;
-    for (const sElem &currentS : s) {
+    for (const SElem &currentS : s) {
         uniques.insert(currentS.coveredEElems.begin(), currentS.coveredEElems.end());
     }
     DEBUG_LOG(DEBUG_VERBOSE, "\nS(>=2) covers " + std::to_string(uniques.size()) + " unique elements of e\n");
@@ -271,10 +277,10 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
     while (alreadyCovered.size() != e.size()) {
         // findest longest difference set
         std::set<size_t> longestDiffset;
-        sElem sElemOfLongestDiffset;
-        for (sElem &currentS : s) {
+        SElem sElemOfLongestDiffset;
+        for (SElem &currentS : s) {
             std::set<size_t> diff;
-            boost::range::set_difference(currentS.coveredEElems, alreadyCovered, std::inserter(diff, diff.end()));
+            boost::range::set_difference(currentS.getCoveredEElems(), alreadyCovered, std::inserter(diff, diff.end()));
             if (diff.size() > longestDiffset.size()) {
                 longestDiffset = diff;
                 sElemOfLongestDiffset = std::move(currentS);
@@ -291,15 +297,15 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
 
         // add found longest diffset combination to the resulting minimal subset
         // skip original e elements that are already covered by other mininmal subset elements
-        std::set<size_t> allCoveredE0 = sElemOfLongestDiffset.coveredE0Elems;
-        sElemOfLongestDiffset.coveredE0Elems.clear();
+        std::set<size_t> allCoveredE0 = sElemOfLongestDiffset.getCoveredE0Elems();
+        sElemOfLongestDiffset.getCoveredE0Elems().clear();
         boost::set_difference(allCoveredE0, alreadyCoveredE0,
-                std::inserter(sElemOfLongestDiffset.coveredE0Elems, sElemOfLongestDiffset.coveredE0Elems.end()));
+                std::inserter(sElemOfLongestDiffset.getCoveredE0Elems(), sElemOfLongestDiffset.getCoveredE0Elems().end()));
 
         // Add all newly covered original e elements in the already covered original e elements
-        alreadyCoveredE0.insert(sElemOfLongestDiffset.coveredE0Elems.begin(), sElemOfLongestDiffset.coveredE0Elems.end());
+        alreadyCoveredE0.insert(sElemOfLongestDiffset.getCoveredE0Elems().begin(), sElemOfLongestDiffset.getCoveredE0Elems().end());
 
-        minimalSubset.push_back(eElem(std::move(sElemOfLongestDiffset)));
+        minimalSubset.push_back(EElem(std::move(sElemOfLongestDiffset)));
     }
 
     int counter = 0;
@@ -327,12 +333,12 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
                 assert(elementIterator != minimalDistances.end());
                 assert(elementIterator->second.second > 2);
 
-                AlignedBitArray combination = e[eidx].combination;
-                const AlignedBitArray &otherElement = e[elementIterator->second.first].combination;
+                AlignedBitArray combination = e[eidx].getCombination();
+                const AlignedBitArray &otherElement = e[elementIterator->second.first].getCombination();
 
                 // Flip a bit that makes the combination approach towards the element that is closest to the combination
                 // by flipping a bit to 1 that is already a one in the other element
-                for (size_t i = otherElement.numInts - 1; i >= 0; i--) {
+                for (size_t i = otherElement.getNumInts() - 1; i >= 0; i--) {
                     uint64_t rightmost = otherElement[i] & ~combination[i];
                     if (rightmost) {
                         combination[i] |= (rightmost & -rightmost);
@@ -343,8 +349,8 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
 
                 // Mark all uncovered elements of e that are covered by the created filler as covered
                 for (size_t checkEidx = 0; checkEidx < e.size(); checkEidx++) {
-                    const eElem &checkEElem = e[checkEidx];
-                    if (combination.covers(checkEElem.combination) && checkEidx != eidx) {
+                    const EElem &checkEElem = e[checkEidx];
+                    if (combination.covers(checkEElem.getCombination()) && checkEidx != eidx) {
                         alreadyCoveredConcurrent.insert(checkEidx);
                     }
                 }
@@ -368,7 +374,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
 //            #endif
 
                 // Insert the covering element
-                minimalSubset.push_back(eElem(std::move(combination), e[eidx].coveredE0Elems));
+                minimalSubset.push_back(EElem(std::move(combination), e[eidx].getCoveredE0Elems()));
             }
         }
     }
@@ -377,7 +383,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
     // Check if each original e element only occures once
     std::set<size_t> coverage;
     for (const auto &current : minimalSubset) {
-        for (const auto &coveredE0Elem : current.coveredE0Elems) {
+        for (const auto &coveredE0Elem : current.getCoveredE0Elems()) {
             assert(coverage.insert(coveredE0Elem).second && "An original e element is covered more than once!");
         }
     }
@@ -386,7 +392,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
     DEBUG_LOG(DEBUG_PROGRESS, "Size S*: " + std::to_string(minimalSubset.size()) + "\n");
 
-    return std::vector<eElem>(std::make_move_iterator(minimalSubset.begin()), std::make_move_iterator(minimalSubset.end()));
+    return std::vector<EElem>(std::make_move_iterator(minimalSubset.begin()), std::make_move_iterator(minimalSubset.end()));
 }
 
 /**
@@ -396,7 +402,7 @@ std::vector<eElem> findMinimalSubset(const std::vector<eElem> &e, std::vector<sE
  * @param e The set E as described in generateE.
  * @return The found minimal set. The size of the minimal set is the value k.
  */
-std::vector<eElem> minimumKAndD(size_t cmPlusD, const std::vector<eElem> &e) {
+std::vector<EElem> minimumKAndD(size_t cmPlusD, const std::vector<EElem> &e) {
     DEBUG_LOG(DEBUG_PROGRESS, "Running minKD\n");
     return findMinimalSubset(e, generateS(cmPlusD, e));
 }
@@ -408,7 +414,7 @@ std::vector<eElem> minimumKAndD(size_t cmPlusD, const std::vector<eElem> &e) {
  * @param hypergraph The input hypergraph
  * @return the set E without duplicates
  */
-std::vector<eElem> generateE(const Hypergraph &hypergraph) {
+std::vector<EElem> generateE(const Hypergraph &hypergraph) {
     DEBUG_LOG(DEBUG_PROGRESS, "Generating E... ");
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
     const std::vector<uint32_t> &hypernodes = hypergraph.getHypernodes();
@@ -416,16 +422,16 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph) {
     std::reverse(hyperedges.begin(), hyperedges.end());
 
     // Set covered e element for each entry
-    std::vector<eElem> e(hypernodes.size(), eElem(hyperedges.size()));
+    std::vector<EElem> e(hypernodes.size(), EElem(hyperedges.size()));
     for (size_t i = 0; i < e.size(); i++) {
-        e[i].coveredE0Elems.insert(i);
+        e[i].getCoveredE0Elems().insert(i);
     }
 
     // Set all combinations accordingly
     for (size_t hyperedgeIdx = 0; hyperedgeIdx < hyperedges.size(); hyperedgeIdx++) {
         DEBUG_LOG(DEBUG_VERBOSE, "Generating entry for hyperedge ID " + std::to_string(hyperedgeIdx) + "\r");
         for (uint32_t node : hyperedges[hyperedgeIdx]) {
-            e[node].combination.setBit(hyperedgeIdx);
+            e[node].getCombination().setBit(hyperedgeIdx);
         }
     }
     DEBUG_LOG(DEBUG_VERBOSE, "\nDone.\n");
@@ -439,16 +445,16 @@ std::vector<eElem> generateE(const Hypergraph &hypergraph) {
 #endif
 
     DEBUG_LOG(DEBUG_VERBOSE, "Removing Duplicates...\n");
-    std::set<eElem> tempSet;
+    std::set<EElem> tempSet;
     for (auto &entry : e) {
         DEBUG_LOG(DEBUG_VERBOSE, "Checking entry ID " + std::to_string(entryIdx++) + "\r");
         // Move is fine here because entry is only used again if the insert failed --> no move happened
         auto result = tempSet.insert(std::move(entry));
         if (!result.second) {
-            result.first->coveredE0Elems.insert(entry.coveredE0Elems.begin(), entry.coveredE0Elems.end());
+            result.first->getCoveredE0Elems().insert(entry.getCoveredE0Elems().begin(), entry.getCoveredE0Elems().end());
         }
     }
-    std::vector<eElem> noDuplicates(std::make_move_iterator(tempSet.begin()), std::make_move_iterator(tempSet.end()));
+    std::vector<EElem> noDuplicates(std::make_move_iterator(tempSet.begin()), std::make_move_iterator(tempSet.end()));
     DEBUG_LOG(DEBUG_VERBOSE, "\nDone.\n");
 
     DEBUG_LOG(DEBUG_PROGRESS, "Size E: " + std::to_string(e.size()) + ", Size E(nodups): " + std::to_string(noDuplicates.size()) + "\n");
@@ -466,15 +472,15 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
     DEBUG_LOG(DEBUG_PROGRESS, "Hyperedges: " + std::to_string(hypergraph.getHyperEdges().size()) + " Hypernodes: " + std::to_string(hypergraph.getHypernodes().size()) + "\n");
 
     // Generate set E according to the paper
-    std::vector<eElem> e = generateE(hypergraph);
+    std::vector<EElem> e = generateE(hypergraph);
 
     // calulate hyperdegree of the hypergraph
     // We assume that all hypernodes have the same degree
-    size_t cm = e[0].combination.countOnes();
+    size_t cm = e[0].countOnes();
 
 #ifndef NDEBUG
-    for (const eElem &curE : e) {
-        assert(curE.combination.countOnes() == cm);
+    for (const EElem &curE : e) {
+        assert(curE.countOnes() == cm);
     }
 #endif
 
@@ -484,16 +490,16 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
     DEBUG_LOG(DEBUG_PROGRESS, "Hyperdegree: " + std::to_string(cm) + "\n");
 
     std::vector<size_t> listOfKs(setOfKs.begin(), setOfKs.end());
-    std::vector<eElem> sStar;
+    std::vector<EElem> sStar;
     // Can skip the first cycle because that results in E = S* anyway
     for (size_t d = 1; d < m - cm; d++) {
         DEBUG_LOG(DEBUG_PROGRESS, "Running with cm+d " + std::to_string(cm + d) + "\n");
         sStar = minimumKAndD(cm + d, e);
 
     #ifndef NDEBUG
-        size_t numberOfOnes = sStar[0].combination.countOnes();
-        for (const eElem &currentSStarElem : sStar) {
-            assert(currentSStarElem.combination.countOnes() == numberOfOnes);
+        size_t numberOfOnes = sStar[0].countOnes();
+        for (const EElem &currentSStarElem : sStar) {
+            assert(currentSStarElem.countOnes() == numberOfOnes);
         }
     #endif
 
@@ -516,13 +522,13 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
             std::vector<size_t> fakes;
         #endif
 
-            for (const eElem &currentSStarElem : e) {
+            for (const EElem &currentSStarElem : e) {
                 // Convert covered elements to partition
-                std::vector<size_t> partition(currentSStarElem.coveredE0Elems.begin(), currentSStarElem.coveredE0Elems.end());
+                std::vector<size_t> partition(currentSStarElem.getCoveredE0Elems().begin(), currentSStarElem.getCoveredE0Elems().end());
 
             #ifndef NDEBUG
                 if (partition.empty()) {
-                    std::cerr << "A partition element wasn't used for partitioning at all: " << currentSStarElem.combination << std::endl;
+                    std::cerr << "A partition element wasn't used for partitioning at all: " << currentSStarElem.getCombination() << std::endl;
                     assert(!partition.empty());
                 }
             #endif
