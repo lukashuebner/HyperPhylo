@@ -8,7 +8,7 @@
 #include <bitset>
 #include <immintrin.h>
 #include <emmintrin.h>
-#include "structures.h"
+#include "AlignedBitArray.h"
 
 static const int SIZE = 50000;
 
