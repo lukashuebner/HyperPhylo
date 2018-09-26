@@ -14,7 +14,7 @@ tbb::concurrent_unordered_map<size_t, std::pair<size_t, size_t>> minimalDistance
 #ifndef OMP_NUM_THREADS
     tlx::ThreadPool pool;
 #else
-    ThreadPool pool(OMP_NUM_THREADS);
+    tlx::ThreadPool pool(OMP_NUM_THREADS);
 #endif
 
 #ifdef FAKE_DETECTION

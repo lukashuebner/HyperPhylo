@@ -7,12 +7,12 @@
 #ifndef OMP_NUM_THREADS
 tlx::ThreadPool pool;
 #else
-ThreadPool pool(OMP_NUM_THREADS);
+tlx::ThreadPool pool(OMP_NUM_THREADS);
 #endif
 
 int main(int argc, char **argv) {
     std::vector<AlignedBitArray> bitsets;
-    const int numberOfBitsAndBitarrays = 50000;
+    const int numberOfBitsAndBitarrays = 5000;
     for (size_t i = 0; i < numberOfBitsAndBitarrays; i++) {
         bitsets.emplace_back(numberOfBitsAndBitarrays);
         bitsets[i].setBit(i);
@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
         assert(results[i] == 2);
     }
 
-    std::cout << "POOL DONE" << std::endl;
+    std::cout << "POOL DONE, results: " << results.size() << std::endl;
 
     results.clear();
     startTM("OMP");
@@ -48,5 +48,7 @@ int main(int argc, char **argv) {
     for (size_t i = 0; i < bitsets.size(); i++) {
         assert(results[i] == 2);
     }
+
+    std::cout << "OMP DONE, results: " << results.size() << std::endl;
     printAllTM();
 }

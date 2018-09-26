@@ -83,7 +83,7 @@ add_executable(JudiciousCpp
         Helper.cpp
         structures.cpp)
 
-add_executable(test
+add_executable(pooltest
         structures.cpp
         Helper.cpp
         pooltest.cpp)
@@ -100,7 +100,7 @@ add_executable(benchmarks
 
 target_link_libraries(JudiciousCpp tbb)
 
-target_link_libraries(test tbb)
+target_link_libraries(pooltest tbb)
 
 target_link_libraries(unittest
         libgtest
