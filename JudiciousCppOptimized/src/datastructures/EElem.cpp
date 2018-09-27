@@ -4,7 +4,7 @@
 EElem::EElem(size_t numBits) : combination(AlignedBitArray(numBits)) {
 }
 
-EElem::EElem(AlignedBitArray combination, std::set <size_t> coveredE0Elems) :
+EElem::EElem(AlignedBitArray combination, std::set <uint32_t> coveredE0Elems) :
         combination(std::move(combination)),
         coveredE0Elems(std::move(coveredE0Elems)) {
 }
@@ -46,11 +46,11 @@ AlignedBitArray &EElem::getCombination() {
     return combination;
 }
 
-std::set<size_t> &EElem::getCoveredE0Elems() const {
+std::set<uint32_t> &EElem::getCoveredE0Elems() const {
     return coveredE0Elems;
 }
 
-std::set<size_t> &EElem::getCoveredE0Elems() {
+std::set<uint32_t> &EElem::getCoveredE0Elems() {
     return coveredE0Elems;
 }
 

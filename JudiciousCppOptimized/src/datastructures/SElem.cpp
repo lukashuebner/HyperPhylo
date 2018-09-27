@@ -2,10 +2,10 @@
 
 // ##### Constructors
 SElem::SElem(AlignedBitArray &&combination,
-        size_t leftElementIdx,
-        size_t rightElementIdx,
-        const std::set<size_t> &left,
-        const std::set<size_t> &right) noexcept : combination(std::move(combination)), coveredEElems({ leftElementIdx, rightElementIdx }) {
+        uint32_t leftElementIdx,
+        uint32_t rightElementIdx,
+        const std::set<uint32_t> &left,
+        const std::set<uint32_t> &right) noexcept : combination(std::move(combination)), coveredEElems({ leftElementIdx, rightElementIdx }) {
     coveredE0Elems.insert(left.begin(), left.end());
     coveredE0Elems.insert(right.begin(), right.end());
 }
@@ -44,11 +44,11 @@ const AlignedBitArray &SElem::getCombination() const {
     return combination;
 }
 
-const std::set<size_t> &SElem::getCoveredEElems() const {
+const std::set<uint32_t> &SElem::getCoveredEElems() const {
     return coveredEElems;
 }
 
-const std::set<size_t> &SElem::getCoveredE0Elems() const {
+const std::set<uint32_t> &SElem::getCoveredE0Elems() const {
     return coveredE0Elems;
 }
 
@@ -56,11 +56,11 @@ AlignedBitArray &SElem::getCombination() {
     return combination;
 }
 
-std::set<size_t> &SElem::getCoveredEElems() {
+std::set<uint32_t> &SElem::getCoveredEElems() {
     return coveredEElems;
 }
 
-std::set<size_t> &SElem::getCoveredE0Elems() {
+std::set<uint32_t> &SElem::getCoveredE0Elems() {
     return coveredE0Elems;
 }
 

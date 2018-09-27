@@ -14,12 +14,12 @@ private:
     /**
      * Elements of the e set in the current iteration that are covered by this combination.
      */
-    std::set<size_t> coveredEElems;
+    std::set<uint32_t> coveredEElems;
 
     /**
      * Elements of the original e set that are covered by this combination.
      */
-    std::set<size_t> coveredE0Elems;
+    std::set<uint32_t> coveredE0Elems;
 
 public:
     // ##### Constructors
@@ -30,10 +30,10 @@ public:
      * Moves the combination. Do not use the AlignedBitArray afterwards!
      */
     explicit SElem(AlignedBitArray &&combination,
-                   size_t leftElementIdx,
-                   size_t rightElementIdx,
-                   const std::set<size_t> &left,
-                   const std::set<size_t> &right) noexcept;
+                   uint32_t leftElementIdx,
+                   uint32_t rightElementIdx,
+                   const std::set<uint32_t> &left,
+                   const std::set<uint32_t> &right) noexcept;
 
     // ##### Operators
     bool operator==(const SElem &rhs) const;
@@ -50,11 +50,11 @@ public:
 
     // ##### Getters/Setters
     const AlignedBitArray &getCombination() const;
-    const std::set<size_t> &getCoveredEElems() const;
-    const std::set<size_t> &getCoveredE0Elems() const;
+    const std::set<uint32_t> &getCoveredEElems() const;
+    const std::set<uint32_t> &getCoveredE0Elems() const;
     AlignedBitArray &getCombination();
-    std::set<size_t> &getCoveredEElems();
-    std::set<size_t> &getCoveredE0Elems();
+    std::set<uint32_t> &getCoveredEElems();
+    std::set<uint32_t> &getCoveredE0Elems();
 
     // ##### Functions
     bool covers(const SElem &rhs) const;

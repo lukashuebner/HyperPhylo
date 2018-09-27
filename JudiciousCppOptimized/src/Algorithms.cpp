@@ -297,7 +297,7 @@ std::vector<EElem> findMinimalSubset(const std::vector<EElem> &e, std::vector<SE
 
         // add found longest diffset combination to the resulting minimal subset
         // skip original e elements that are already covered by other mininmal subset elements
-        std::set<size_t> allCoveredE0 = sElemOfLongestDiffset.getCoveredE0Elems();
+        std::set<uint32_t> allCoveredE0 = sElemOfLongestDiffset.getCoveredE0Elems();
         sElemOfLongestDiffset.getCoveredE0Elems().clear();
         boost::set_difference(allCoveredE0, alreadyCoveredE0,
                 std::inserter(sElemOfLongestDiffset.getCoveredE0Elems(), sElemOfLongestDiffset.getCoveredE0Elems().end()));

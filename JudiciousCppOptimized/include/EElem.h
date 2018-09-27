@@ -13,7 +13,7 @@ class EElem {
 private:
     AlignedBitArray combination;
     // Elements of the original e set that are covered by this combination.
-    mutable std::set<size_t> coveredE0Elems;
+    mutable std::set<uint32_t> coveredE0Elems;
 
 public:
     // ##### Constructors
@@ -25,7 +25,7 @@ public:
     /**
      * Create new from combination and covering
      */
-    EElem(AlignedBitArray combination, std::set<size_t> coveredE0Elems);
+    EElem(AlignedBitArray combination, std::set<uint32_t> coveredE0Elems);
 
     /**
      * Converts from SElem by dropping the coveredEElems set. This MOVES the inner datastructures, do not use original afterwards!
@@ -47,8 +47,8 @@ public:
     // ##### Getters/Setters
     const AlignedBitArray &getCombination() const;
     AlignedBitArray &getCombination();
-    std::set<size_t> &getCoveredE0Elems() const;
-    std::set<size_t> &getCoveredE0Elems();
+    std::set<uint32_t> &getCoveredE0Elems() const;
+    std::set<uint32_t> &getCoveredE0Elems();
     size_t countOnes() const;
 };
 
