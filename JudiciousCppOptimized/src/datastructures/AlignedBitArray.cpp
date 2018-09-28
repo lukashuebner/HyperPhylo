@@ -129,7 +129,8 @@ bool AlignedBitArray::covers(const AlignedBitArray &rhs) const {
 size_t AlignedBitArray::calculateDistance(const AlignedBitArray &rhs) const {
     assert(numInts == rhs.numInts && numBits == rhs.numBits);
     size_t result = 0;
-    for (size_t i = 0; i < numInts; i++) {
+    for (size_t i = 0; i < numInts; i++) {+
+        // Runtime 50:50
         result += __builtin_popcountll(bitarray[i] ^ rhs[i]);
     }
     return result;

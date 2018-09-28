@@ -147,13 +147,13 @@ std::vector<SElem> generateS(size_t cmPlusD, const std::vector<EElem> &e) {
 
     // Run over all possible pairs in E and check if they build a possible combination
     #pragma omp parallel for schedule(dynamic)
-    for (size_t firstEidx = 0; firstEidx < e.size(); firstEidx++) {
+    for (uint32_t firstEidx = 0; firstEidx < e.size(); firstEidx++) {
     #if DEBUG >= DEBUG_VERBOSE && _OPENMP
         if (omp_get_thread_num() == 0) DEBUG_LOG(DEBUG_PROGRESS, "Running loop for firstEidx " + std::to_string(firstEidx) + "\r");
     #elif DEBUG >= DEBUG_VERBOSE
         if (firstEidx % 10 == 0) DEBUG_LOG(DEBUG_PROGRESS, "Running loop for firstEidx " + std::to_string(firstEidx) + "\r");
     #endif
-        for (size_t secondEidx = firstEidx + 1; secondEidx < e.size(); secondEidx++) {
+        for (uint32_t secondEidx = firstEidx + 1; secondEidx < e.size(); secondEidx++) {
             const EElem &firstE = e[firstEidx];
             const EElem &secondE = e[secondEidx];
 
@@ -423,7 +423,7 @@ std::vector<EElem> generateE(const Hypergraph &hypergraph) {
 
     // Set covered e element for each entry
     std::vector<EElem> e(hypernodes.size(), EElem(hyperedges.size()));
-    for (size_t i = 0; i < e.size(); i++) {
+    for (uint32_t i = 0; i < e.size(); i++) {
         e[i].getCoveredE0Elems().insert(i);
     }
 
