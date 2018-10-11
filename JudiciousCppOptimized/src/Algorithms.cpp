@@ -274,16 +274,20 @@ std::vector<EElem> findMinimalSubset(const std::vector<EElem> &e, std::vector<SE
 
     // As long as not all of e is covered, i.e. alreadyCovered and E differ
     // Because of how the loop works (adding diffsets), alreadyCovered and E are the same when they have the same number of elements
+    startTM("ALL");
     while (alreadyCovered.size() != e.size()) {
         // findest longest difference set
         std::set<size_t> longestDiffset;
-        SElem sElemOfLongestDiffset;
-        for (SElem &currentS : s) {
+        size_t longestDiffsetSElemIdx = 0;
+        for (size_t i = 0; i < s.size(); i++) {
+            SElem &currentS = s[i];
             std::set<size_t> diff;
+            startTM("DIFF");
             boost::range::set_difference(currentS.getCoveredEElems(), alreadyCovered, std::inserter(diff, diff.end()));
+            endTM("DIFF");
             if (diff.size() > longestDiffset.size()) {
                 longestDiffset = diff;
-                sElemOfLongestDiffset = std::move(currentS);
+                longestDiffsetSElemIdx = i;
             }
         }
 
@@ -291,22 +295,35 @@ std::vector<EElem> findMinimalSubset(const std::vector<EElem> &e, std::vector<SE
         if (longestDiffset.empty()) {
             break;
         }
+        SElem &sElemOfLongestDiffset = s[longestDiffsetSElemIdx];
 
         // Add all elements of the found longest diffset to the already covered elements of e
+        startTM("InsertAlreadyCovered");
         alreadyCovered.insert(longestDiffset.begin(), longestDiffset.end());
+        endTM("InsertAlreadyCovered");
 
         // add found longest diffset combination to the resulting minimal subset
         // skip original e elements that are already covered by other mininmal subset elements
+        startTM("copy");
         std::set<uint32_t> allCoveredE0 = sElemOfLongestDiffset.getCoveredE0Elems();
         sElemOfLongestDiffset.getCoveredE0Elems().clear();
+        endTM("copy");
+
+        startTM("DIFFE0");
         boost::set_difference(allCoveredE0, alreadyCoveredE0,
                 std::inserter(sElemOfLongestDiffset.getCoveredE0Elems(), sElemOfLongestDiffset.getCoveredE0Elems().end()));
+        endTM("DIFFE0");
 
+        startTM("InsertAlreadyCoveredE0");
         // Add all newly covered original e elements in the already covered original e elements
         alreadyCoveredE0.insert(sElemOfLongestDiffset.getCoveredE0Elems().begin(), sElemOfLongestDiffset.getCoveredE0Elems().end());
+        endTM("InsertAlreadyCoveredE0");
 
+        // Push to longest subset and remove from s
         minimalSubset.push_back(EElem(std::move(sElemOfLongestDiffset)));
+        s.erase(s.begin() + longestDiffsetSElemIdx);
     }
+    endTM("ALL");
 
     int counter = 0;
     DEBUG_LOG(DEBUG_VERBOSE, "Elements not covered yet: " + std::to_string(e.size() - alreadyCovered.size()) + "\n");
