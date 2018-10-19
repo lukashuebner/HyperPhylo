@@ -4,11 +4,12 @@ import config
 from subprocess import check_output
 import re
 import os
+import sys
 
 runtime_pattern = re.compile("Runtime: (\d+)ms")
 
 print("scaling,sites,k,threads,runtime")
-#for num_sites in range(config.MIN_SITES, config.MAX_SITES, config.STEP)
+sys.stdout.flush()
 
 def num_threads_generator():
     num_threads = config.MIN_THREADS
@@ -26,6 +27,7 @@ for num_threads in num_threads_generator():
     runtime_line = output.split("\n".encode())[-2].decode()
     runtime = int(re.match(runtime_pattern, runtime_line).group(1))
     print("strong,%d,%d,%d,%d" % (num_sites, config.K, num_threads, runtime))
+    sys.stdout.flush()
 
 # Weak scaling
 my_env = os.environ.copy()
@@ -37,4 +39,4 @@ for num_threads in num_threads_generator():
     runtime_line = output.split("\n".encode())[-2].decode()
     runtime = int(re.match(runtime_pattern, runtime_line).group(1))
     print("weak,%d,%d,%d,%d" % (num_sites, config.K, num_threads, runtime))
-
+    sys.stdout.flush()
