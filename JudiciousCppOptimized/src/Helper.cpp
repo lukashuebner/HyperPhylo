@@ -6,7 +6,7 @@
 
 #include "Helper.h"
 
-std::map<std::string, long> measurements;
+std::map<std::string, uint64_t> measurements;
 std::map<std::string, std::chrono::time_point<std::chrono::high_resolution_clock>> measureStarts;
 
 void startTM(const std::string &identifier) {
@@ -42,9 +42,9 @@ void printAllTM() {
 
 	for (const auto &entry : measurements) {
 		if (entry.second < 10'000'000) {
-			std::cout << entry.first << ": " << entry.second / 1000.0 << "µs" << std::endl;
+			std::cout << entry.first << ": " << entry.second / 1000 << "µs" << std::endl;
 		} else {
-			std::cout << entry.first << ": " << entry.second / 1000.0 / 1000.0 << "ms" << std::endl;
+			std::cout << entry.first << ": " << entry.second / 1000 / 1000 << "ms" << std::endl;
 		}
 	}
 }
