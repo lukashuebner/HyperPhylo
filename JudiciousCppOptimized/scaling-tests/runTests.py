@@ -10,7 +10,7 @@ import argparse
 
 runtime_pattern = re.compile("Runtime: (\d+)ms")
 
-def generate_partitons_file(num_sites):
+def generate_partitions_file(num_sites):
     file_name = "%s/supermatrix_subsample_single_partiton_%d.partitions" % (config.PARTITIONS_DIR, num_sites)
     if not os.path.isfile(file_name):
         f = open(file_name, "w")
@@ -18,14 +18,15 @@ def generate_partitons_file(num_sites):
         f.close()
 
 def generate_repeats_file(num_sites):
-    input_file_name = "%s/supermatrix_subsample_single_partiton_%d.partitions" % (config.PARTITIONS_DIR, num_sites)
-    output_file_name = file_name.split('.')[0] + ".repeats"
-    if not os.path.isfile(output_file_name):
+    base_file_name = "supermatrix_subsample_single_partiton_%d" % num_sites
+    partitions_file_path = config.PARTITIONS_DIR + "/" + base_file_name + ".partitions"
+    repeats_file_path = config.REPEATS_DIR + "/" + base_file_name + ".repeats"
+    if not os.path.isfile(repeats_file_path):
         call([config.MSACONVERTER_BIN + "/convert",
               config.SUPERMATRIX_DIR + "/supermatrix_C_nt2.fas",
-              config.PARTITIONS_DIR + "/" + input_file_name,
+              partitions_file_path,
               config.TREEFILE_DIR + "/supermatrix_C_nt2.newick",
-              config.REPEATS_DIR + "/" + output_file_name
+              repeats_file_path
         ])
 
 def strong_tests_generator(num_threads_list):
@@ -46,8 +47,14 @@ def measure_runtime(num_threads, num_sites, k):
     runtime = int(re.match(runtime_pattern, runtime_line).group(1))
     return runtime
 
-def run_tests(dry_run, num_threads_list, printer):
-    test_params = itertools.chain(weak_tests_generator(num_threads_list), strong_tests_generator(num_threads_list))
+def run_tests(dry_run, num_threads_list, printer, scaling):
+    if scaling == "weak":
+        test_params = weak_tests_generator(num_threads_list)
+    elif scaling == "strong":
+        test_params = strong_tests_generator(num_threads_list)
+    else:
+        test_params = itertools.chain(weak_tests_generator(num_threads_list), strong_tests_generator(num_threads_list))
+
     for (scaling, num_threads, num_sites, k) in test_params:
         if dry_run:
             runtime = 0
@@ -77,16 +84,36 @@ class CSVPrinter:
         print("%s,%s,%s,%d,%d,%d,%d" % (self._algorithm, scaling, self._machine_id, num_sites, k, num_threads, runtime))
         sys.stdout.flush()
 
+def parse_define(s):
+    from pprint import pprint
+    pprint(s)
+
+class SetParamAction(argparse.Action):
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        if nargs is not None:
+            raise ValueError("nargs not allowed")
+        super(SetParamAction, self).__init__(option_strings, dest, **kwargs)
+    def __call__(self, parser, namespace, values, option_string=None):
+        (name, value) = values.split('=')
+        if getattr(config, name) == None:
+            raise ValueError("unknown parameter %s" % name)
+        else:
+            value = type(getattr(config, name))(value)
+        setattr(config, name, value)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "Run scaling tests for JudiciousPartitioner.")
-    parser.add_argument("-p", "--print-header", action="store_true")
-    parser.add_argument("-m", "--machine-id", default="unknown")
-    parser.add_argument("-a", "--algorithm", default="unknown")
-    parser.add_argument("-d", "--dry-run", action="store_true")
-    parser.add_argument("-t", "--nthreads", type=int, nargs="+", default=[1, 2, 4, 8])
+    parser.add_argument("-p", "--print-header", action="store_true", help="Print the CSV header")
+    parser.add_argument("-m", "--machine-id", default="unknown", help="Machine id to print into the CSV field")
+    parser.add_argument("-a", "--algorithm", default="unknown", help="Algorithm name to print into CSV field")
+    parser.add_argument("-d", "--dry-run", action="store_true", help="Do not perform any measurements")
+    parser.add_argument("-t", "--nthreads", type=int, nargs="+", default=[1, 2, 4, 8], help="List of OMP_THREAD_NUM values to benchmark")
+    parser.add_argument("-s", "--scaling", choices=["strong", "weak", "both"], default="both", help="Which kinf of scaling test to perform")
+    parser.add_argument("-P", "--param", action=SetParamAction, help="Change any values defined in config.py")
     args = parser.parse_args()
 
+    config.WEAK_SCALING_SITES_PER_CORE = config.MAX_SITES / max(args.nthreads)
+
     printer = CSVPrinter(args.machine_id, args.algorithm, args.print_header)
-    run_tests(args.dry_run, args.nthreads, printer)
+    run_tests(args.dry_run, args.nthreads, printer, args.scaling)
 
