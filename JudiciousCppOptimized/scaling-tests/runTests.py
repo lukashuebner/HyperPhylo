@@ -10,7 +10,7 @@ import argparse
 
 runtime_pattern = re.compile("Runtime: (\d+)ms")
 
-def generate_partitons_file(num_sites):
+def generate_partitions_file(num_sites):
     file_name = "%s/supermatrix_subsample_single_partiton_%d.partitions" % (config.PARTITIONS_DIR, num_sites)
     if not os.path.isfile(file_name):
         f = open(file_name, "w")
@@ -18,14 +18,15 @@ def generate_partitons_file(num_sites):
         f.close()
 
 def generate_repeats_file(num_sites):
-    input_file_name = "%s/supermatrix_subsample_single_partiton_%d.partitions" % (config.PARTITIONS_DIR, num_sites)
-    output_file_name = file_name.split('.')[0] + ".repeats"
-    if not os.path.isfile(output_file_name):
+    base_file_name = "supermatrix_subsample_single_partiton_%d" % num_sites
+    partitions_file_path = config.PARTITIONS_DIR + "/" + base_file_name + ".partitions"
+    repeats_file_path = config.REPEATS_DIR + "/" + base_file_name + ".repeats"
+    if not os.path.isfile(repeats_file_path):
         call([config.MSACONVERTER_BIN + "/convert",
               config.SUPERMATRIX_DIR + "/supermatrix_C_nt2.fas",
-              config.PARTITIONS_DIR + "/" + input_file_name,
+              partitions_file_path,
               config.TREEFILE_DIR + "/supermatrix_C_nt2.newick",
-              config.REPEATS_DIR + "/" + output_file_name
+              repeats_file_path
         ])
 
 def strong_tests_generator(num_threads_list):
