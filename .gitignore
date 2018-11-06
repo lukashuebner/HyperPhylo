@@ -270,3 +270,4 @@ src/timings*.txt
 *.LPP
 *.hgr
 supermatrix_single.repeats
+.Rproj.user
