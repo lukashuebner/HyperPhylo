@@ -48,6 +48,15 @@ AlignedBitArray AlignedBitArray::operator|(const AlignedBitArray &rhs) const {
     return result;
 }
 
+AlignedBitArray AlignedBitArray::operator&(const AlignedBitArray &rhs) const {
+    assert(numInts == rhs.numInts && numBits == rhs.numBits);
+    AlignedBitArray result(numBits);
+    for (size_t i = 0; i < numInts; i++) {
+        result[i] = bitarray[i] & rhs[i];
+    }
+    return result;
+}
+
 bool AlignedBitArray::operator==(const AlignedBitArray &rhs) const {
     assert(numInts == rhs.numInts && numBits == rhs.numBits);
     for (size_t i = 0; i < numInts; i++) {
