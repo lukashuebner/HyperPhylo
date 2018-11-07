@@ -44,6 +44,7 @@ public:
     uint64_t &operator[](size_t i);
     const uint64_t &operator[](size_t i) const;
     AlignedBitArray operator|(const AlignedBitArray &rhs) const;
+    AlignedBitArray operator&(const AlignedBitArray &rhs) const;
     bool operator==(const AlignedBitArray &rhs) const;
     bool operator!=(const AlignedBitArray &rhs) const;
     bool operator<(const AlignedBitArray &rhs) const;
