@@ -271,3 +271,4 @@ src/timings*.txt
 *.hgr
 supermatrix_single.repeats
 .Rproj.user
+i10pc*/
