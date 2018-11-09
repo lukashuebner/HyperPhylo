@@ -2,7 +2,16 @@ library(ggplot2)
 library(dplyr)
 library(readr)
 
-testResults <- read_csv("testResults.csv")
+testResults <- read_csv("testResults.csv", col_names = TRUE,
+  cols(
+    algorithm = col_character(),
+    pinning = col_logical(),
+    scaling = col_character(),
+    machine = col_character(),
+    sites = col_integer(),
+    k = col_integer(),
+    threads = col_integer()
+))
 
 # Strong scaling
 strongResults <- testResults %>% filter(scaling == "strong")
@@ -18,8 +27,8 @@ strongResults %>%
   geom_point() +
   geom_abline(slope=1, intercept=0) + 
   coord_fixed(ratio=1) +
-  scale_x_continuous(limits = c(0, 32)) +
-  scale_y_continuous(limits = c(0, 32)) +
+  scale_x_continuous(limits = c(0, 32), breaks = unique(weakResults$threads)) +
+  scale_y_continuous(limits = c(0, 32), breaks = seq(from = 0, to = 32, by = 2)) +
   theme_light() +
   theme(panel.grid.minor = element_blank())
 
@@ -31,16 +40,14 @@ weakResults <- testResults %>% filter(scaling == "weak")
 series <- weakResults %>% filter(threads==1) %>% select(algorithm, scaling, machine, k, runtime)
 colnames(series)[colnames(series)=="runtime"] <- "baselineRuntime"
 weakResults <- inner_join(weakResults, series)
-weakResults$speedup <- weakResults$baselineRuntime / weakResults$runtime
 
 weakResults %>%
   filter(algorithm=="aligned", k==160) %>% 
-  ggplot(aes(x=threads, y=speedup, color=machine, shape=machine)) +
+  ggplot(aes(x=threads, y=runtime/1000/(sites/1000), color=machine, shape=machine)) +
   geom_line() +
   geom_point() +
-  geom_hline(yintercept=1) +
-  scale_x_continuous(limits = c(0, 32)) +
-  scale_y_continuous(limits = c(0, 2)) +
+  scale_x_continuous(limits = c(0, 32), breaks=unique(weakResults$threads)) +
+  scale_y_continuous(name = "runtime per 1,000 sites [s]") +
   theme_light() +
   theme(panel.grid.minor = element_blank())
 
@@ -53,6 +60,7 @@ strongResults %>%
   ggplot(aes(x=threads, y=runtime/(1000*3600), color=machine, shape=machine)) +
   geom_line() +
   geom_point() +
+  scale_y_continuous(name = "runtime [h]") +
   theme_light() +
   theme(panel.grid.minor = element_blank())
 
