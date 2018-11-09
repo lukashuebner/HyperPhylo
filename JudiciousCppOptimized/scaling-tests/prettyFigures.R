@@ -12,7 +12,7 @@ strongResults <- inner_join(strongResults, series)
 strongResults$speedup <- strongResults$baselineRuntime / strongResults$runtime
 
 strongResults %>%
-  filter(algorithm=="aligned") %>% 
+  filter(algorithm=="aligned", k==50) %>% 
   ggplot(aes(x=threads, y=speedup, color=machine, shape=machine)) +
   geom_line() +
   geom_point() +
@@ -46,3 +46,14 @@ weakResults %>%
 
 ggsave("weak-scaling.svg", width=7)
 
+# Absolute running times
+strongResults <- testResults %>% filter(scaling == "strong")
+strongResults %>%
+  filter(algorithm=="aligned", k==50) %>% 
+  ggplot(aes(x=threads, y=runtime/(1000*3600), color=machine, shape=machine)) +
+  geom_line() +
+  geom_point() +
+  theme_light() +
+  theme(panel.grid.minor = element_blank())
+
+ggsave("runtimes.svg", width=7)
