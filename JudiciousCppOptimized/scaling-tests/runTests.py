@@ -38,18 +38,19 @@ def weak_tests_generator(num_threads_list):
         num_sites = num_threads * config.WEAK_SCALING_SITES_PER_CORE
         yield ("weak", num_threads, num_sites, config.K)
 
-def measure_runtime(num_threads, num_sites, k):
+def measure_runtime(num_threads, num_sites, k, algorithm):
     my_env = os.environ.copy()
     my_env["OMP_NUM_THREADS"] = str(num_threads)
     if config.THREAD_PINNING:
         my_env["GOMP_CPU_AFFINITY"] = "0-%d" % (num_threads - 1)
     file_name = "%s/supermatrix_subsample_single_partiton_%d.repeats" % (config.REPEATS_DIR, num_sites)
-    output = check_output([config.JUDICIOUS_BIN + "/JudiciousCpp", file_name, str(k)], env=my_env)
+    binary = "JudiciousCpp" + algorithm.capitalize()
+    output = check_output(["%s/%s" % (config.JUDICIOUS_BIN, binary), file_name, str(k)], env=my_env)
     runtime_line = output.split("\n".encode())[-2].decode()
     runtime = int(re.match(runtime_pattern, runtime_line).group(1))
     return runtime
 
-def run_tests(dry_run, num_threads_list, printer, scaling):
+def run_tests(dry_run, num_threads_list, printer, scaling, algorithm):
     if scaling == "weak":
         test_params = weak_tests_generator(num_threads_list)
     elif scaling == "strong":
@@ -63,7 +64,7 @@ def run_tests(dry_run, num_threads_list, printer, scaling):
         else:
             generate_partitions_file(num_sites)
             generate_repeats_file(num_sites)
-            runtime = measure_runtime(num_threads, num_sites, k)
+            runtime = measure_runtime(num_threads, num_sites, k, algorithm)
         printer.print_result(scaling, config.THREAD_PINNING, num_sites, k, num_threads, runtime)
 
 class CSVPrinter:
@@ -117,5 +118,5 @@ if __name__ == "__main__":
     config.WEAK_SCALING_SITES_PER_CORE = config.MAX_SITES / max(args.nthreads)
 
     printer = CSVPrinter(args.machine_id, args.algorithm, args.print_header)
-    run_tests(args.dry_run, args.nthreads, printer, args.scaling)
+    run_tests(args.dry_run, args.nthreads, printer, args.scaling, args.algorithm)
 
