@@ -41,6 +41,8 @@ def weak_tests_generator(num_threads_list):
 def measure_runtime(num_threads, num_sites, k):
     my_env = os.environ.copy()
     my_env["OMP_NUM_THREADS"] = str(num_threads)
+    if config.THREAD_PINNING:
+        my_env["GOMP_CPU_AFFINITY"] = "0-%d" % (num_threads - 1)
     file_name = "%s/supermatrix_subsample_single_partiton_%d.repeats" % (config.REPEATS_DIR, num_sites)
     output = check_output([config.JUDICIOUS_BIN + "/JudiciousCpp", file_name, str(k)], env=my_env)
     runtime_line = output.split("\n".encode())[-2].decode()
@@ -62,7 +64,7 @@ def run_tests(dry_run, num_threads_list, printer, scaling):
             generate_partitions_file(num_sites)
             generate_repeats_file(num_sites)
             runtime = measure_runtime(num_threads, num_sites, k)
-        printer.print_result(scaling, num_sites, k, num_threads, runtime)
+        printer.print_result(scaling, config.THREAD_PINNING, num_sites, k, num_threads, runtime)
 
 class CSVPrinter:
     """Prints the test results in csv format"""
@@ -77,11 +79,11 @@ class CSVPrinter:
             self.print_header()
 
     def print_header(self):
-        print("algorithm,scaling,machine,sites,k,threads,runtime")
+        print("algorithm,pinning,scaling,machine,sites,k,threads,runtime")
         sys.stdout.flush()
 
-    def print_result(self, scaling, num_sites, k, num_threads, runtime):
-        print("%s,%s,%s,%d,%d,%d,%d" % (self._algorithm, scaling, self._machine_id, num_sites, k, num_threads, runtime))
+    def print_result(self, scaling, pinning, num_sites, k, num_threads, runtime):
+        print("%s,%s,%s,%s,%d,%d,%d,%d" % (self._algorithm, pinning, scaling, self._machine_id, num_sites, k, num_threads, runtime))
         sys.stdout.flush()
 
 def parse_define(s):
