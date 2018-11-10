@@ -1,6 +1,7 @@
 #include <map>
 #include <chrono>
 #include <iostream>
+#include <sstream>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 
