@@ -78,6 +78,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    std::cout << "This is the master executable" << std::endl;
     DEBUG_LOG(DEBUG_PROGRESS, "Reading graph from file...");
     Hypergraph hypergraph = getHypergraphFromPartitionFile(filepath, partitionNumber);
     DEBUG_LOG(DEBUG_PROGRESS, " Done\n");
