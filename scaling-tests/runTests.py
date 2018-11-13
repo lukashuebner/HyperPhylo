@@ -39,11 +39,11 @@ def weak_tests_generator(num_threads_list):
         num_sites = num_threads * config.WEAK_SCALING_SITES_PER_CORE
         yield ("weak", num_threads, num_sites, config.K)
 
-def measure_runtime(num_threads, num_sites, k, algorithm, core_pinning):
+def measure_runtime(num_threads, num_sites, k, algorithm, thread_pinning):
     my_env = os.environ.copy()
     my_env["OMP_NUM_THREADS"] = str(num_threads)
-    if core_pinning.enabled:
-        pinning_str = ','.join(str(x) for x in core_pinning.pinning(num_threads))
+    if thread_pinning.enabled:
+        pinning_str = ','.join(str(x) for x in thread_pinning.pinning(num_threads))
         my_env["GOMP_CPU_AFFINITY"] = pinning_str
         sys.stderr.write("Pinning: " + pinning_str)
     else:
@@ -63,7 +63,7 @@ def measure_runtime(num_threads, num_sites, k, algorithm, core_pinning):
     runtime = int(re.match(runtime_pattern, runtime_line).group(1))
     return runtime
 
-def run_tests(dry_run, num_threads_list, printer, scaling, algorithm, core_pinning):
+def run_tests(dry_run, num_threads_list, printer, scaling, algorithm, thread_pinning):
     if scaling == "weak":
         test_params = weak_tests_generator(num_threads_list)
     elif scaling == "strong":
@@ -77,8 +77,8 @@ def run_tests(dry_run, num_threads_list, printer, scaling, algorithm, core_pinni
         else:
             #generate_partitions_file(num_sites)
             #generate_repeats_file(num_sites)
-            runtime = measure_runtime(num_threads, num_sites, k, algorithm, core_pinning)
-        printer.print_result(scaling, config.THREAD_PINNING, num_sites, k, num_threads, runtime)
+            runtime = measure_runtime(num_threads, num_sites, k, algorithm, thread_pinning)
+        printer.print_result(scaling, thread_pinning.mode, num_sites, k, num_threads, runtime)
 
 class CSVPrinter:
     """Prints the test results in csv format"""
@@ -123,9 +123,12 @@ class SetCPUConfigAction(argparse.Action):
             raise ValueError("nargs not allowed")
         super(SetCPUConfigAction, self).__init__(option_strings, dest, **kwargs)
     def __call__(self, parser, namespace, value, option_string=None):
-        (nSockets, nCoresPerSocket) = value.split('x')
-        setattr(namespace, "nSockets", int(nSockets))
-        setattr(namespace, "nCoresPerSocket", int(nCoresPerSocket))
+        if value == "":
+            return
+        else:
+            (nSockets, nCoresPerSocket) = value.split('x')
+            setattr(namespace, "nSockets", int(nSockets))
+            setattr(namespace, "nCoresPerSocket", int(nCoresPerSocket))
 
 class CorePinningConfiguration:
     enabled = False
@@ -177,16 +180,17 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--scaling", choices=["strong", "weak", "both"], default="both", help="Which kinf of scaling test to perform")
     parser.add_argument("-P", "--param", action=SetParamAction, help="Change any values defined in config.py")
     parser.add_argument("-c", "--cpu-config", action=SetCPUConfigAction, help="Defines the CPU configuration as <nSockets>x<nCoresPerSocket>")
+    parser.add_argument("-tp", "--thread_pinning", choices=["disabled", "balanced"], default="disabled", help="Choose thread pinning mode. disabled: no thread pinning. balanced: Use minimum number of sockets for given number of threads but balance out number of threads over per socket over the sockets.")
     args = parser.parse_args()
 
-    core_pinning = None
-    if config.THREAD_PINNING:
-        core_pinning = CorePinningConfiguration("balanced", args.nSockets, args.nCoresPerSocket)
-    else:
-        core_pinning = CorePinningConfiguration("disabled", args.nSockets, args.nCoresPerSocket)
+    thread_pinning = None
+    if args.thread_pinning == "balanced":
+        thread_pinning = CorePinningConfiguration("balanced", args.nSockets, args.nCoresPerSocket)
+    elif args.thread_pinning == "disabled":
+        thread_pinning = CorePinningConfiguration("disabled", 0, 0)
 
     config.WEAK_SCALING_SITES_PER_CORE = config.MAX_SITES / max(args.nthreads)
 
     printer = CSVPrinter(args.machine_id, args.algorithm, args.print_header)
-    run_tests(args.dry_run, args.nthreads, printer, args.scaling, args.algorithm, core_pinning)
+    run_tests(args.dry_run, args.nthreads, printer, args.scaling, args.algorithm, thread_pinning)
 
