@@ -2,10 +2,8 @@
 
 LIST_OF_BRANCHES="SparseBitVector master"
 LIST_OF_EXECUTABLE_NAMES=(JudiciousCppSparse JudiciousCppAligned)
-LIST_OF_HOSTS="132 133"
-# LIST_OF_HOSTS="127 128 129 132 134"
+LIST_OF_HOSTS="127 128 129 132 134"
 JUDICIOUS_SRC_PATH="../JudiciousCppOptimized/"
-MSA_CONVERTER_SRC_PATH="../RepeatsCounter/tools/MSAConverter/"
 CMAKE_COMMAND="/software/cmake-3.10.0/bin/cmake .. -DCMAKE_C_COMPILER=/software/clang/6.0.1/bin/clang -DCMAKE_CXX_COMPILER=/software/clang/6.0.1/bin/clang++"
 
 require_clean_work_tree() {
@@ -40,9 +38,6 @@ require_clean_work_tree() {
 if [ ! -d "$JUDICIOUS_SRC_PATH" ]; then
     echo "Judicious path does not exist!"
     exit 1
-elif [ ! -d "$MSA_CONVERTER_SRC_PATH" ]; then
-    echo "MSA Converter path does not exist!"
-    exit 1
 fi
 
 # Check if branches exist
@@ -62,22 +57,6 @@ if [[ `hostname` -ne "i10pc107" ]]; then
 	echo >&2 "Must be run on login node."
 	exit 1
 fi
-
-# Copy source to each host folder for easier compiling
-for host_number in $LIST_OF_HOSTS; do
-	hostname="i10pc$host_number"
-	    
-    # cp -r ../$MSA_CONVERTER_SRC_PATH conv_src
-
-    # Compile convert executable
-    # cd conv_src
-    # mkdir compile
-    # cd compile
-    # $CMAKE_COMMAND
-	# ssh $hostname "cd $(pwd); make"
-	
-    # Copy the convert exectuable to the hostname folder, remove the compile directory
-done
 
 # For each host compile both branches over ssh
 for host_number in $LIST_OF_HOSTS; do
