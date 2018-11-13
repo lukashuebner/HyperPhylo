@@ -75,8 +75,8 @@ def run_tests(dry_run, num_threads_list, printer, scaling, algorithm, thread_pin
         if dry_run:
             runtime = 0
         else:
-            #generate_partitions_file(num_sites)
-            #generate_repeats_file(num_sites)
+            generate_partitions_file(num_sites)
+            generate_repeats_file(num_sites)
             runtime = measure_runtime(num_threads, num_sites, k, algorithm, thread_pinning)
         printer.print_result(scaling, thread_pinning.mode, num_sites, k, num_threads, runtime)
 
