@@ -15,26 +15,29 @@ output_file = "result.ddf"
 cmdlines = []
 
 input_files_single_partition = [
-    "../datasets/extracted/59-s.repeats",
-    "../datasets/extracted/404-s.repeats",
-    "../datasets/extracted/128-s.repeats",
-    "../datasets/extracted/59-l.repeats",
-    "../datasets/extracted/404-l.repeats",
-    "../datasets/extracted/128-l.repeats",
     "../datasets/59_single.repeats",
     "../datasets/404_single.repeats",
     "../datasets/128_single.repeats",
+    "../datasets/supermatrix_C_nt2_50k_single.repeats",
+    "../datasets/supermatrix_C_nt2_100k_single.repeats",
+    # "../datasets/supermatrix_C_nt2_3_180k_single.repeats",
+    # "../datasets/supermatrix_C_nt2_16_300k_single.repeats",
 ]
 
 input_files_multiple_partitions = [
     "../datasets/59.repeats",
     "../datasets/404.repeats",
     "../datasets/128.repeats",
+    # "../datasets/supermatrix_C_nt2_3_180k.repeats",
+    # "../datasets/supermatrix_C_nt2_16_300k.repeats",
 ]
 
-rccc_path = "../RepeatsCounter/RepeatsCounter/build/RepeatsCounter"
+rccc_path = "./i10pc127/RepeatsCounter"
+naive_path = "./very_naive_split.py"
+rdda_path = "./i10pc127/rdda"
+judicious_path = "./i10pc127/JudiciousCpp"
 
-block_numbers = [2, 4, 8, 12, 16, 24, 32, 48, 64]
+block_numbers = [2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128, 160, 200, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096, 8192 ]
 
 # Generate cmdlines for naive
 for input_file in input_files_single_partition:
@@ -44,7 +47,7 @@ for input_file in input_files_single_partition:
         exit(1)
 
     cmdlines.append([
-        "./very_naive_split.py {} {}".format(input_file, ",".join(str(x) for x in block_numbers)),
+        "{} {} {}".format(naive_path, input_file, ",".join(str(x) for x in block_numbers)),
         "split",
         input_file,
         "naive_{}".format(m.group(1).replace("-", ""))
@@ -58,7 +61,7 @@ for input_file in input_files_single_partition:
         exit(1)
 
     cmdlines.append([
-        "../JudiciousCppOptimized/build/JudiciousCpp {} {}".format(input_file, ",".join(str(x) for x in block_numbers)),
+        "{} {} {}".format(judicious_path, input_file, ",".join(str(x) for x in block_numbers)),
         "split",
         input_file,
         "judicious_{}".format(m.group(1).replace("-", ""))
@@ -73,7 +76,7 @@ for input_file in input_files_multiple_partitions:
 
     for numberOfBlocks in block_numbers:
         cmdlines.append([
-            "../RepeatsCounter/RDDA/build/rdda {} {} {}".format(input_file, numberOfBlocks, output_file),
+            "{} {} {} {}".format(rdda_path, input_file, numberOfBlocks, output_file),
             "file",
             input_file,
             "rdda_{}_{}.rcccount".format(m.group(1), numberOfBlocks)
