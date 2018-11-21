@@ -1,0 +1,60 @@
+Parsing repeats file ../datasets/128.repeats...
+Parsing distribution file result.ddf...
+***********************************
+** 	Analysis results	 **
+***********************************
+Core0 RCC: 10377	 sites: 833	 partitions: 3
+Core1 RCC: 7732	 sites: 977	 partitions: 2
+Core2 RCC: 8566	 sites: 1011	 partitions: 2
+Core3 RCC: 8502	 sites: 863	 partitions: 2
+Core4 RCC: 7975	 sites: 844	 partitions: 2
+Core5 RCC: 10923	 sites: 896	 partitions: 3
+Core6 RCC: 8496	 sites: 676	 partitions: 2
+Core7 RCC: 8681	 sites: 687	 partitions: 2
+Core8 RCC: 8188	 sites: 578	 partitions: 2
+Core9 RCC: 7759	 sites: 1179	 partitions: 2
+Core10 RCC: 8043	 sites: 1134	 partitions: 2
+Core11 RCC: 8578	 sites: 866	 partitions: 2
+Core12 RCC: 9098	 sites: 832	 partitions: 2
+Core13 RCC: 9402	 sites: 976	 partitions: 2
+Core14 RCC: 8989	 sites: 1109	 partitions: 2
+Core15 RCC: 7970	 sites: 251	 partitions: 2
+Core16 RCC: 7049	 sites: 285	 partitions: 1
+Core17 RCC: 7589	 sites: 300	 partitions: 2
+Core18 RCC: 8813	 sites: 822	 partitions: 2
+Core19 RCC: 8254	 sites: 906	 partitions: 2
+Core20 RCC: 6929	 sites: 832	 partitions: 1
+Core21 RCC: 8830	 sites: 570	 partitions: 2
+Core22 RCC: 8475	 sites: 474	 partitions: 2
+Core23 RCC: 7877	 sites: 338	 partitions: 1
+Core24 RCC: 9035	 sites: 381	 partitions: 2
+Core25 RCC: 7725	 sites: 398	 partitions: 1
+Core26 RCC: 8703	 sites: 364	 partitions: 2
+Core27 RCC: 8196	 sites: 364	 partitions: 2
+Core28 RCC: 8192	 sites: 416	 partitions: 1
+Core29 RCC: 9534	 sites: 438	 partitions: 2
+Core30 RCC: 8746	 sites: 602	 partitions: 1
+Core31 RCC: 7490	 sites: 602	 partitions: 2
+Core32 RCC: 8137	 sites: 435	 partitions: 1
+Core33 RCC: 8231	 sites: 435	 partitions: 1
+Core34 RCC: 10194	 sites: 544	 partitions: 2
+Core35 RCC: 7827	 sites: 573	 partitions: 1
+Core36 RCC: 9555	 sites: 505	 partitions: 2
+Core37 RCC: 8036	 sites: 426	 partitions: 1
+Core38 RCC: 8618	 sites: 426	 partitions: 1
+Core39 RCC: 10465	 sites: 523	 partitions: 2
+Core40 RCC: 7908	 sites: 554	 partitions: 1
+Core41 RCC: 8530	 sites: 554	 partitions: 1
+Core42 RCC: 9653	 sites: 377	 partitions: 2
+Core43 RCC: 8343	 sites: 368	 partitions: 1
+Core44 RCC: 9667	 sites: 374	 partitions: 2
+Core45 RCC: 9131	 sites: 417	 partitions: 1
+Core46 RCC: 8768	 sites: 417	 partitions: 1
+Core47 RCC: 8580	 sites: 417	 partitions: 1
+
+Worst RCC lower bound:	6917 (total RCC before split / number of cores)
+Worst RCC: 		10923
+Worst RCC * cores: 	524304
+Sum of RCCs: 	 	412359
+Total repeats loss:	80304
+Worst partitions:	3
