@@ -78,6 +78,9 @@ include_directories(include /opt/intel/tbb/include)
 link_directories(/opt/intel/tbb/lib/intel64/gcc4.7)
 file(GLOB_RECURSE ds src/datastructures/*.cpp)
 
+message("SET C FLAGS: ${CMAKE_C_FLAGS}")
+message("SET CXX FLAGS: ${CMAKE_CXX_FLAGS}")
+
 add_executable(JudiciousCpp
         ${ds}
         src/main.cpp
