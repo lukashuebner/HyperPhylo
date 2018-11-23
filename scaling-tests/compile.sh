@@ -4,7 +4,7 @@ LIST_OF_BRANCHES="SparseBitVector master"
 LIST_OF_EXECUTABLE_NAMES=(JudiciousCppSparse JudiciousCppAligned)
 LIST_OF_HOSTS="127 128 129 132 134"
 JUDICIOUS_SRC_PATH="../JudiciousCppOptimized/"
-CMAKE_COMMAND="/software/cmake-3.10.0/bin/cmake .. -DCMAKE_C_COMPILER=/software/clang/6.0.1/bin/clang -DCMAKE_CXX_COMPILER=/software/clang/6.0.1/bin/clang++"
+CMAKE_COMMAND="/software/cmake-3.10.0/bin/cmake .. -DCMAKE_C_COMPILER=/software/clang/6.0.1/bin/clang -DCMAKE_CXX_COMPILER=/software/clang/6.0.1/bin/clang++ -DCMAKE_CXX_FLAGS='-DNDEBUG'"
 
 require_clean_work_tree() {
     # Update the index
