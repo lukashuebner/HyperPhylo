@@ -34,7 +34,7 @@ for input_file in input_files:
             sys.stdout.flush()
             ps.append(subprocess.Popen([jp_path, input_file, k], stdout=subprocess.PIPE))
 
-        for p in ps:
+        for core, p in enumerate(ps):
             output, _ = p.communicate()
 
             diff = difflib.Differ()
@@ -53,5 +53,5 @@ for input_file in input_files:
                     print(colored(element, "red"))
 
             if found:
-                print("Program is not deterministic! Exiting...")
+                print("Program is not deterministic, difference in run {:03d}! Exiting...".format(i + core))
                 exit(1)
