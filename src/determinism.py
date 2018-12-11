@@ -46,15 +46,9 @@ for input_file in input_files:
                     continue
 
                 if element.startswith("+"):
-                    if not found:
-                        print("")
-
                     found = True
                     print(colored(element, "green"))
                 elif element.startswith("-"):
-                    if not found:
-                        print("")
-
                     found = True
                     print(colored(element, "red"))
 
