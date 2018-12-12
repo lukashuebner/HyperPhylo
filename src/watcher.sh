@@ -17,8 +17,8 @@ while true; do
     	fi
 
 
-	result=$(ssh i10pc$host "S_TIME_FORMAT=ISO mpstat 2 1" | awk '$12 ~ /[0-9.]+/ { print 100 - $12 }' | head -n 1)
-	if (( $(echo "$result > 1.0" | bc -l) )); then
+	result=$(ssh i10pc$host "LC_ALL=en_US.UTF-8 S_TIME_FORMAT=ISO mpstat 2 1" | awk '$12 ~ /[0-9.]+/ { print $12 }' | head -n 1)
+	if (( $(echo "(100.0 - $result) > 1.0" | bc) )); then
 	    success=0
             echo "i10pc$host under load, sleeping..."
             sleep 600
