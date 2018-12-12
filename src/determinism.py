@@ -15,9 +15,8 @@ input_files = [
     "../datasets/extracted/59-l.repeats",
     "../datasets/59_single.repeats",
     "../datasets/extracted/404-l.repeats",
-    "../datasets/extracted/128-l.repeats"
+    "../datasets/extracted/128-l.repeats",
     "../datasets/404_single.repeats",
-
 ]
 
 first_output = None
