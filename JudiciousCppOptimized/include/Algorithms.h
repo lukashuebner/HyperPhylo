@@ -11,7 +11,7 @@
 #define DEBUG_PROGRESS 1
 #define DEBUG_VERBOSE 2
 
-#define DETERMINISM
+//#define DETERMINISM
 //#define FAKE_DETECTION
 
 #if DEBUG > 0
