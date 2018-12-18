@@ -44,7 +44,7 @@ class Partition:
             % (self.id, self.get_num_sites(), self.get_number_of_repeat_classes())
 
     def get_num_sites(self):
-        return sum([node.number_of_sites() for node in self.internal_nodes])
+        return self.internal_nodes[0].number_of_sites()
 
     def get_number_of_repeat_classes(self, subset_of_sites=None):
         return sum([node.number_of_repeat_classes(subset_of_sites) for node in self.internal_nodes])
@@ -205,6 +205,20 @@ def reassign_split(judicious_assignment, partition, rounded_proportions):
     return new_assignment
 
 
+def print_data_distribution_as_ddf(data_distribution):
+    data_distribution = {int(key[4:]): data_distribution[key] for key in data_distribution.keys()}
+
+    print(len(data_distribution))
+    for key in sorted(data_distribution):
+        value = data_distribution[key]
+        print('CPU' + str(key), len(value))
+        for partition_name, sites in value.items():
+            print(partition_name, len(sites), end=' ')
+            for site in sorted(sites):
+                print(site, end=' ')
+            print()
+
+
 def main():
     args = parse_args()
     repeats_file = args.repeatsfile
@@ -243,6 +257,23 @@ def main():
                 cur_partition_obj = partitions[partition]
                 new_assignment = reassign_split(judicious_assignment, cur_partition_obj, rounded_proportions)
 
+                cores = []
+                for j in range(1, number_of_cores+1):
+                    cur_core = splits_file_lines[i+j].split()[0]
+                    cores.append(cur_core)
+
+                list_of_the_sites = []
+                for sites in new_assignment.values():
+                    list_of_the_sites.append(sites)
+
+                assert len(cores) == len(list_of_the_sites)
+
+                for core, sites in zip(cores, list_of_the_sites):
+                    if core in data_distribution:
+                        data_distribution[core][partition] = sites
+                    else:
+                        data_distribution[core] = {partition: sites}
+
             else:  # partition is not split
                 core = splits_file_lines[i+1].split()[0]
                 partition_size = partitions[split_line[0]].get_num_sites()
@@ -253,7 +284,7 @@ def main():
                 else:
                     data_distribution[core] = {partition: list_of_the_sites}
 
-    # TODO Print data_distribution in the proper DDF format
+    print_data_distribution_as_ddf(data_distribution)
 
 
 if __name__ == "__main__":
