@@ -9,6 +9,7 @@ from enum import Enum
 
 JUDICIOUS_EXE = '../JudiciousCppOptimized/cmake-build-debug/JudiciousCpp'
 
+
 class InternalNode:
     sites = [] # Stores the repeat class for each site
 
@@ -29,6 +30,7 @@ class InternalNode:
     def number_of_sites(self):
         return len(self.sites)
 
+
 class Partition:
     id = ""
     internal_nodes = []
@@ -47,6 +49,7 @@ class Partition:
     def get_number_of_repeat_classes(self, subset_of_sites=None):
         return sum([node.number_of_repeat_classes(subset_of_sites) for node in self.internal_nodes])
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -62,8 +65,8 @@ def get_partitions_from_repeats_file(repeats_file):
     Get information on the number of sites and repeat classes per partition from the given repeats file.
     :param repeats_file: The repeats file for which to get the information
     :return: Dict with
-        key: partiton id
-        value: tuples (number of sites, number of repeat classes) for each partition in the repeats file
+        key: partition id
+        value: the Partition object for that partition
     """
     def partition_iterator(repeats_file):
         class State(Enum):
@@ -130,13 +133,13 @@ def get_partitions_from_repeats_file(repeats_file):
         partitions[partition.id] = partition
     return partitions
 
+
 def calculate_k(split_proportions):
     rounded_proportions = [round(prop * 10) for prop in split_proportions]
     gcd = functools.reduce(math.gcd, rounded_proportions)
     rounded_proportions = [prop//gcd for prop in rounded_proportions]
     k = sum(rounded_proportions)
     return k, rounded_proportions
-
 
 
 def parse_ddf(ddf):
@@ -179,16 +182,16 @@ def reassign_split(judicious_assignment, partition, rounded_proportions):
         for cpu_id in range(len(rounded_proportions))
     }
 
-    # Start assigning sits to CPUs. All the sites of one CPU in the given assignment will be assigned to exactly one
+    # Start assigning sites to CPUs. All the sites of one CPU in the given assignment will be assigned to exactly one
     # CPU of the new assignment. This means we are only agglomerating CPUs! This guarantees, that the sum of repeat
     # classes over all CPUs after this operation will be at most as large as before this operation.
     new_assignment = { cpu: [] for cpu in target_rcs_by_cpu }
 
     # Iterate over the CPUs, sorted by the number of repeat-classes they have in decreasing order
-    for old_cpu, _ in sorted(rcs_by_cpu_judicious.items(), key = lambda kv: kv[1], reverse=True):
+    for old_cpu, _ in sorted(rcs_by_cpu_judicious.items(), key=lambda kv: kv[1], reverse=True):
         # Which target CPU is missing the most rcs to hit its rc-goal? Assign the sites of the current (old) CPU to it
         # We are trying to hit a moving target here. As CPUs are agglomerated, the number of total repeat classes
-        # decreases. This means we have to recalculated the rc-goal of every CPU in every iteration. TODO
+        # decreases. This means we have to recalculate the rc-goal of every CPU in every iteration. TODO
         rcs_by_cpu_current = get_rcs_by_cpu(new_assignment, partition)
         missing_rcs_by_cpu = { cpu: target_rcs_by_cpu[cpu] - rcs_by_cpu_current[cpu] for cpu in new_assignment }
         cpu_missing_most_rcs = max(missing_rcs_by_cpu.items(), key=lambda kv: kv[1])[0]
@@ -200,6 +203,7 @@ def reassign_split(judicious_assignment, partition, rounded_proportions):
     assert(sum(get_rcs_by_cpu(new_assignment, partition).values()) <=
            sum(get_rcs_by_cpu(judicious_assignment, partition).values()))
     return new_assignment
+
 
 def main():
     args = parse_args()
@@ -236,12 +240,12 @@ def main():
 
                 # Parse output and fit it into the data_distribution
                 judicious_assignment = parse_ddf(judicious_ddf)
-                new_assignment = reassign_split(judicious_assignment, partition, rounded_proportions)
-                
+                cur_partition_obj = partitions[partition]
+                new_assignment = reassign_split(judicious_assignment, cur_partition_obj, rounded_proportions)
 
             else:  # partition is not split
                 core = splits_file_lines[i+1].split()[0]
-                partition_size = partition[split_line[0]].get_num_sites()
+                partition_size = partitions[split_line[0]].get_num_sites()
                 list_of_the_sites = [j for j in range(partition_size)]
 
                 if core in data_distribution:
