@@ -135,9 +135,15 @@ def get_partitions_from_repeats_file(repeats_file):
 
 
 def calculate_k(split_proportions):
-    rounded_proportions = [round(prop * 10) for prop in split_proportions]
-    gcd = functools.reduce(math.gcd, rounded_proportions)
-    rounded_proportions = [prop//gcd for prop in rounded_proportions]
+    rounded_proportions = []
+    factor = 10
+    rounded_proportions_are_ok = False
+    while not rounded_proportions_are_ok:
+        rounded_proportions = [round(prop * factor) for prop in split_proportions]
+        factor += 10
+        if all(prop >= 2 for prop in rounded_proportions):
+            rounded_proportions_are_ok = True
+
     k = sum(rounded_proportions)
     return k, rounded_proportions
 
