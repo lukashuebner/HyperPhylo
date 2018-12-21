@@ -259,12 +259,11 @@ HypergraphRepresentation/*.pdf
 cmake-build-debug/
 cmake-build-release/
 __pycache__/
-JudiciousCppOptimized/JudiciousCppOptimized
-JudiciousCppOptimized/unittest
-JudiciousCppOptimized/JudiciousCppOptimized.cbp
+JudiciousPartitioning/JudiciousPartitioning
+JudiciousPartitioning/unittest
+JudiciousPartitioning/JudiciousPartitioning.cbp
 rc
-JudiciousCppOptimized/gtest
-JudiciousCppOptimized/fakedata
+JudiciousPartitioning/gtest
 src/results*.txt
 src/timings*.txt
 *.LPP

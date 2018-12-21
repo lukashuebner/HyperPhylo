@@ -39,7 +39,7 @@ while True:
         rfile.write(output)
         rfile.flush()
 
-        process = Popen(["../JudiciousCppOptimized/cmake-build-debug/JudiciousCpp", rfile.name, "4,8,12,16,24,32,48,64"])
+        process = Popen(["../JudiciousPartitioning/cmake-build-debug/JudiciousCpp", rfile.name, "4,8,12,16,24,32,48,64"])
         process.communicate()
 
         if process.returncode and "y" in input("Do you want to save the file?"):

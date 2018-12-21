@@ -7,7 +7,7 @@ import psutil
 from termcolor import colored
 
 k = "2,8,16,64"
-jp_path = "../JudiciousCppOptimized/cmake-build-debug/JudiciousCpp"
+jp_path = "../JudiciousPartitioning/cmake-build-debug/JudiciousCpp"
 input_files = [
     "../datasets/extracted/59-s.repeats",
     "../datasets/extracted/128-s.repeats",

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(JudiciousCppOptimized)
+project(JudiciousPartitioning)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall")
@@ -81,7 +81,7 @@ file(GLOB_RECURSE ds src/datastructures/*.cpp)
 message("SET C FLAGS: ${CMAKE_C_FLAGS}")
 message("SET CXX FLAGS: ${CMAKE_CXX_FLAGS}")
 
-add_executable(JudiciousCpp
+add_executable(JudiciousPartitioning
         ${ds}
         src/main.cpp
         src/Algorithms.cpp
@@ -97,7 +97,7 @@ add_executable(benchmarks
         src/Benchmark.cpp
         src/Helper.cpp)
 
-target_link_libraries(JudiciousCpp tbb)
+target_link_libraries(JudiciousPartitioning tbb)
 
 target_link_libraries(unittest
         libgtest
