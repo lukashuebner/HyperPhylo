@@ -2,7 +2,7 @@
 
 REPEATS_FILE="../scaling-tests/repeats-files/supermatrix_subsample_single_partiton_50000.repeats"
 # REPEATS_FILE="../datasets/extracted/59-l.repeats"
-EXECUTABLE="./JudiciousCpp$1"
+EXECUTABLE="./JudiciousPartitioning$1"
 OUTPUT_FILE="numa_result$1.txt"
 k=50
 # export KMP_AFFINITY=verbose

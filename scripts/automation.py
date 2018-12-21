@@ -35,7 +35,7 @@ input_files_multiple_partitions = [
 rccc_path = "./i10pc127/RepeatsCounter"
 naive_path = "./very_naive_split.py"
 rdda_path = "./i10pc127/rdda"
-judicious_path = "./i10pc127/JudiciousCpp"
+judicious_path = "./i10pc127/JudiciousPartitioning"
 
 block_numbers = [2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128, 160, 200, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096, 8192 ]
 
@@ -53,7 +53,7 @@ for input_file in input_files_single_partition:
         "naive_{}".format(m.group(1).replace("-", ""))
     ])
 
-# Generate cmdlines for JudiciousCpp
+# Generate cmdlines for JudiciousPartitioning
 for input_file in input_files_single_partition:
     m = re.search(".*/(.*)\.repeats", input_file)
     if not m:

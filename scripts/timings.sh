@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-path="../JudiciousPartitioning/cmake-build-debug/JudiciousCpp"
+path="../JudiciousPartitioning/cmake-build-debug/JudiciousPartitioning"
 
 #files='59-s.repeats 128-s.repeats 404-s.repeats 59-l.repeats 128-l.repeats 404-l.repeats'
 #files='404-l.repeats'

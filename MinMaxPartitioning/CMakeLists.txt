@@ -3,6 +3,6 @@ project(MinMaxPartitioning)
 
 set(CMAKE_CXX_STANDARD 14)
 
-include_directories(../JudiciousCppOptimized/include)
+include_directories(../JudiciousPartitioning/include)
 
-add_executable(MinMaxPartitioning main.cpp ../JudiciousCppOptimized/src/datastructures/Hypergraph.cpp)
+add_executable(MinMaxPartitioning main.cpp ../JudiciousPartitioning/src/datastructures/Hypergraph.cpp)

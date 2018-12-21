@@ -1,9 +1,9 @@
 #!/bin/bash
 
 LIST_OF_BRANCHES="SparseBitVector master"
-LIST_OF_EXECUTABLE_NAMES=(JudiciousCppSparse JudiciousCppAligned)
+LIST_OF_EXECUTABLE_NAMES=(JudiciousPartitioningSparse JudiciousPartitioningAligned)
 LIST_OF_HOSTS="127 128 129 132 134"
-JUDICIOUS_SRC_PATH="../JudiciousCppOptimized/"
+JUDICIOUS_SRC_PATH="../JudiciousPartitioning/"
 CMAKE_COMMAND="/software/cmake-3.10.0/bin/cmake .. -DCMAKE_C_COMPILER=/software/clang/6.0.1/bin/clang -DCMAKE_CXX_COMPILER=/software/clang/6.0.1/bin/clang++ -DCMAKE_CXX_FLAGS='-DNDEBUG'"
 
 require_clean_work_tree() {
@@ -72,16 +72,16 @@ for host_number in $LIST_OF_HOSTS; do
             cp -r $JUDICIOUS_SRC_PATH $hostname/jud_src
         	cp convert $hostname
             		
-            # Compile JudiciousCpp
+            # Compile JudiciousPartitioning
             cd $hostname
             cd jud_src
             mkdir compile
 		    cd compile
             $CMAKE_COMMAND
-		    make -j 4 JudiciousCpp
+		    make -j 4 JudiciousPartitioning
             
             # Move the exectuable and rename it
-            mv JudiciousCpp ../../${LIST_OF_EXECUTABLE_NAMES[$branch_num]}
+            mv JudiciousPartitioning ../../${LIST_OF_EXECUTABLE_NAMES[$branch_num]}
 
             # Clean up
             cd ../..

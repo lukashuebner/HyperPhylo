@@ -50,7 +50,7 @@ def measure_runtime(num_threads, num_sites, k, algorithm, thread_pinning):
         sys.stderr.write("No pinning.")
 
     file_name = "%s/supermatrix_subsample_single_partiton_%d.repeats" % (config.REPEATS_DIR, num_sites)
-    binary = "JudiciousCpp" + algorithm.capitalize()
+    binary = "JudiciousPartitioning" + algorithm.capitalize()
 
     sys.stderr.write(" Running with %d thread(s), %d sites and k=%d ..." % (num_threads, num_sites, k))
     sys.stderr.flush()

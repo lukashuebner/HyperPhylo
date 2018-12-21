@@ -7,7 +7,7 @@ import functools
 import subprocess
 from enum import Enum
 
-JUDICIOUS_EXE = '../JudiciousPartitioning/cmake-build-debug/JudiciousCpp'
+JUDICIOUS_EXE = '../JudiciousPartitioning/cmake-build-debug/JudiciousPartitioning'
 
 
 class InternalNode:

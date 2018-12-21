@@ -11,9 +11,9 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include "../JudiciousCppOptimized/include/Hypergraph.h"
-//#include "../JudiciousCppOptimized/include/EElem.h"
-//#include "../JudiciousCppOptimized/include/Algorithms.h"
+#include "../JudiciousPartitioning/include/Hypergraph.h"
+//#include "../JudiciousPartitioning/include/EElem.h"
+//#include "../JudiciousPartitioning/include/Algorithms.h"
 
 
 std::vector<std::string> splitLineAtSpaces(const std::string &line) {
