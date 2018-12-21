@@ -134,8 +134,9 @@ def get_partitions_from_repeats_file(repeats_file):
     return partitions
 
 
-def calculate_k(split_proportions):
+def calculate_rounded_proportions(split_proportions):
     rounded_proportions = []
+
     factor = 10
     rounded_proportions_are_ok = False
     while not rounded_proportions_are_ok:
@@ -144,8 +145,14 @@ def calculate_k(split_proportions):
         if all(prop >= 2 for prop in rounded_proportions):
             rounded_proportions_are_ok = True
 
-    k = sum(rounded_proportions)
-    return k, rounded_proportions
+    return rounded_proportions
+
+
+def execute_judicious_partitioning(repeats_file, k, partition):
+    partition_number = partition[10:]
+    judicious_partitioning_call = [JUDICIOUS_EXE, repeats_file, str(k), partition_number]
+    judicious_ddf = subprocess.check_output(judicious_partitioning_call, universal_newlines=True)
+    return judicious_ddf
 
 
 def parse_ddf(ddf):
@@ -251,12 +258,10 @@ def main():
                     core_proportions[cur[0]] = cur[1]
 
                 split_proportions = [float(prop) for prop in core_proportions.values()]
-                k, rounded_proportions = calculate_k(split_proportions)
+                rounded_proportions = calculate_rounded_proportions(split_proportions)
+                k = sum(rounded_proportions)
 
-                # Execute Judicious Partitioning
-                partition_number = partition[10:]
-                judicious_partitioning_call = [JUDICIOUS_EXE, repeats_file, str(k), partition_number]
-                judicious_ddf = subprocess.check_output(judicious_partitioning_call, universal_newlines=True)
+                judicious_ddf = execute_judicious_partitioning(repeats_file, k, partition)
 
                 # Parse output and fit it into the data_distribution
                 judicious_assignment = parse_ddf(judicious_ddf)
