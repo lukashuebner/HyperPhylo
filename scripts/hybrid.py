@@ -23,6 +23,5 @@ stdout, _ = p.communicate()
 os.remove("/tmp/temp")
 os.remove("/tmp/temp.splits")
 
-print(stdout)
-
-
+with open(output_file, "w") as ofile:
+    print(stdout, file=ofile)
