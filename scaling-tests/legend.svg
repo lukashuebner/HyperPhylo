@@ -144,6 +144,92 @@
          height="425.25"
          id="rect404" />
     </clipPath>
+    <clipPath
+       id="cpMHw1MDR8MjYyLjV8MA==-3">
+      <rect
+         x="0"
+         y="0"
+         width="504"
+         height="262.5"
+         id="rect163"
+         style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10" />
+    </clipPath>
+    <clipPath
+       id="clipPath745">
+      <rect
+         x="0"
+         y="0"
+         width="504"
+         height="262.5"
+         id="rect743"
+         style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10" />
+    </clipPath>
+    <clipPath
+       id="clipPath749">
+      <rect
+         x="0"
+         y="0"
+         width="504"
+         height="262.5"
+         id="rect747"
+         style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10" />
+    </clipPath>
+    <clipPath
+       id="clipPath753">
+      <rect
+         x="0"
+         y="0"
+         width="504"
+         height="262.5"
+         id="rect751"
+         style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10" />
+    </clipPath>
+    <clipPath
+       id="clipPath757">
+      <rect
+         x="0"
+         y="0"
+         width="504"
+         height="262.5"
+         id="rect755"
+         style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10" />
+    </clipPath>
+    <clipPath
+       id="cpMHw1MDR8MjYyLjV8MA==">
+      <rect
+         x="0"
+         y="0"
+         width="504"
+         height="262.5"
+         id="rect15-3" />
+    </clipPath>
+    <clipPath
+       id="clipPath1132">
+      <rect
+         x="0"
+         y="0"
+         width="504"
+         height="262.5"
+         id="rect1130" />
+    </clipPath>
+    <clipPath
+       id="cpMHw1MDR8MjYyLjV8MA==-6">
+      <rect
+         x="0"
+         y="0"
+         width="504"
+         height="262.5"
+         id="rect15-7" />
+    </clipPath>
+    <clipPath
+       id="clipPath1148">
+      <rect
+         x="0"
+         y="0"
+         width="504"
+         height="262.5"
+         id="rect1146" />
+    </clipPath>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -152,9 +238,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.979899"
-     inkscape:cx="144.76763"
-     inkscape:cy="760.50695"
+     inkscape:zoom="0.9899495"
+     inkscape:cx="-218.86136"
+     inkscape:cy="686.24959"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -171,7 +257,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -354,7 +440,7 @@
          id="tspan307"
          x="16.019508"
          y="82.252029"
-         style="stroke-width:0.26458332px">2x Intel Xeon E5-2650 6x2.6 GHz (i10pc129)</tspan></text>
+         style="stroke-width:0.26458332px">2x Intel Xeon E5-2650 8x2.6 GHz (i10pc129)</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:2.11666656px;line-height:6.61458349px;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -404,5 +490,89 @@
          y="81.557632"
          id="tspan319-7"
          style="stroke-width:0.26458332px" /></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:2.11666656px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="100.06921"
+       y="78.113342"
+       id="text370"
+       inkscape:export-xdpi="403.91501"
+       inkscape:export-ydpi="403.91501"><tspan
+         sodipodi:role="line"
+         x="100.06921"
+         y="78.113342"
+         id="tspan392"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.32833338px;line-height:1.25;font-family:Arial;-inkscape-font-specification:Arial;stroke-width:0.26458332px">k=50</tspan><tspan
+         sodipodi:role="line"
+         x="100.06921"
+         y="81.023758"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.32833338px;line-height:1.25;font-family:Arial;-inkscape-font-specification:Arial;stroke-width:0.26458332px"
+         id="tspan404">50,000 sites</tspan></text>
+    <line
+       x1="439.42001"
+       y1="151.06"
+       x2="453.23999"
+       y2="151.06"
+       style="fill:none;stroke:#f8766d;stroke-width:1.07000005;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:10"
+       clip-path="url(#cpMHw1MDR8MjYyLjV8MA==-3)"
+       id="line332"
+       transform="matrix(0.26458333,0,0,0.26458333,-15.750996,27.870272)" />
+    <circle
+       cx="446.32999"
+       cy="151.06"
+       r="1.95pt"
+       style="fill:#f8766d;stroke:none;stroke-width:0.70999998;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10"
+       clip-path="url(#cpMHw1MDR8MjYyLjV8MA==-3)"
+       id="circle334"
+       transform="matrix(0.26458333,0,0,0.26458333,-15.750996,27.870272)" />
+    <line
+       x1="439.42001"
+       y1="168.34"
+       x2="453.23999"
+       y2="168.34"
+       style="fill:none;stroke:#00bfc4;stroke-width:1.07000005;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:10"
+       clip-path="url(#cpMHw1MDR8MjYyLjV8MA==-3)"
+       id="line338"
+       transform="matrix(0.26458333,0,0,0.26458333,-15.750996,27.870272)" />
+    <polyline
+       points="446.33,165.30 448.96,169.86 443.70,169.86 "
+       style="fill:#00bfc4;stroke:none;stroke-width:0.70999998;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10"
+       clip-path="url(#cpMHw1MDR8MjYyLjV8MA==-3)"
+       id="polyline340"
+       transform="matrix(0.26458333,0,0,0.26458333,-15.750996,27.870272)" />
+    <g
+       clip-path="url(#cpMHw1MDR8MjYyLjV8MA==-3)"
+       id="g348"
+       transform="matrix(0.26458333,0,0,0.26458333,-15.750996,27.870272)">
+      <text
+         x="457.13"
+         y="171.49001"
+         style="font-size:8.80000019px;font-family:Arial"
+         textLength="26.41"
+         lengthAdjust="spacingAndGlyphs"
+         id="text346">sparse</text>
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:2.32833338px;line-height:6.61458349px;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="105.33087"
+       y="68.502594"
+       id="text358"><tspan
+         sodipodi:role="line"
+         id="tspan356"
+         x="105.33087"
+         y="68.502594"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial;stroke-width:0.26458332px">full</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:2.11666656px;line-height:6.61458349px;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="99.98568"
+       y="65.1194"
+       id="text362"><tspan
+         sodipodi:role="line"
+         id="tspan360"
+         x="99.98568"
+         y="65.1194"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.82222223px;line-height:7.9375px;font-family:Arial;-inkscape-font-specification:Arial;stroke-width:0.26458332px">hyperedge repr.</tspan></text>
   </g>
 </svg>
