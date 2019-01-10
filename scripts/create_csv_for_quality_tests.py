@@ -4,8 +4,8 @@ import argparse
 import os
 
 
-# ALGORITHMS = ('judicious', 'naive')
-ALGORITHMS = ('rdda', 'hybrid')
+# ALGORITHMS = ['judicious', 'naive']
+ALGORITHMS = ['rdda', 'hybrid']
 MAX = '8192'
 VALUES_OF_K = ['2', '4', '8', '12', '16', '24', '32', '48', '64', '96', '128', '160', '200', '256', '384', '512',
                '768', '1024', '1536', '2048', '3072', '4096', MAX]
