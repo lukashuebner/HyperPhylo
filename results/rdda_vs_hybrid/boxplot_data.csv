@@ -40678,7 +40678,6 @@ instance,algorithm,k,coreRCC
 59,hybrid,8192,0
 59,hybrid,8192,0
 59,hybrid,8192,0
-instance,algorithm,k,coreRCC
 404,rdda,2,105426
 404,rdda,2,111127
 404,rdda,4,52836
@@ -81958,7 +81957,6 @@ instance,algorithm,k,coreRCC
 404,hybrid,8192,402
 404,hybrid,8192,402
 404,hybrid,8192,402
-instance,algorithm,k,coreRCC
 128,rdda,2,170006
 128,rdda,2,165912
 128,rdda,4,83471
