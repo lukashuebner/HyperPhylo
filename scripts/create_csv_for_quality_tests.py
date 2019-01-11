@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import re
 
 
 # ALGORITHMS = ['judicious', 'naive']
@@ -31,6 +32,7 @@ def parse_args():
     parser.add_argument('repeats_file', nargs=1, help='the repeats file for which you want to check rccc results')
     parser.add_argument('results_folder', nargs=1, help='the folder where all rcccout result files are located')
     parser.add_argument('repeats_name', nargs=1, help='the name of the repeats file as in the rcccout file names')
+    parser.add_argument('--boxplot', action="store_true", help='changes output csv content boxplot requirement')
 
     args = parser.parse_args()
     return args
@@ -104,13 +106,25 @@ def main():
     results_folder = args.results_folder[0]
     repeats_name = args.repeats_name[0]
 
-    number_of_inner_nodes = get_number_of_inner_nodes(repeats_file)
-    lower_bounds = get_lower_bounds(results_folder, repeats_name, number_of_inner_nodes)
+    if not args.boxplot:
+        number_of_inner_nodes = get_number_of_inner_nodes(repeats_file)
+        lower_bounds = get_lower_bounds(results_folder, repeats_name, number_of_inner_nodes)
 
-    all_results = get_all_worstrcc_results(results_folder, repeats_name)
-    # all_results looks like: {'2': {'algo1': <worstrcc>, 'algo2': <worstrcc>}, '4': ...}
+        all_results = get_all_worstrcc_results(results_folder, repeats_name)
+        # all_results looks like: {'2': {'algo1': <worstrcc>, 'algo2': <worstrcc>}, '4': ...}
 
-    print_csv(all_results, lower_bounds)
+        print_csv(all_results, lower_bounds)
+    else:
+        print("instance,algorithm,k,coreRCC")
+        for algorithm in ALGORITHMS:
+            rcccout_files = get_rcccout_files(results_folder, repeats_name, algorithm)
+            for file, k in zip(rcccout_files, VALUES_OF_K):
+                lines = open(file, 'r').readlines()
+                for line in lines:
+                    m = re.search(r"^(Core|CPU)\d+ RCC: (\d+)\s+sites: \d+\s+partitions: \d+$", line)
+                    if m:
+                        rcc_of_core = m.group(2)
+                        print(repeats_name, algorithm, k, rcc_of_core, sep=",")
 
 
 if __name__ == '__main__':
