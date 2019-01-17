@@ -176,7 +176,9 @@ def execute_judicious_partitioning(repeats_file : str, k, partition):
         for line in cachefile.readlines():
             # check if it is the right part of the file
             if re.match("^\\d+$", line):
-                if int(line) is k:
+                if "551" in line:
+                    x = 0
+                if int(line) == k:
                     judicious_ddf = line
                     found = True
                 elif found:  # If k was already found and this is the next k, exit loop
