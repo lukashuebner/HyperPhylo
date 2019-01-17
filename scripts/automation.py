@@ -9,7 +9,7 @@ import tempfile
 import shlex
 import sys
 
-check_only = False
+check_only = True
 output_file = "result.ddf"
 
 cmdlines = []
@@ -28,7 +28,7 @@ input_files_multiple_partitions = [
     "../datasets/59.repeats",
     "../datasets/404.repeats",
     "../datasets/128.repeats",
-    # "../datasets/supermatrix_C_nt2.repeats",
+    "../datasets/supermatrix_C_nt2.repeats",
 ]
 
 rccc_path = "../RepeatsCounter/RepeatsCounter/build/RepeatsCounter"

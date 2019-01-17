@@ -2,12 +2,14 @@
 
 
 import argparse
-import math
-import functools
+import os
+import re
 import subprocess
+import sys
 from enum import Enum
 
 JUDICIOUS_EXE = '../JudiciousPartitioning/cmake-build-debug/JudiciousPartitioning'
+JP_K_UP_TO = 1024
 
 
 class InternalNode:
@@ -148,10 +150,46 @@ def calculate_rounded_proportions(split_proportions):
     return rounded_proportions
 
 
-def execute_judicious_partitioning(repeats_file, k, partition):
+def execute_judicious_partitioning(repeats_file : str, k, partition):
     partition_number = partition[10:]
-    judicious_partitioning_call = [JUDICIOUS_EXE, repeats_file, str(k), partition_number]
-    judicious_ddf = subprocess.check_output(judicious_partitioning_call, universal_newlines=True)
+
+    # Check if there is a cache folder already, otherwise create it
+    if not os.path.isdir("jp_cache"):
+        os.mkdir("jp_cache")
+
+    # Check if there is a cache file for this partition and file already, otherwise call jp to create the file
+    filename = repeats_file.split("/")[-1].replace(".", "-") + "_" + partition
+    if not os.path.isfile("jp_cache/" + filename):
+        judicious_partitioning_call = [
+            JUDICIOUS_EXE,
+            repeats_file,
+            ",".join(str(x) for x in range(2, JP_K_UP_TO + 1)),
+            partition_number
+        ]
+        subprocess.call(judicious_partitioning_call, universal_newlines=True, stdout=open("jp_cache/" + filename, "w"))
+
+    # Open the cachefile and extract the requested k
+    judicious_ddf = None
+    with open("jp_cache/" + filename, "r") as cachefile:
+        # Find correct output for the requested k
+        found = False
+        for line in cachefile.readlines():
+            # check if it is the right part of the file
+            if re.match("^\\d+$", line):
+                if int(line) is k:
+                    judicious_ddf = line
+                    found = True
+                elif found:  # If k was already found and this is the next k, exit loop
+                    break
+            elif found:      # If we are currenty in the right block, add to output but ignore the "Runtime" line
+                if not line.startswith("Runtime"):
+                    judicious_ddf += line
+
+    # If there was no k in the cache, crash the program and notify
+    if not judicious_ddf:
+        print("The the requested k={} was not in the cachefile!".format(k), file=sys.stderr)
+        exit(1)
+
     return judicious_ddf
 
 
