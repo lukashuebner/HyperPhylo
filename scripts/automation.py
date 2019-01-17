@@ -9,7 +9,7 @@ import tempfile
 import shlex
 import sys
 
-check_only = True
+check_only = False
 output_file = "result.ddf"
 
 cmdlines = []
