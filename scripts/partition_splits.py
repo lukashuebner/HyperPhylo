@@ -9,7 +9,8 @@ import sys
 from enum import Enum
 
 JUDICIOUS_EXE = '../JudiciousPartitioning/cmake-build-debug/JudiciousPartitioning'
-JP_K_UP_TO = 1024
+CACHE_FOLDER = "/home/peet/Desktop/jp_cache"
+JP_K_UP_TO = 5000
 
 
 class InternalNode:
@@ -154,51 +155,40 @@ def execute_judicious_partitioning(repeats_file : str, k, partition):
     partition_number = partition[10:]
 
     # Check if there is a cache folder already, otherwise create it
-    if not os.path.isdir("jp_cache"):
-        os.mkdir("jp_cache")
+    if not os.path.isdir(CACHE_FOLDER):
+        os.mkdir(CACHE_FOLDER)
 
     # Check if there is a cache file for this partition and file already, otherwise call jp to create the file
-    filename = repeats_file.split("/")[-1].replace(".", "-") + "_" + partition
-    if not os.path.isfile("jp_cache/" + filename):
+    folder_name = repeats_file.split("/")[-1].replace(".", "-") + "_" + partition
+    folder_path = CACHE_FOLDER + "/" + folder_name
+    if not os.path.isdir(folder_path):
+        os.mkdir(folder_path)
         judicious_partitioning_call = [
             JUDICIOUS_EXE,
             repeats_file,
             ",".join(str(x) for x in range(2, JP_K_UP_TO + 1)),
             partition_number
         ]
-        subprocess.call(judicious_partitioning_call, universal_newlines=True, stdout=open("jp_cache/" + filename, "w"))
-
-    # Open the cachefile and extract the requested k
-    judicious_ddf = None
-    with open("jp_cache/" + filename, "r") as cachefile:
-        # Find correct output for the requested k
-        found = False
-        all_lines = cachefile.readlines()
-        idx = 0
-        while idx < len(all_lines):
-            line = all_lines[idx]
-            # check if it is the right part of the file
+        p = subprocess.Popen(judicious_partitioning_call, universal_newlines=True, stdout=subprocess.PIPE)
+        stdout, _ = p.communicate()
+        current_file = None
+        for idx, line in enumerate(stdout.split("\n")):
             if re.match("^\\d+$", line):
-                if int(line) == k:
-                    judicious_ddf = line
-                    found = True
-                elif found:  # If k was already found and this is the next k, exit loop
-                    break
-                else:        # Else, we are in an uninteresting block and we can just fully skip it
-                    idx += 2 * int(line)
-            elif found:      # If we are currenty in the right block, add to output but ignore the "Runtime" line
-                if not line.startswith("Runtime"):
-                    judicious_ddf += line
-            else:            # Impossible state
-                print("This state should not occur, the line skipping didn't work!", file=sys.stderr)
-                exit(1)
-            idx += 1
+                if current_file:
+                    current_file.close()
+                current_file = open(folder_path + "/" + line + ".ddf", "w")
+                current_file.write(line + "\n")
+            elif not line.startswith("Runtime"):
+                current_file.write(line + "\n")
 
-
-    # If there was no k in the cache, crash the program and notify
-    if not judicious_ddf:
+    # Check if file for needed k exists
+    cachefile_path = folder_path + "/" + str(k) + ".ddf"
+    if not os.path.isfile(cachefile_path):
         print("The the requested k={} was not in the cachefile!".format(k), file=sys.stderr)
         exit(1)
+
+    # Read the cachefile
+    judicious_ddf = open(cachefile_path, "r").read()
 
     return judicious_ddf
 
