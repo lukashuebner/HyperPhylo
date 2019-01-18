@@ -173,19 +173,27 @@ def execute_judicious_partitioning(repeats_file : str, k, partition):
     with open("jp_cache/" + filename, "r") as cachefile:
         # Find correct output for the requested k
         found = False
-        for line in cachefile.readlines():
+        all_lines = cachefile.readlines()
+        idx = 0
+        while idx < len(all_lines):
+            line = all_lines[idx]
             # check if it is the right part of the file
             if re.match("^\\d+$", line):
-                if "551" in line:
-                    x = 0
                 if int(line) == k:
                     judicious_ddf = line
                     found = True
                 elif found:  # If k was already found and this is the next k, exit loop
                     break
+                else:        # Else, we are in an uninteresting block and we can just fully skip it
+                    idx += 2 * int(line)
             elif found:      # If we are currenty in the right block, add to output but ignore the "Runtime" line
                 if not line.startswith("Runtime"):
                     judicious_ddf += line
+            else:            # Impossible state
+                print("This state should not occur, the line skipping didn't work!", file=sys.stderr)
+                exit(1)
+            idx += 1
+
 
     # If there was no k in the cache, crash the program and notify
     if not judicious_ddf:
