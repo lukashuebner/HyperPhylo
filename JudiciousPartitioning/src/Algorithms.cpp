@@ -596,7 +596,11 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
             }
 
             assert(partitionsContainAllVertices(hypergraph, partitions));
+
+        #ifdef DETERMINISM
             std::sort(partitions.begin(), partitions.end());
+        #endif
+
             printDDF(element, partitions);
             listOfKs.pop_back();
 
