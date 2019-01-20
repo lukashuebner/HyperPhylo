@@ -271,3 +271,6 @@ src/timings*.txt
 supermatrix_single.repeats
 .Rproj.user
 i10pc*/
+supermatrix*.repeats
+i10pc*-testResults.csv
+jp_cache/

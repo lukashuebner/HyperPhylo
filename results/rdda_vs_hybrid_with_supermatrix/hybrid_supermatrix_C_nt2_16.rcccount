@@ -1,0 +1,28 @@
+Parsing repeats file ../datasets/supermatrix_C_nt2.repeats...
+Parsing distribution file result.ddf...
+***********************************
+** 	Analysis results	 **
+***********************************
+CPU0 RCC: 195723	 sites: 17716	 partitions: 5
+CPU1 RCC: 169380	 sites: 16811	 partitions: 4
+CPU2 RCC: 174947	 sites: 15961	 partitions: 5
+CPU3 RCC: 171480	 sites: 18723	 partitions: 4
+CPU4 RCC: 167255	 sites: 18180	 partitions: 4
+CPU5 RCC: 209061	 sites: 36745	 partitions: 5
+CPU6 RCC: 189487	 sites: 60761	 partitions: 4
+CPU7 RCC: 183890	 sites: 37379	 partitions: 4
+CPU8 RCC: 183299	 sites: 36974	 partitions: 4
+CPU9 RCC: 188601	 sites: 32451	 partitions: 4
+CPU10 RCC: 188401	 sites: 25963	 partitions: 4
+CPU11 RCC: 189857	 sites: 29459	 partitions: 4
+CPU12 RCC: 165397	 sites: 16409	 partitions: 3
+CPU13 RCC: 188707	 sites: 16067	 partitions: 4
+CPU14 RCC: 180573	 sites: 16082	 partitions: 4
+CPU15 RCC: 177647	 sites: 17778	 partitions: 3
+
+Worst RCC lower bound:	164279 (total RCC before split / number of cores)
+Worst RCC: 		209061
+Worst RCC * cores: 	3344976
+Sum of RCCs: 	 	2923705
+Total repeats loss:	295227
+Worst partitions:	5
