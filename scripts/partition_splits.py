@@ -9,7 +9,7 @@ import sys
 from enum import Enum
 
 JUDICIOUS_EXE = '../JudiciousPartitioning/cmake-build-debug/JudiciousPartitioning'
-CACHE_FOLDER = "jp_cache"
+CACHE_FOLDER = "/home/peet/Desktop/jp_cache"
 JP_K_UP_TO = 5000
 
 
