@@ -1,8 +1,10 @@
 #ifndef JUDICIOUSCPPOPTIMIZED_HELPER_H
 #define JUDICIOUSCPPOPTIMIZED_HELPER_H
 
-#include <string>
+#include "Definitions.h"
 #include "Hypergraph.h"
+
+#include <string>
 
 void startTM(const std::string &identifier);
 void endTM(const std::string &identifier);

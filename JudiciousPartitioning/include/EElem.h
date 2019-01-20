@@ -1,9 +1,12 @@
 #ifndef JUDICIOUSCPPOPTIMIZED_EELEM_H
 #define JUDICIOUSCPPOPTIMIZED_EELEM_H
 
-#include <set>
+#include "Definitions.h"
 #include "SElem.h"
 #include "AlignedBitArray.h"
+#include "SparseBitVector.h"
+
+#include <set>
 
 /**
  * elems of the set E: sets of hyperedges for each hypernode that contain a hypernode and set S*, which
@@ -11,7 +14,7 @@
  */
 class EElem {
 private:
-    AlignedBitArray combination;
+    BitRepresentation combination;
     // Elements of the original e set that are covered by this combination.
     mutable std::set<uint32_t> coveredE0Elems;
 
@@ -25,7 +28,7 @@ public:
     /**
      * Create new from combination and covering
      */
-    EElem(AlignedBitArray combination, std::set<uint32_t> coveredE0Elems);
+    EElem(BitRepresentation combination, std::set<uint32_t> coveredE0Elems);
 
     /**
      * Converts from SElem by dropping the coveredEElems set. This MOVES the inner datastructures, do not use original afterwards!
@@ -45,8 +48,8 @@ public:
     bool operator>=(const EElem &rhs) const;
 
     // ##### Getters/Setters
-    const AlignedBitArray &getCombination() const;
-    AlignedBitArray &getCombination();
+    const BitRepresentation &getCombination() const;
+    BitRepresentation &getCombination();
     std::set<uint32_t> &getCoveredE0Elems() const;
     std::set<uint32_t> &getCoveredE0Elems();
     size_t countOnes() const;
@@ -55,7 +58,7 @@ public:
 namespace std {
     template <> struct hash<EElem> {
         size_t operator()(const EElem &e) const {
-            return std::hash<AlignedBitArray>{}(e.getCombination());
+            return std::hash<BitRepresentation>{}(e.getCombination());
         }
     };
 }
