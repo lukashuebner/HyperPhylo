@@ -33,12 +33,3 @@ vignettes/*.pdf
 # Temporary files created by R markdown
 *.utf8.md
 *.knit.md
-
-# Outputted plots
-weak-scaling.svg
-weak-scaling.png
-strong-scaling.svg
-strong-scaling.png
-runtimes.svg
-runtimes.png
-
