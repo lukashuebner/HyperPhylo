@@ -3,6 +3,7 @@ project(JudiciousPartitioning)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall")
+set(OPENMP_ENABLED TRUE CACHE BOOLEAN "Openmp enabled or not")
 
 execute_process(COMMAND cat /proc/cpuinfo OUTPUT_VARIABLE result)
 if ("${result}" MATCHES "avx2")
@@ -16,7 +17,7 @@ endif()
 find_package(OpenMP)
 
 # Change to TRUE to activate OpenMP
-if (OPENMP_FOUND AND TRUE)
+if (OPENMP_FOUND AND "${OPENMP_ENABLED}")
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")

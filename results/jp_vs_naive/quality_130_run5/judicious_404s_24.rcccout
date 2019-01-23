@@ -1,0 +1,36 @@
+Parsing repeats file ../datasets/extracted/404-s.repeats...
+Parsing distribution file /tmp/tmphsp9_gi2...
+***********************************
+** 	Analysis results	 **
+***********************************
+CPU1 RCC: 658	 sites: 87	 partitions: 1
+CPU2 RCC: 402	 sites: 1	 partitions: 1
+CPU3 RCC: 420	 sites: 3	 partitions: 1
+CPU4 RCC: 402	 sites: 1	 partitions: 1
+CPU5 RCC: 402	 sites: 1	 partitions: 1
+CPU6 RCC: 402	 sites: 1	 partitions: 1
+CPU7 RCC: 437	 sites: 3	 partitions: 1
+CPU8 RCC: 516	 sites: 5	 partitions: 1
+CPU9 RCC: 402	 sites: 1	 partitions: 1
+CPU10 RCC: 453	 sites: 2	 partitions: 1
+CPU11 RCC: 402	 sites: 1	 partitions: 1
+CPU12 RCC: 419	 sites: 2	 partitions: 1
+CPU13 RCC: 402	 sites: 1	 partitions: 1
+CPU14 RCC: 596	 sites: 7	 partitions: 1
+CPU15 RCC: 423	 sites: 2	 partitions: 1
+CPU16 RCC: 422	 sites: 3	 partitions: 1
+CPU17 RCC: 519	 sites: 3	 partitions: 1
+CPU18 RCC: 549	 sites: 7	 partitions: 1
+CPU19 RCC: 527	 sites: 8	 partitions: 1
+CPU20 RCC: 510	 sites: 6	 partitions: 1
+CPU21 RCC: 631	 sites: 157	 partitions: 1
+CPU22 RCC: 645	 sites: 96	 partitions: 1
+CPU23 RCC: 454	 sites: 3	 partitions: 1
+CPU24 RCC: 617	 sites: 187	 partitions: 1
+
+Worst RCC lower bound:	105 (total RCC before split / number of cores)
+Worst RCC: 		658
+Worst RCC * cores: 	15792
+Sum of RCCs: 	 	11610
+Total repeats loss:	9085
+Worst partitions:	1

@@ -15,19 +15,35 @@ output_file = "result.ddf"
 cmdlines = []
 
 input_files_single_partition = [
-    # "../datasets/59_single.repeats",
-    # "../datasets/404_single.repeats",
-    # "../datasets/128_single.repeats",
-    # "../datasets/supermatrix_C_nt2_50k_single.repeats",
-    # "../datasets/supermatrix_C_nt2_100k_single.repeats",
-    # "../datasets/supermatrix_C_nt2_3_180k_single.repeats",
-    # "../datasets/supermatrix_C_nt2_16_300k_single.repeats",
+    "../datasets/extracted/59-s.repeats",
+    "../datasets/extracted/404-s.repeats",
+    "../datasets/extracted/128-s.repeats",
+    "../datasets/extracted/59-l.repeats",
+    "../datasets/extracted/404-l.repeats",
+    "../datasets/extracted/128-l.repeats",
+    "../datasets/extracted/sm_part24_11756.repeats",
+    "../datasets/extracted/sm_part12_20753.repeats",
+    "../datasets/extracted/sm_part3_31854.repeats",
+    "../datasets/extracted/sm_part1_170859.repeats",
+]
+
+input_files_single_partition_jp_version = [
+    "Dense",
+    "Dense",
+    "Dense",
+    "Dense",
+    "Dense",
+    "Dense",
+    "Sparse",
+    "Sparse",
+    "Sparse",
+    "Sparse",
 ]
 
 input_files_multiple_partitions = [
-    "../datasets/59.repeats",
-    "../datasets/404.repeats",
-    "../datasets/128.repeats",
+    # "../datasets/59.repeats",
+    # "../datasets/404.repeats",
+    # "../datasets/128.repeats",
     # "../datasets/supermatrix_C_nt2.repeats",
 ]
 
@@ -56,14 +72,14 @@ def main():
         ])
 
     # Generate cmdlines for JudiciousPartitioning
-    for input_file in input_files_single_partition:
+    for idx, input_file in enumerate(input_files_single_partition):
         m = re.search(".*/(.*)\.repeats", input_file)
         if not m:
             print("Mismatch in filename!", file=sys.stderr)
             exit(1)
 
         cmdlines.append([
-            "{} {} {}".format(judicious_path, input_file, ",".join(str(x) for x in block_numbers)),
+            "{} {} {}".format(judicious_path + input_files_single_partition_jp_version[idx], input_file, ",".join(str(x) for x in block_numbers)),
             "split",
             input_file,
             "judicious_{}".format(m.group(1).replace("-", ""))
@@ -109,8 +125,9 @@ def main():
         if check_only:
             time.sleep(1)
             process.terminate()
-            stdout, _ = process.communicate()
+            stdout, stderr = process.communicate()
             print(stdout)
+            print(stderr)
             continue
 
         stdout, _ = process.communicate()

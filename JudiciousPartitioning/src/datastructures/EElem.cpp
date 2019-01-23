@@ -1,10 +1,10 @@
 #include "EElem.h"
 
 // ##### Constructors
-EElem::EElem(size_t numBits) : combination(AlignedBitArray(numBits)) {
+EElem::EElem(size_t numBits) : combination(BitRepresentation(numBits)) {
 }
 
-EElem::EElem(AlignedBitArray combination, std::set <uint32_t> coveredE0Elems) :
+EElem::EElem(BitRepresentation combination, std::set <uint32_t> coveredE0Elems) :
         combination(std::move(combination)),
         coveredE0Elems(std::move(coveredE0Elems)) {
 }
@@ -38,11 +38,11 @@ bool EElem::operator>=(const EElem &rhs) const {
 }
 
 // ##### Getters/Setters
-const AlignedBitArray &EElem::getCombination() const {
+const BitRepresentation &EElem::getCombination() const {
     return combination;
 }
 
-AlignedBitArray &EElem::getCombination() {
+BitRepresentation &EElem::getCombination() {
     return combination;
 }
 

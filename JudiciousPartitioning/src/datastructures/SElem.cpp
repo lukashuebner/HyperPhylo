@@ -1,7 +1,7 @@
 #include "SElem.h"
 
 // ##### Constructors
-SElem::SElem(AlignedBitArray &&combination,
+SElem::SElem(BitRepresentation &&combination,
         uint32_t leftElementIdx,
         uint32_t rightElementIdx,
         const std::set<uint32_t> &left,
@@ -40,7 +40,7 @@ bool SElem::operator>=(const SElem &rhs) const {
 }
 
 // ##### Getters/Setters
-const AlignedBitArray &SElem::getCombination() const {
+const BitRepresentation &SElem::getCombination() const {
     return combination;
 }
 
@@ -52,7 +52,7 @@ const std::set<uint32_t> &SElem::getCoveredE0Elems() const {
     return coveredE0Elems;
 }
 
-AlignedBitArray &SElem::getCombination() {
+BitRepresentation &SElem::getCombination() {
     return combination;
 }
 
@@ -69,7 +69,7 @@ bool SElem::covers(const SElem &rhs) const {
     return combination.covers(rhs.combination);
 }
 
-bool SElem::covers(const AlignedBitArray &rhs) const {
+bool SElem::covers(const BitRepresentation &rhs) const {
     return combination.covers(rhs);
 }
 

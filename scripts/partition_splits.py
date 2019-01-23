@@ -2,12 +2,15 @@
 
 
 import argparse
-import math
-import functools
+import os
+import re
 import subprocess
+import sys
 from enum import Enum
 
 JUDICIOUS_EXE = '../JudiciousPartitioning/cmake-build-debug/JudiciousPartitioning'
+CACHE_FOLDER = "/home/peet/Desktop/jp_cache"
+JP_K_UP_TO = 5000
 
 
 class InternalNode:
@@ -148,10 +151,45 @@ def calculate_rounded_proportions(split_proportions):
     return rounded_proportions
 
 
-def execute_judicious_partitioning(repeats_file, k, partition):
+def execute_judicious_partitioning(repeats_file : str, k, partition):
     partition_number = partition[10:]
-    judicious_partitioning_call = [JUDICIOUS_EXE, repeats_file, str(k), partition_number]
-    judicious_ddf = subprocess.check_output(judicious_partitioning_call, universal_newlines=True)
+
+    # Check if there is a cache folder already, otherwise create it
+    if not os.path.isdir(CACHE_FOLDER):
+        os.mkdir(CACHE_FOLDER)
+
+    # Check if there is a cache file for this partition and file already, otherwise call jp to create the file
+    folder_name = repeats_file.split("/")[-1].replace(".", "-") + "_" + partition
+    folder_path = CACHE_FOLDER + "/" + folder_name
+    if not os.path.isdir(folder_path):
+        os.mkdir(folder_path)
+        judicious_partitioning_call = [
+            JUDICIOUS_EXE,
+            repeats_file,
+            ",".join(str(x) for x in range(2, JP_K_UP_TO + 1)),
+            partition_number
+        ]
+        p = subprocess.Popen(judicious_partitioning_call, universal_newlines=True, stdout=subprocess.PIPE)
+        stdout, _ = p.communicate()
+        current_file = None
+        for idx, line in enumerate(stdout.split("\n")):
+            if re.match("^\\d+$", line):
+                if current_file:
+                    current_file.close()
+                current_file = open(folder_path + "/" + line + ".ddf", "w")
+                current_file.write(line + "\n")
+            elif not line.startswith("Runtime"):
+                current_file.write(line + "\n")
+
+    # Check if file for needed k exists
+    cachefile_path = folder_path + "/" + str(k) + ".ddf"
+    if not os.path.isfile(cachefile_path):
+        print("The the requested k={} was not in the cachefile!".format(k), file=sys.stderr)
+        exit(1)
+
+    # Read the cachefile
+    judicious_ddf = open(cachefile_path, "r").read()
+
     return judicious_ddf
 
 

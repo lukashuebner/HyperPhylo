@@ -51,6 +51,7 @@ public:
     bool operator>(const AlignedBitArray &rhs) const;
     bool operator<=(const AlignedBitArray &rhs) const;
     bool operator>=(const AlignedBitArray &rhs) const;
+    friend std::ostream &operator<<(std::ostream &stream, const AlignedBitArray &array);
 
     // ##### Getters/Setters
     size_t getNumBits() const;
@@ -75,9 +76,8 @@ public:
     size_t countOnes() const;
     bool covers(const AlignedBitArray &rhs) const;
     size_t calculateDistance(const AlignedBitArray &rhs) const;
+    void setRightmost(const AlignedBitArray &rhs);
 };
-
-std::ostream &operator<<(std::ostream &stream, const AlignedBitArray &array);
 
 namespace std {
     template <> struct hash<AlignedBitArray> {

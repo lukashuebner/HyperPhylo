@@ -4,6 +4,7 @@
 #include <set>
 #include <tuple>
 #include <limits>
+#include <sstream>
 
 #include <sys/stat.h>
 
@@ -12,22 +13,9 @@
 #include <boost/algorithm/string.hpp>
 
 #include "../JudiciousPartitioning/include/Hypergraph.h"
+#include "../JudiciousPartitioning/include/Helper.h"
 //#include "../JudiciousPartitioning/include/EElem.h"
 //#include "../JudiciousPartitioning/include/Algorithms.h"
-
-
-std::vector<std::string> splitLineAtSpaces(const std::string &line) {
-    std::vector<std::string> splitLine;
-    boost::split(splitLine, line, boost::is_any_of(" "));
-    return splitLine;
-}
-
-uint32_t stringToUint32t(const std::string &theString) {
-    uint32_t theInt;
-    std::istringstream iss(theString);
-    iss >> theInt;
-    return theInt;
-}
 
 void printDDF(size_t k, const std::vector<std::vector<size_t>> &partitions) {
     std::cout << k << std::endl;
@@ -180,39 +168,49 @@ void partitionMinMax(const Hypergraph& hypergraph, const size_t k, const size_t 
      */
 //    std::vector<EElem> e = generateEWithDuplicates(hypergraph);
 
+    size_t count = 0;
     for (auto hypernode : hypernodes) {
+        std::cout << "Running hypernode " << count++ << "\r" << std::flush;
         std::vector<hElem> curHyperedges;
+//        startTM("get_all_edges_with_node");
         for (auto edge : hyperedges) {
             if (std::find(edge.begin(), edge.end(), hypernode) != edge.end()) {
                 curHyperedges.push_back(edge);
             }
         }
-        // Use magic capacity bound c to get the viable partitions
-        std::vector<int> viablePartitionIds;
+//        endTM("get_all_edges_with_node");
 
-        int least_filled_partitionId = 0;
-        for (int i = 0; i < partitions.size(); i++) {
+        // Use magic capacity bound c to get the viable partitions
+        std::vector<size_t> viablePartitionIds;
+
+//        startTM("search_least_filled_partition");
+        size_t least_filled_partitionId = 0;
+        for (size_t i = 0; i < partitions.size(); i++) {
             std::pair<std::vector<size_t>, std::vector<hElem>> partition = partitions[i];
             if (partition.first.size() < partitions[least_filled_partitionId].first.size()) {
                 least_filled_partitionId = i;
             }
         }
+//        endTM("search_least_filled_partition");
 
+//        startTM("weird_shit");
         size_t capacity_bound = partitions[least_filled_partitionId].first.size() + c;
-        for (int i = 0; i < partitions.size(); i++) {
+        for (size_t i = 0; i < partitions.size(); i++) {
             std::pair<std::vector<size_t>, std::vector<hElem>> partition = partitions[i];
             if (partition.first.size() <= capacity_bound) {
                 viablePartitionIds.push_back(i);
             }
         }
+//        endTM("weird_shit");
 
         // Find best partition
-        int bestPartitionId = 0;
+//        startTM("find_best_fitting_partition");
+        size_t bestPartitionId = 0;
         size_t maxIntersectionSize = 0;
-        for (int i : viablePartitionIds) {
+        for (size_t i : viablePartitionIds) {
             std::pair<std::vector<size_t>, std::vector<hElem>> partition = partitions[i];
             size_t intersection_size = 0;
-            for (auto edge : curHyperedges) {
+            for (const auto &edge : curHyperedges) {
                 if (std::find(partition.second.begin(), partition.second.end(), edge) != partition.second.end()) {
                     intersection_size++;
                 }
@@ -222,12 +220,14 @@ void partitionMinMax(const Hypergraph& hypergraph, const size_t k, const size_t 
                 maxIntersectionSize = intersection_size;
             }
         }
+//        endTM("find_best_fitting_partition");
 
         if (maxIntersectionSize == 0) {
             // Choose most empty partition
-            int minPartitionId;
+//            startTM("find_best_fitting_partition_intersect_zero");
+            size_t minPartitionId = 0;
             size_t minPartitionSize = std::numeric_limits<size_t>::max();
-            for (int i = 0; i < partitions.size(); i++) {
+            for (size_t i = 0; i < partitions.size(); i++) {
                 auto partition = partitions[i];
                 if (partition.first.size() < minPartitionSize) {
                     minPartitionId = i;
@@ -235,6 +235,7 @@ void partitionMinMax(const Hypergraph& hypergraph, const size_t k, const size_t 
                 }
             }
             bestPartitionId = minPartitionId;
+//            endTM("find_best_fitting_partition_intersect_zero");
         }
 
         partitions[bestPartitionId].first.push_back(hypernode);
@@ -242,7 +243,7 @@ void partitionMinMax(const Hypergraph& hypergraph, const size_t k, const size_t 
     }
 
     std::vector<std::vector<size_t>> partitionsForDDF;
-    for (auto partition : partitions) {
+    for (const auto &partition : partitions) {
         partitionsForDDF.push_back(partition.first);
     }
 
@@ -283,10 +284,13 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    std::cout << "Reading hypergraph from file... " << std::flush;
     Hypergraph hypergraph = getHypergraphFromPartitionFile(filepath, partitionNumber);
+    std::cout << "Done. Hypernodes: " << hypergraph.getHypernodes().size() << ", Hyperedges: " << hypergraph.getHyperEdges().size() << std::endl;
     size_t c = 12;  // currently hardcoded
 
     partitionMinMax(hypergraph, k, c);
+//    printAllTM();
 
     return 0;
 }

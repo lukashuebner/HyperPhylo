@@ -95,6 +95,13 @@ bool AlignedBitArray::operator>=(const AlignedBitArray &rhs) const {
     return !(*this < rhs);
 }
 
+std::ostream &operator<<(std::ostream &stream, const AlignedBitArray &array) {
+    for (size_t i = array.getNumBits(); i > 0; i--) {
+        stream << array.getBit(i - 1);
+    }
+    return stream;
+}
+
 // ##### Getters/Setters
 size_t AlignedBitArray::getNumBits() const {
     return numBits;
@@ -145,12 +152,18 @@ size_t AlignedBitArray::calculateDistance(const AlignedBitArray &rhs) const {
     return result;
 }
 
-std::ostream &operator<<(std::ostream &stream, const AlignedBitArray &array) {
-    for (size_t i = array.getNumBits(); i > 0; i--) {
-        stream << array.getBit(i - 1);
+void AlignedBitArray::setRightmost(const AlignedBitArray &rhs) {
+    for (size_t i = rhs.getNumInts() - 1; i >= 0; i--) {
+        uint64_t rightmost = rhs[i] & ~bitarray[i];
+        if (rightmost) {
+            bitarray[i] |= (rightmost & -rightmost);
+            break;
+        }
+        assert(i != 0);
     }
-    return stream;
 }
+
+
 
 //bool AlignedBitArray::covers(const AlignedBitArray &rhs) const {
 //    assert(numInts == rhs.numInts && numBits == rhs.numBits);

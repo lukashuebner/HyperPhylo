@@ -7,8 +7,8 @@ import psutil
 from termcolor import colored
 
 k = "2,8,16,64"
-jp_path_dense = "../JudiciousPartitioning/cmake-build-debug/JudiciousCppDense"
-jp_path_sparse = "../JudiciousPartitioning/cmake-build-debug/JudiciousCppSparse"
+jp_path_dense = "../JudiciousPartitioning/cmake-build-debug/JudiciousPartitioningDense"
+jp_path_sparse = "../JudiciousPartitioning/cmake-build-debug/JudiciousPartitioningSparse"
 input_files = [
     "../datasets/extracted/59-s.repeats",
     "../datasets/extracted/128-s.repeats",
@@ -32,8 +32,9 @@ for input_file in input_files:
     for i in range(1, 101, cpu_count):
         ps_dense = []
         ps_sparse = []
+
+        print("Staring runs {}...".format(",".join(["{:03}".format(x) for x in list(range(i, i + cpu_count))])))
         for core in range(cpu_count):
-            print("Run {:03d}...".format(i + core))
             sys.stdout.flush()
             ps_dense.append(subprocess.Popen([jp_path_dense, input_file, k], stdout=subprocess.PIPE))
             ps_sparse.append(subprocess.Popen([jp_path_sparse, input_file, k], stdout=subprocess.PIPE))
@@ -115,3 +116,5 @@ for input_file in input_files:
 
                 print("Programs don't have the same result, difference in run {:03d}! Exiting...".format(i + core))
                 exit(1)
+
+            print("\tRun {:03} done.".format(i + core))

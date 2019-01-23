@@ -1,0 +1,16 @@
+Parsing repeats file ../datasets/59.repeats...
+Parsing distribution file result.ddf...
+***********************************
+** 	Analysis results	 **
+***********************************
+CPU0 RCC: 9032	 sites: 1587	 partitions: 3
+CPU1 RCC: 9182	 sites: 1584	 partitions: 2
+CPU2 RCC: 9633	 sites: 2613	 partitions: 3
+CPU3 RCC: 9454	 sites: 1167	 partitions: 2
+
+Worst RCC lower bound:	8909 (total RCC before split / number of cores)
+Worst RCC: 		9633
+Worst RCC * cores: 	38532
+Sum of RCCs: 	 	37301
+Total repeats loss:	1663
+Worst partitions:	3

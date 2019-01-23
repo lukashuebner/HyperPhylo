@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <omp.h>
 #include <tbb/concurrent_unordered_map.h>
 #include <tbb/concurrent_unordered_set.h>
 #include <tbb/concurrent_vector.h>
@@ -10,6 +11,7 @@
 #include "SElem.h"
 #include "EElem.h"
 #include "AlignedBitArray.h"
+#include "SparseBitVector.h"
 #include "Helper.h"
 #include "Algorithms.h"
 
@@ -164,7 +166,7 @@ std::vector<SElem> generateS(size_t cmPlusD, const std::vector<EElem> &e) {
             assert(distance % 2 == 0 && distance >= 2 && distance <= e[0].getCombination().getNumBits());
             if (distance == 2) {
                 assert(firstE != secondE);
-                AlignedBitArray combination = firstE.getCombination() | secondE.getCombination();
+                BitRepresentation combination = firstE.getCombination() | secondE.getCombination();
                 assert(combination.countOnes() == cmPlusD);
 
                 SElem newS(std::move(combination), firstEidx, secondEidx, firstE.getCoveredE0Elems(), secondE.getCoveredE0Elems());
@@ -267,7 +269,7 @@ std::vector<EElem> findMinimalSubset(const std::vector<EElem> &e, std::vector<SE
 #if DEBUG >= DEBUG_VERBOSE
     std::set<size_t> uniques;
     for (const SElem &currentS : s) {
-        uniques.insert(currentS.coveredEElems.begin(), currentS.coveredEElems.end());
+        uniques.insert(currentS.getCoveredEElems().begin(), currentS.getCoveredEElems().end());
     }
     DEBUG_LOG(DEBUG_VERBOSE, "\nS(>=2) covers " + std::to_string(uniques.size()) + " unique elements of e\n");
 #endif
@@ -350,19 +352,13 @@ std::vector<EElem> findMinimalSubset(const std::vector<EElem> &e, std::vector<SE
                 assert(elementIterator != minimalDistances.end());
                 assert(elementIterator->second.second > 2);
 
-                AlignedBitArray combination = e[eidx].getCombination();
-                const AlignedBitArray &otherElement = e[elementIterator->second.first].getCombination();
+                BitRepresentation combination = e[eidx].getCombination();
+                const BitRepresentation &otherElement = e[elementIterator->second.first].getCombination();
 
                 // Flip a bit that makes the combination approach towards the element that is closest to the combination
                 // by flipping a bit to 1 that is already a one in the other element
-                for (size_t i = otherElement.getNumInts() - 1; i >= 0; i--) {
-                    uint64_t rightmost = otherElement[i] & ~combination[i];
-                    if (rightmost) {
-                        combination[i] |= (rightmost & -rightmost);
-                        break;
-                    }
-                    assert(i != 0);
-                }
+                BitRepresentation copy = combination;
+                combination.setRightmost(otherElement);
 
                 // Mark all uncovered elements of e that are covered by the created filler as covered
                 for (size_t checkEidx = 0; checkEidx < e.size(); checkEidx++) {
@@ -377,9 +373,9 @@ std::vector<EElem> findMinimalSubset(const std::vector<EElem> &e, std::vector<SE
 //                std::set<size_t> coveredSites;
 //                #pragma omp parallel for schedule(dynamic)
 //                for (size_t i = 0; i < minimalSubset.size(); i++) {
-//                    const AlignedBitArray &current = minimalSubset[i].combination;
+//                    const BitRepresentation &current = minimalSubset[i].combination;
 //                    // Does it cover this element of e? If yes insert index into covered set.
-//                    const AlignedBitArray &eElement = e[eidx].combination;
+//                    const BitRepresentation &eElement = e[eidx].combination;
 //                    if (current.covers(eElement)) {
 //                        std::cerr << "Combination " << combination << " doesn't cover a new e element";
 //                        std::cerr << ", especially the filled element is already covered by another element of the minimal subset." << std::endl;
@@ -553,7 +549,7 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
                 partitions.push_back(std::move(partition));
 
             #ifdef FAKE_DETECTION
-                AlignedBitArray expectedCombination(e[0].combination.numBits);
+                BitRepresentation expectedCombination(e[0].combination.numBits);
 
                 DEBUG_LOG(DEBUG_VERBOSE, "Covers:");
                 size_t currentEElemIdx = 0;
@@ -600,6 +596,11 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
             }
 
             assert(partitionsContainAllVertices(hypergraph, partitions));
+
+        #ifdef DETERMINISM
+            std::sort(partitions.begin(), partitions.end());
+        #endif
+
             printDDF(element, partitions);
             listOfKs.pop_back();
 

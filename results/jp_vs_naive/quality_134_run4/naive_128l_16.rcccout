@@ -1,0 +1,28 @@
+Parsing repeats file ../datasets/extracted/128-l.repeats...
+Parsing distribution file /tmp/tmpuops_7wa...
+***********************************
+** 	Analysis results	 **
+***********************************
+CPU1 RCC: 2987	 sites: 183	 partitions: 1
+CPU2 RCC: 2599	 sites: 184	 partitions: 1
+CPU3 RCC: 2810	 sites: 183	 partitions: 1
+CPU4 RCC: 2498	 sites: 183	 partitions: 1
+CPU5 RCC: 2439	 sites: 184	 partitions: 1
+CPU6 RCC: 2252	 sites: 183	 partitions: 1
+CPU7 RCC: 2394	 sites: 183	 partitions: 1
+CPU8 RCC: 2642	 sites: 183	 partitions: 1
+CPU9 RCC: 2689	 sites: 184	 partitions: 1
+CPU10 RCC: 2863	 sites: 183	 partitions: 1
+CPU11 RCC: 2580	 sites: 183	 partitions: 1
+CPU12 RCC: 2728	 sites: 184	 partitions: 1
+CPU13 RCC: 2494	 sites: 183	 partitions: 1
+CPU14 RCC: 2214	 sites: 183	 partitions: 1
+CPU15 RCC: 2635	 sites: 184	 partitions: 1
+CPU16 RCC: 2489	 sites: 183	 partitions: 1
+
+Worst RCC lower bound:	1476 (total RCC before split / number of cores)
+Worst RCC: 		2987
+Worst RCC * cores: 	47792
+Sum of RCCs: 	 	41313
+Total repeats loss:	17695
+Worst partitions:	1

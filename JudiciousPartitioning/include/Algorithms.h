@@ -1,15 +1,13 @@
 #ifndef JUDICIOUSCPPOPTIMIZED_ALGORITHMS_H
 #define JUDICIOUSCPPOPTIMIZED_ALGORITHMS_H
 
+#include "Hypergraph.h"
+#include "Definitions.h"
+
 #include <cstdlib>
 #include <vector>
 #include <string>
 #include <set>
-#include "Hypergraph.h"
-
-#define DEBUG 0
-#define DEBUG_PROGRESS 1
-#define DEBUG_VERBOSE 2
 
 //#define DETERMINISM
 //#define FAKE_DETECTION

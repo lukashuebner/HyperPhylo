@@ -1,6 +1,8 @@
 #ifndef JUDICIOUSCPP_HYPERGAPH_H
 #define JUDICIOUSCPP_HYPERGAPH_H
 
+#include "Definitions.h"
+
 #include <algorithm>
 #include <vector>
 #include <stdint.h>
