@@ -1,0 +1,20 @@
+Parsing repeats file ../datasets/extracted/sm_part24_11756.repeats...
+Parsing distribution file /tmp/tmpadgfruwz...
+***********************************
+** 	Analysis results	 **
+***********************************
+CPU1 RCC: 23739	 sites: 1992	 partitions: 1
+CPU2 RCC: 22248	 sites: 1424	 partitions: 1
+CPU3 RCC: 17810	 sites: 1356	 partitions: 1
+CPU4 RCC: 18779	 sites: 1137	 partitions: 1
+CPU5 RCC: 12658	 sites: 702	 partitions: 1
+CPU6 RCC: 20242	 sites: 1843	 partitions: 1
+CPU7 RCC: 19361	 sites: 1733	 partitions: 1
+CPU8 RCC: 21437	 sites: 1569	 partitions: 1
+
+Worst RCC lower bound:	12464 (total RCC before split / number of cores)
+Worst RCC: 		23739
+Worst RCC * cores: 	189912
+Sum of RCCs: 	 	156274
+Total repeats loss:	56561
+Worst partitions:	1
