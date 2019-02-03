@@ -152,7 +152,7 @@ def main():
                 with tempfile.NamedTemporaryFile("w") as ddf_file:
                     ddf_file.write(output)
                     ddf_file.flush()
-                    filename = "../results/" + folder_name + "/" + cmdline[3] + "_" + output_nick + ".rcccout"
+                    filename = "../results/" + folder_name + "/" + cmdline[3] + "_" + output_nick + ".rcccount"
                     subprocess.call([rccc_path, cmdline[2], ddf_file.name], stdout=open(filename, "w"))
         elif cmdline[1] is "file":
             filename = "../results/" + folder_name + "/" + cmdline[3]

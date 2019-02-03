@@ -5,8 +5,8 @@ import os
 import re
 
 
-# ALGORITHMS = ['judicious', 'naive']
-ALGORITHMS = ['rdda', 'hybrid']
+ALGORITHMS = ['judicious', 'naive']
+# ALGORITHMS = ['rdda', 'hybrid']
 MAX = '8192'
 VALUES_OF_K = ['2', '4', '8', '12', '16', '24', '32', '48', '64', '96', '128', '160', '200', '256', '384', '512',
                '768', '1024', '1536', '2048', '3072', '4096', MAX]
@@ -34,6 +34,7 @@ def parse_args():
     parser.add_argument('repeats_name', nargs=1, help='the name of the repeats file as in the rcccount file names')
     parser.add_argument('--boxplot', action="store_true", help='changes output csv content boxplot requirement')
     parser.add_argument('--loss', action='store_true', help='Parse repeats loss instead of RCC')
+    parser.add_argument('--print_name', action='store_true', help='Add file name to the output')
 
     args = parser.parse_args()
     return args
@@ -100,7 +101,9 @@ def print_list_as_csv_row(list):
     print()
 
 
-def print_csv(all_results, lower_bounds=None):
+def print_csv(all_results, lower_bounds=None, repeats_name=None):
+    if repeats_name:
+        print_list_as_csv_row([repeats_name] * len(VALUES_OF_K))
     print_list_as_csv_row(VALUES_OF_K)
     for algorithm in ALGORITHMS:
         print_list_as_csv_row([all_results[k][algorithm] for k in VALUES_OF_K])
@@ -122,9 +125,9 @@ def main():
         # all_results looks like: {'2': {'algo1': <worstrcc>, 'algo2': <worstrcc>}, '4': ...}
 
         if args.loss:
-            print_csv(all_results)
+            print_csv(all_results, repeats_name=args.repeats_name[0] if args.print_name else None)
         else:
-            print_csv(all_results, lower_bounds)
+            print_csv(all_results, lower_bounds, args.repeats_name[0] if args.print_name else None)
     else:
         print("instance,algorithm,k,coreRCC")
         for algorithm in ALGORITHMS:

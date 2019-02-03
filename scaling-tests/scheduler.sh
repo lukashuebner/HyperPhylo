@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 tmux start-server
 tmux new-session -d -s scalingtests -n i10pc127

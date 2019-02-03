@@ -25,6 +25,31 @@ tbb::concurrent_unordered_map<size_t, std::pair<size_t, size_t>> minimalDistance
 std::vector<eElem> originalE;
 #endif
 
+std::string pretty_bytes(size_t bytes) {
+    const char* suffixes[7];
+    suffixes[0] = "B";
+    suffixes[1] = "KB";
+    suffixes[2] = "MB";
+    suffixes[3] = "GB";
+    suffixes[4] = "TB";
+    suffixes[5] = "PB";
+    suffixes[6] = "EB";
+    uint s = 0; // which suffix to use
+    double count = bytes;
+    while (count >= 1024 && s < 7) {
+        s++;
+        count /= 1024;
+    }
+
+    char buf[10000];
+    if (count - floor(count) == 0.0)
+        sprintf(buf, "%d %s", (int)count, suffixes[s]);
+    else
+        sprintf(buf, "%.1f %s", count, suffixes[s]);
+
+    return std::string(buf);
+}
+
 /**
  * Parse a partition file and create its hypergraph.
  * @param filepath The path to the partition file.
@@ -243,7 +268,15 @@ std::vector<SElem> generateS(size_t cmPlusD, const std::vector<EElem> &e) {
 
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
     DEBUG_LOG(DEBUG_PROGRESS, "Size S(>=2): " + std::to_string(s.size()) + "\n");
-    return std::vector<SElem>(std::make_move_iterator(s.begin()), std::make_move_iterator(s.end()));
+
+    std::vector<SElem> temp(std::make_move_iterator(s.begin()), std::make_move_iterator(s.end()));
+    size_t size_of_S = 0;
+    for (const SElem &current : temp) {
+        size_of_S += current.getCombination().getNumInts() * sizeof(uint64_t);
+    }
+    std::cout << "Memory usage of S(>=2): " << pretty_bytes(size_of_S) << std::endl;
+    std::cout << "Worst case memory usage of S(>=2): " << pretty_bytes(0.5 * e.size() * e[0].getCombination().getNumBits() * sizeof(uint64_t)) << std::endl;
+    return temp;
 }
 
 /**
@@ -361,6 +394,9 @@ std::vector<EElem> findMinimalSubset(const std::vector<EElem> &e, std::vector<SE
                 combination.setRightmost(otherElement);
 
                 // Mark all uncovered elements of e that are covered by the created filler as covered
+                // TODO This doesn't make any sense and eats runtime for nothing.
+                //  "alle elemente in E die zusammengefasst werden können sind ja schon von generateS>=2 zusammenfasst,
+                //  damit bleibt nixmehr übrig was durch einen einzelnen bitflip plötzlich zufällig zusammengefasst wird"
                 for (size_t checkEidx = 0; checkEidx < e.size(); checkEidx++) {
                     const EElem &checkEElem = e[checkEidx];
                     if (combination.covers(checkEElem.getCombination()) && checkEidx != eidx) {
@@ -405,7 +441,14 @@ std::vector<EElem> findMinimalSubset(const std::vector<EElem> &e, std::vector<SE
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
     DEBUG_LOG(DEBUG_PROGRESS, "Size S*: " + std::to_string(minimalSubset.size()) + "\n");
 
-    return std::vector<EElem>(std::make_move_iterator(minimalSubset.begin()), std::make_move_iterator(minimalSubset.end()));
+    std::vector<EElem> temp(std::make_move_iterator(minimalSubset.begin()), std::make_move_iterator(minimalSubset.end()));
+    size_t size_of_S = 0;
+    for (const EElem &current : temp) {
+        size_of_S += current.getCombination().getNumInts() * sizeof(uint64_t);
+    }
+    std::cout << "Memory usage of S*: " << pretty_bytes(size_of_S) << std::endl;
+
+    return temp;
 }
 
 /**

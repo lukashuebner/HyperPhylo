@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(JudiciousPartitioning)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -DNDEBUG -Rpass=loop-vectorize")
 set(OPENMP_ENABLED TRUE CACHE BOOLEAN "Openmp enabled or not")
 
 execute_process(COMMAND cat /proc/cpuinfo OUTPUT_VARIABLE result)
