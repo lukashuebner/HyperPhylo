@@ -2,7 +2,6 @@
 #define JUDICIOUSCPPOPTIMIZED_SPARSEBITVECTOR_H
 
 #include <cstdlib>
-#include <bits/unique_ptr.h>
 #include <boost/functional/hash.hpp>
 
 #ifdef __AVX512F__
