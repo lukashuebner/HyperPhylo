@@ -1,7 +1,3 @@
-[submodule "kahypar"]
-	path = kahypar
-	url = https://github.com/SebastianSchlag/kahypar.git
-	ignore = dirty
 [submodule "RepeatsCounter"]
 	path = RepeatsCounter
 	url = https://github.com/BenoitMorel/RepeatsCounter.git
