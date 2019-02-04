@@ -5,7 +5,7 @@
 #include "SparseBitVector.h"
 
 // Debug stuff
-#define DEBUG 1
+#define DEBUG 0
 #define DEBUG_PROGRESS 1
 #define DEBUG_VERBOSE 2
 

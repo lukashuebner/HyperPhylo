@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(JudiciousPartitioning)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -DNDEBUG -Rpass=loop-vectorize")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -DNDEBUG")
 set(OPENMP_ENABLED TRUE CACHE BOOLEAN "Openmp enabled or not")
 
 execute_process(COMMAND cat /proc/cpuinfo OUTPUT_VARIABLE result)
@@ -25,56 +25,6 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 endif()
 
-# We need thread support for googletest
-find_package(Threads REQUIRED)
-
-# Enable ExternalProject CMake module
-include(ExternalProject)
-
-# Download and install GoogleTest
-ExternalProject_Add(
-        gtest
-        URL https://github.com/google/googletest/archive/master.zip
-        PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
-        # Disable install step
-        INSTALL_COMMAND ""
-)
-
-# Get GTest source and binary directories from CMake project
-ExternalProject_Get_Property(gtest source_dir binary_dir)
-
-# Create a libgtest target to be used as a dependency by test programs
-add_library(libgtest IMPORTED STATIC GLOBAL)
-add_dependencies(libgtest gtest)
-
-# Set libgtest properties
-set_target_properties(libgtest PROPERTIES
-        "IMPORTED_LOCATION" "${binary_dir}/googlemock/gtest/libgtest.a"
-        "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-        )
-
-# Create a libgmock target to be used as a dependency by test programs
-add_library(libgmock IMPORTED STATIC GLOBAL)
-add_dependencies(libgmock gtest)
-
-# Set libgmock properties
-set_target_properties(libgmock PROPERTIES
-        "IMPORTED_LOCATION" "${binary_dir}/googlemock/libgmock.a"
-        "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-        )
-
-include_directories("${source_dir}/googletest/include"
-        "${source_dir}/googlemock/include")
-
-#find_package(PkgConfig)
-#pkg_check_modules(GTEST REQUIRED gtest>=1.7.0)
-#pkg_check_modules(GMOCK REQUIRED gmock>=1.7.0)
-
-#include_directories(
-#    ${GTEST_INCLUDE_DIRS}
-#    ${GMOCK_INCLUDE_DIRS}
-#)
-
 include_directories(include /opt/intel/tbb/include)
 link_directories(/opt/intel/tbb/lib/intel64/gcc4.7)
 file(GLOB_RECURSE ds src/datastructures/*.cpp)
@@ -88,21 +38,10 @@ add_executable(JudiciousPartitioning
         src/Algorithms.cpp
         src/Helper.cpp)
 
-add_executable(unittest
-        ${ds}
-        test/unittests.cpp
-        src/Algorithms.cpp)
-
 add_executable(benchmarks
         ${ds}
         src/Benchmark.cpp
         src/Helper.cpp)
 
 target_link_libraries(JudiciousPartitioning tbb)
-
-target_link_libraries(unittest
-        libgtest
-        libgmock
-        tbb)
-
 target_link_libraries(benchmarks benchmark sdsl)

@@ -21,35 +21,6 @@
 // * the second value is the minimal distance
 tbb::concurrent_unordered_map<size_t, std::pair<size_t, size_t>> minimalDistances;
 
-#ifdef FAKE_DETECTION
-std::vector<eElem> originalE;
-#endif
-
-std::string pretty_bytes(size_t bytes) {
-    const char* suffixes[7];
-    suffixes[0] = "B";
-    suffixes[1] = "KB";
-    suffixes[2] = "MB";
-    suffixes[3] = "GB";
-    suffixes[4] = "TB";
-    suffixes[5] = "PB";
-    suffixes[6] = "EB";
-    uint s = 0; // which suffix to use
-    double count = bytes;
-    while (count >= 1024 && s < 7) {
-        s++;
-        count /= 1024;
-    }
-
-    char buf[10000];
-    if (count - floor(count) == 0.0)
-        sprintf(buf, "%d %s", (int)count, suffixes[s]);
-    else
-        sprintf(buf, "%.1f %s", count, suffixes[s]);
-
-    return std::string(buf);
-}
-
 /**
  * Parse a partition file and create its hypergraph.
  * @param filepath The path to the partition file.
@@ -195,7 +166,6 @@ std::vector<SElem> generateS(size_t cmPlusD, const std::vector<EElem> &e) {
                 assert(combination.countOnes() == cmPlusD);
 
                 SElem newS(std::move(combination), firstEidx, secondEidx, firstE.getCoveredE0Elems(), secondE.getCoveredE0Elems());
-                // TODO Move instead of copy
                 auto result = s.insert(newS);
                 // Merge together if this element already exists
                 if (!result.second) {
@@ -233,9 +203,6 @@ std::vector<SElem> generateS(size_t cmPlusD, const std::vector<EElem> &e) {
     }
 
 #ifndef NDEBUG
-    // TODO I'm pretty sure this doesn't actually do something ever. Can probably be removed. For now, writes are commented out.
-    // Run over E and check for each element if it fits into one of the generated combinations
-    // TODO This will obviously also add the initial elements of e that created the combination, so maybe we can try to avoid that?
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
     #pragma omp parallel for schedule(dynamic)
     for (size_t eidx = 0; eidx < e.size(); eidx++) {
@@ -247,20 +214,9 @@ std::vector<SElem> generateS(size_t cmPlusD, const std::vector<EElem> &e) {
         const EElem &currentE = e[eidx];
         for (const SElem &currentS : s) {
             if (currentS.covers(currentE.getCombination())) {
-//                auto result = currentS.coveredEElems.insert(eidx);
-//                if (result.second) {
-//                    std::cout << "THIS ACTUALLY DID SOMETHING; WOW" << std::endl;
-//                    assert(false);
-//                }
                 if (!currentS.getCoveredEElems().count(eidx)) {
-                    assert(false && "There was an uncovered element that is covered by a created combination, we thought that never happens.");
+                    assert(false && "There was an uncovered element that is covered by a created combination, this should never happen.");
                 }
-//                size_t prev = currentS.coveredE0Elems.size();
-//                currentS.coveredE0Elems.insert(currentE.coveredE0Elems.begin(), currentE.coveredE0Elems.end());
-//                if (prev != currentS.coveredE0Elems.size()) {
-//                    std::cout << "THIS ACTUALLY DID SOMETHING; AMAZING" << std::endl;
-//                    assert(false);
-//                }
             }
         }
     }
@@ -268,15 +224,7 @@ std::vector<SElem> generateS(size_t cmPlusD, const std::vector<EElem> &e) {
 
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
     DEBUG_LOG(DEBUG_PROGRESS, "Size S(>=2): " + std::to_string(s.size()) + "\n");
-
-    std::vector<SElem> temp(std::make_move_iterator(s.begin()), std::make_move_iterator(s.end()));
-    size_t size_of_S = 0;
-    for (const SElem &current : temp) {
-        size_of_S += current.getCombination().getNumInts() * sizeof(uint64_t);
-    }
-    std::cout << "Memory usage of S(>=2): " << pretty_bytes(size_of_S) << std::endl;
-    std::cout << "Worst case memory usage of S(>=2): " << pretty_bytes(0.5 * e.size() * e[0].getCombination().getNumBits() * sizeof(uint64_t)) << std::endl;
-    return temp;
+    return std::vector<SElem>(std::make_move_iterator(s.begin()), std::make_move_iterator(s.end()));
 }
 
 /**
@@ -309,7 +257,6 @@ std::vector<EElem> findMinimalSubset(const std::vector<EElem> &e, std::vector<SE
 
     // As long as not all of e is covered, i.e. alreadyCovered and E differ
     // Because of how the loop works (adding diffsets), alreadyCovered and E are the same when they have the same number of elements
-//    startTM("ALL");
     while (alreadyCovered.size() != e.size()) {
         // findest longest difference set
         std::set<size_t> longestDiffset;
@@ -317,9 +264,7 @@ std::vector<EElem> findMinimalSubset(const std::vector<EElem> &e, std::vector<SE
         for (size_t i = 0; i < s.size(); i++) {
             SElem &currentS = s[i];
             std::set<size_t> diff;
-//            startTM("DIFF");
             boost::range::set_difference(currentS.getCoveredEElems(), alreadyCovered, std::inserter(diff, diff.end()));
-//            endTM("DIFF");
             if (diff.size() > longestDiffset.size()) {
                 longestDiffset = diff;
                 longestDiffsetSElemIdx = i;
@@ -333,32 +278,23 @@ std::vector<EElem> findMinimalSubset(const std::vector<EElem> &e, std::vector<SE
         SElem &sElemOfLongestDiffset = s[longestDiffsetSElemIdx];
 
         // Add all elements of the found longest diffset to the already covered elements of e
-//        startTM("InsertAlreadyCovered");
         alreadyCovered.insert(longestDiffset.begin(), longestDiffset.end());
-//        endTM("InsertAlreadyCovered");
 
         // add found longest diffset combination to the resulting minimal subset
         // skip original e elements that are already covered by other mininmal subset elements
-//        startTM("copy");
         std::set<uint32_t> allCoveredE0 = sElemOfLongestDiffset.getCoveredE0Elems();
         sElemOfLongestDiffset.getCoveredE0Elems().clear();
-//        endTM("copy");
 
-//        startTM("DIFFE0");
         boost::set_difference(allCoveredE0, alreadyCoveredE0,
                 std::inserter(sElemOfLongestDiffset.getCoveredE0Elems(), sElemOfLongestDiffset.getCoveredE0Elems().end()));
-//        endTM("DIFFE0");
 
-//        startTM("InsertAlreadyCoveredE0");
         // Add all newly covered original e elements in the already covered original e elements
         alreadyCoveredE0.insert(sElemOfLongestDiffset.getCoveredE0Elems().begin(), sElemOfLongestDiffset.getCoveredE0Elems().end());
-//        endTM("InsertAlreadyCoveredE0");
 
         // Push to longest subset and remove from s
         minimalSubset.push_back(EElem(std::move(sElemOfLongestDiffset)));
         s.erase(s.begin() + longestDiffsetSElemIdx);
     }
-//    endTM("ALL");
 
     int counter = 0;
     DEBUG_LOG(DEBUG_VERBOSE, "Elements not covered yet: " + std::to_string(e.size() - alreadyCovered.size()) + "\n");
@@ -393,35 +329,6 @@ std::vector<EElem> findMinimalSubset(const std::vector<EElem> &e, std::vector<SE
                 BitRepresentation copy = combination;
                 combination.setRightmost(otherElement);
 
-                // Mark all uncovered elements of e that are covered by the created filler as covered
-                // TODO This doesn't make any sense and eats runtime for nothing.
-                //  "alle elemente in E die zusammengefasst werden können sind ja schon von generateS>=2 zusammenfasst,
-                //  damit bleibt nixmehr übrig was durch einen einzelnen bitflip plötzlich zufällig zusammengefasst wird"
-                for (size_t checkEidx = 0; checkEidx < e.size(); checkEidx++) {
-                    const EElem &checkEElem = e[checkEidx];
-                    if (combination.covers(checkEElem.getCombination()) && checkEidx != eidx) {
-                        alreadyCoveredConcurrent.insert(checkEidx);
-                    }
-                }
-
-                // Sanity Check: Does this element cover an element e (the filled one) that isn't already covered by a combination of other minimal subset elements?
-//            #ifndef NDEBUG
-//                std::set<size_t> coveredSites;
-//                #pragma omp parallel for schedule(dynamic)
-//                for (size_t i = 0; i < minimalSubset.size(); i++) {
-//                    const BitRepresentation &current = minimalSubset[i].combination;
-//                    // Does it cover this element of e? If yes insert index into covered set.
-//                    const BitRepresentation &eElement = e[eidx].combination;
-//                    if (current.covers(eElement)) {
-//                        std::cerr << "Combination " << combination << " doesn't cover a new e element";
-//                        std::cerr << ", especially the filled element is already covered by another element of the minimal subset." << std::endl;
-//                        std::cerr << "Combination contains of elements with " << eElement.countOnes() << " and " << otherElement.countOnes() << " ones." << std::endl;
-//                        std::cerr << "This occured in filling element " << eidx << std::endl;
-//                        assert(false);
-//                    }
-//                }
-//            #endif
-
                 // Insert the covering element
                 minimalSubset.push_back(EElem(std::move(combination), e[eidx].getCoveredE0Elems()));
             }
@@ -441,14 +348,7 @@ std::vector<EElem> findMinimalSubset(const std::vector<EElem> &e, std::vector<SE
     DEBUG_LOG(DEBUG_VERBOSE, "\n");
     DEBUG_LOG(DEBUG_PROGRESS, "Size S*: " + std::to_string(minimalSubset.size()) + "\n");
 
-    std::vector<EElem> temp(std::make_move_iterator(minimalSubset.begin()), std::make_move_iterator(minimalSubset.end()));
-    size_t size_of_S = 0;
-    for (const EElem &current : temp) {
-        size_of_S += current.getCombination().getNumInts() * sizeof(uint64_t);
-    }
-    std::cout << "Memory usage of S*: " << pretty_bytes(size_of_S) << std::endl;
-
-    return temp;
+    return std::vector<EElem>(std::make_move_iterator(minimalSubset.begin()), std::make_move_iterator(minimalSubset.end()));
 }
 
 /**
@@ -491,10 +391,6 @@ std::vector<EElem> generateE(const Hypergraph &hypergraph) {
         }
     }
     DEBUG_LOG(DEBUG_VERBOSE, "\nDone.\n");
-
-#ifdef FAKE_DETECTION
-    originalE = e;
-#endif
 
 #if DEBUG > 0
     size_t entryIdx = 0;
@@ -573,11 +469,6 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
             // Extract partitions
             std::vector<std::vector<size_t>> partitions;
 
-        #ifdef FAKE_DETECTION
-            size_t numberOfFakes = 0;
-            std::vector<size_t> fakes;
-        #endif
-
             for (const EElem &currentSStarElem : e) {
                 // Convert covered elements to partition
                 std::vector<size_t> partition(currentSStarElem.getCoveredE0Elems().begin(), currentSStarElem.getCoveredE0Elems().end());
@@ -590,46 +481,7 @@ void partition(const Hypergraph &hypergraph, const std::set<size_t> &setOfKs) {
             #endif
 
                 partitions.push_back(std::move(partition));
-
-            #ifdef FAKE_DETECTION
-                BitRepresentation expectedCombination(e[0].combination.numBits);
-
-                DEBUG_LOG(DEBUG_VERBOSE, "Covers:");
-                size_t currentEElemIdx = 0;
-                for (const auto &currentEElem : originalE) {
-                    // If the original E element is contained in the current element of S, OR it into the expected combination.
-                    if ((currentEElem.combination & currentSStarElem.combination) == currentEElem.combination) {
-                        DEBUG_LOG(DEBUG_VERBOSE, " " + std::to_string(currentEElemIdx));
-                        expectedCombination = expectedCombination | currentEElem.combination;
-                    }
-                    currentEElemIdx++;
-                }
-
-                // Check for fake elements. A fake element is one that doesn't equal the result of ORing together
-                // all contained original e elements. It is only relevant if it was actually used for a partition though.
-                assert(!(expectedCombination != currentSStarElem.combination && expectedCombination.countOnes() == currentSStarElem.combination.countOnes()));
-                if (expectedCombination != currentSStarElem.combination) {
-                    assert(currentSStarElem.combination.countOnes() >= expectedCombination.countOnes() && "The partition can't be smaller than the expected combination.");
-                    // Check if only the partition bitstreams has ones where the expected combination has zeros and not the other way round.
-                    for (size_t i = 0; i < currentSStarElem.combination.numBits; i++) {
-                        assert(!(!currentSStarElem.combination.getBit(i) && expectedCombination.getBit(i)) && "The partition has a zero where the expected partition has a one, impossible!");
-                    }
-
-                    numberOfFakes += currentSStarElem.combination.countOnes() - expectedCombination.countOnes();
-                    fakes.push_back(partitions.size() + 1);
-                }
-            #endif
             }
-
-        #ifdef FAKE_DETECTION
-            if (numberOfFakes) {
-                std::cout << "\033[0;31mNumber of fake elements: " << numberOfFakes << " (";
-                for (size_t current : fakes) {
-                    std::cout << "CPU" << current << " ";
-                }
-                std::cout << "\b)" << "\033[0m" << std::endl;
-            }
-        #endif
 
             // If there are no elements in sStar left but there are not enough partitions yet, fill with empties
             if (partitions.size() < element) {

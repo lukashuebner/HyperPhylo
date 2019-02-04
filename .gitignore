@@ -256,8 +256,8 @@ build/
 HypergraphRepresentation/*.pdf
 .idea/
 *.iml
-cmake-build-debug/
-cmake-build-release/
+cmake-build-debug*/
+cmake-build-release*/
 __pycache__/
 JudiciousPartitioning/JudiciousPartitioning
 JudiciousPartitioning/unittest
