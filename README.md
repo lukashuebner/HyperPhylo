@@ -64,4 +64,5 @@ Example output:
     CPU2 2
     partition_0 1 5
     partition_1 4 0 1 2 3
+    Runtime: 100 ms
 
