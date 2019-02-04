@@ -19,12 +19,14 @@ All dependencies should be available in your package manager.
 
 #### Build
 The programm can be build using gcc or clang. However, note that the resulting binaries built with clang resulted in a lower runtime in our experiments.
+
 First, adjust TBB's path in the CMakeList.txt in JudicousPartitioning by adjusting the following lines:
 ```
 include_directories(include <tbb-path>/include/tbb/)
 link_directories(<tbb-path>/lib/)
 ```
 Where <tbb-path> is the path to your TBB installation.
+    
 Then, run the following commands to build HyperPhylo:
 
     cd JudiciousPartitioning
