@@ -12,7 +12,7 @@ In judicious partitioning, the maximum number of hyperedges per block is minimiz
 ## How to build & run
 #### Building
 Dependencies are Boost and Intel's ThreadBuildingBlocks (TBB). The programm can be build which gcc or clang. The resulting binaries built with clang had a lower runtime in our experiments.
-Simply execute the following commands to build:
+First, adjust TBB's path in the CMakeList.txt in JudicousPartition, then run the following commands to build:
 
     cd JudiciousPartitioning
     mkdir build
@@ -30,8 +30,8 @@ The programm can be run as follows:
 Where `partition_file` is a file describing the site repeats and `partition_number` is the number of the partition to be split. A split with the respective number of block whill be computed for each given k.
 
 #### Repeats file format
-A repeats file is generated from the partitioned MSA and a phylogenetic tree. generated from a partitioned MSA and a tree.
-The repeats file starts with the number of partitions, a space, and the number of internal nodes of the treen−3).
+A repeats file is generated from the partitioned MSA and a phylogenetic tree.
+The repeats file starts with the number of partitions, a space, and the number of internal nodes of the tree.
 This is followed by a blocks describing the partitions (partition blocks).
 A partition block starts with the partition name, a space, and the number of sites in this partition.
 Then, it contains one line per internal node of the tree.
