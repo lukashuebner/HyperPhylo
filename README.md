@@ -39,6 +39,7 @@ Each element in the line corresponds to a site, and is the repeats class identif
 Elements are separated by spaces. All sites that have the same repeats class identifier belong to the same repeats class.
 
 Example of a repeats file with two partitions and a treee with three internal nodes.
+    
     2 3
     partition_0 6
     0 1 2 3 4 4
@@ -48,3 +49,19 @@ Example of a repeats file with two partitions and a treee with three internal no
     0 1 2 3
     0 1 1 2
     0 1 2 3
+    
+#### Output format
+The output describes which CPU receives which site(s) from which partition.
+It contains one data block per CPU. A block starts with the CPU name, a space, and the number of partitions that CPU works on. Then, it contains one line per partition. Each line comprises the partition name, and a sequence of site identifiers, separated with spaces.
+A site identifier corresponds to the index of the the site in its original input data partition, starting from 0.
+Additionally, the runtime will be printed as `Runtime: xxxx ms`
+
+Example output:
+
+    2
+    CPU1 1
+    partition_0 5 0 1 2 3 4
+    CPU2 2
+    partition_0 1 5
+    partition_1 4 0 1 2 3
+
