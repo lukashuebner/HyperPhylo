@@ -2,7 +2,7 @@
 #define JUDICIOUSCPPOPTIMIZED_ALIGNEDBITARRAY_H
 
 #include <cstdlib>
-#include <bits/unique_ptr.h>
+#include <memory>
 #include <boost/functional/hash.hpp>
 
 #ifdef __AVX512F__
