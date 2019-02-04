@@ -25,7 +25,7 @@ First, adjust TBB's path in the CMakeList.txt in JudicousPartitioning by adjusti
 include_directories(include <tbb-path>/include/tbb/)
 link_directories(<tbb-path>/lib/)
 ```
-Where <tbb-path> is the path to your TBB installation.
+Where `<tbb-path>` is the path to your TBB installation.
     
 Then, run the following commands to build HyperPhylo:
 
