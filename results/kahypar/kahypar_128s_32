@@ -1,0 +1,44 @@
+Parsing repeats file ../HyperPhylo/datasets/extracted/128-s.repeats...
+Parsing distribution file 128-s.hmetis.part32.epsilon0.02.seed15907.KaHyPar.ddf...
+***********************************
+** 	Analysis results	 **
+***********************************
+CPU0 RCC: 126	 sites: 7	 partitions: 1
+CPU1 RCC: 144	 sites: 6	 partitions: 1
+CPU2 RCC: 207	 sites: 6	 partitions: 1
+CPU3 RCC: 173	 sites: 6	 partitions: 1
+CPU4 RCC: 190	 sites: 7	 partitions: 1
+CPU5 RCC: 269	 sites: 6	 partitions: 1
+CPU6 RCC: 126	 sites: 6	 partitions: 1
+CPU7 RCC: 126	 sites: 7	 partitions: 1
+CPU8 RCC: 126	 sites: 7	 partitions: 1
+CPU9 RCC: 171	 sites: 5	 partitions: 1
+CPU10 RCC: 126	 sites: 6	 partitions: 1
+CPU11 RCC: 135	 sites: 7	 partitions: 1
+CPU12 RCC: 126	 sites: 6	 partitions: 1
+CPU13 RCC: 135	 sites: 7	 partitions: 1
+CPU14 RCC: 126	 sites: 6	 partitions: 1
+CPU15 RCC: 126	 sites: 7	 partitions: 1
+CPU16 RCC: 126	 sites: 7	 partitions: 1
+CPU17 RCC: 126	 sites: 6	 partitions: 1
+CPU18 RCC: 126	 sites: 6	 partitions: 1
+CPU19 RCC: 126	 sites: 6	 partitions: 1
+CPU20 RCC: 126	 sites: 6	 partitions: 1
+CPU21 RCC: 247	 sites: 7	 partitions: 1
+CPU22 RCC: 180	 sites: 6	 partitions: 1
+CPU23 RCC: 202	 sites: 7	 partitions: 1
+CPU24 RCC: 140	 sites: 7	 partitions: 1
+CPU25 RCC: 187	 sites: 6	 partitions: 1
+CPU26 RCC: 262	 sites: 7	 partitions: 1
+CPU27 RCC: 274	 sites: 6	 partitions: 1
+CPU28 RCC: 135	 sites: 6	 partitions: 1
+CPU29 RCC: 189	 sites: 6	 partitions: 1
+CPU30 RCC: 126	 sites: 6	 partitions: 1
+CPU31 RCC: 135	 sites: 7	 partitions: 1
+
+Worst RCC lower bound:	36 (total RCC before split / number of cores)
+Worst RCC: 		274
+Worst RCC * cores: 	8768
+Sum of RCCs: 	 	5139
+Total repeats loss:	3969
+Worst partitions:	1

@@ -1,0 +1,108 @@
+Parsing repeats file ../HyperPhylo/datasets/extracted/404-l.repeats...
+Parsing distribution file 404-l.hmetis.part96.epsilon0.02.seed21218.KaHyPar.ddf...
+***********************************
+** 	Analysis results	 **
+***********************************
+CPU0 RCC: 619	 sites: 22	 partitions: 1
+CPU1 RCC: 1281	 sites: 23	 partitions: 1
+CPU2 RCC: 915	 sites: 22	 partitions: 1
+CPU3 RCC: 773	 sites: 22	 partitions: 1
+CPU4 RCC: 1065	 sites: 23	 partitions: 1
+CPU5 RCC: 920	 sites: 22	 partitions: 1
+CPU6 RCC: 976	 sites: 22	 partitions: 1
+CPU7 RCC: 973	 sites: 23	 partitions: 1
+CPU8 RCC: 1126	 sites: 22	 partitions: 1
+CPU9 RCC: 1022	 sites: 22	 partitions: 1
+CPU10 RCC: 1328	 sites: 23	 partitions: 1
+CPU11 RCC: 1376	 sites: 23	 partitions: 1
+CPU12 RCC: 1025	 sites: 22	 partitions: 1
+CPU13 RCC: 1318	 sites: 23	 partitions: 1
+CPU14 RCC: 1184	 sites: 23	 partitions: 1
+CPU15 RCC: 1082	 sites: 22	 partitions: 1
+CPU16 RCC: 1502	 sites: 23	 partitions: 1
+CPU17 RCC: 1329	 sites: 23	 partitions: 1
+CPU18 RCC: 1166	 sites: 22	 partitions: 1
+CPU19 RCC: 1862	 sites: 23	 partitions: 1
+CPU20 RCC: 1910	 sites: 23	 partitions: 1
+CPU21 RCC: 1727	 sites: 22	 partitions: 1
+CPU22 RCC: 2203	 sites: 23	 partitions: 1
+CPU23 RCC: 2234	 sites: 23	 partitions: 1
+CPU24 RCC: 706	 sites: 22	 partitions: 1
+CPU25 RCC: 415	 sites: 22	 partitions: 1
+CPU26 RCC: 417	 sites: 23	 partitions: 1
+CPU27 RCC: 402	 sites: 23	 partitions: 1
+CPU28 RCC: 412	 sites: 22	 partitions: 1
+CPU29 RCC: 402	 sites: 22	 partitions: 1
+CPU30 RCC: 506	 sites: 23	 partitions: 1
+CPU31 RCC: 692	 sites: 22	 partitions: 1
+CPU32 RCC: 805	 sites: 22	 partitions: 1
+CPU33 RCC: 1133	 sites: 23	 partitions: 1
+CPU34 RCC: 1038	 sites: 22	 partitions: 1
+CPU35 RCC: 834	 sites: 22	 partitions: 1
+CPU36 RCC: 419	 sites: 23	 partitions: 1
+CPU37 RCC: 402	 sites: 22	 partitions: 1
+CPU38 RCC: 533	 sites: 23	 partitions: 1
+CPU39 RCC: 441	 sites: 22	 partitions: 1
+CPU40 RCC: 941	 sites: 23	 partitions: 1
+CPU41 RCC: 863	 sites: 23	 partitions: 1
+CPU42 RCC: 1011	 sites: 23	 partitions: 1
+CPU43 RCC: 1142	 sites: 23	 partitions: 1
+CPU44 RCC: 703	 sites: 22	 partitions: 1
+CPU45 RCC: 756	 sites: 22	 partitions: 1
+CPU46 RCC: 737	 sites: 23	 partitions: 1
+CPU47 RCC: 985	 sites: 22	 partitions: 1
+CPU48 RCC: 423	 sites: 23	 partitions: 1
+CPU49 RCC: 402	 sites: 22	 partitions: 1
+CPU50 RCC: 430	 sites: 22	 partitions: 1
+CPU51 RCC: 415	 sites: 23	 partitions: 1
+CPU52 RCC: 413	 sites: 22	 partitions: 1
+CPU53 RCC: 414	 sites: 22	 partitions: 1
+CPU54 RCC: 810	 sites: 23	 partitions: 1
+CPU55 RCC: 848	 sites: 23	 partitions: 1
+CPU56 RCC: 836	 sites: 21	 partitions: 1
+CPU57 RCC: 706	 sites: 23	 partitions: 1
+CPU58 RCC: 848	 sites: 23	 partitions: 1
+CPU59 RCC: 697	 sites: 21	 partitions: 1
+CPU60 RCC: 614	 sites: 22	 partitions: 1
+CPU61 RCC: 494	 sites: 23	 partitions: 1
+CPU62 RCC: 602	 sites: 23	 partitions: 1
+CPU63 RCC: 402	 sites: 23	 partitions: 1
+CPU64 RCC: 402	 sites: 22	 partitions: 1
+CPU65 RCC: 402	 sites: 23	 partitions: 1
+CPU66 RCC: 1238	 sites: 23	 partitions: 1
+CPU67 RCC: 808	 sites: 23	 partitions: 1
+CPU68 RCC: 413	 sites: 22	 partitions: 1
+CPU69 RCC: 428	 sites: 23	 partitions: 1
+CPU70 RCC: 428	 sites: 22	 partitions: 1
+CPU71 RCC: 469	 sites: 22	 partitions: 1
+CPU72 RCC: 853	 sites: 22	 partitions: 1
+CPU73 RCC: 899	 sites: 23	 partitions: 1
+CPU74 RCC: 1058	 sites: 23	 partitions: 1
+CPU75 RCC: 910	 sites: 22	 partitions: 1
+CPU76 RCC: 1006	 sites: 22	 partitions: 1
+CPU77 RCC: 1167	 sites: 23	 partitions: 1
+CPU78 RCC: 1183	 sites: 22	 partitions: 1
+CPU79 RCC: 1123	 sites: 23	 partitions: 1
+CPU80 RCC: 1292	 sites: 23	 partitions: 1
+CPU81 RCC: 938	 sites: 22	 partitions: 1
+CPU82 RCC: 1240	 sites: 23	 partitions: 1
+CPU83 RCC: 1409	 sites: 22	 partitions: 1
+CPU84 RCC: 1058	 sites: 22	 partitions: 1
+CPU85 RCC: 996	 sites: 23	 partitions: 1
+CPU86 RCC: 1245	 sites: 23	 partitions: 1
+CPU87 RCC: 1002	 sites: 22	 partitions: 1
+CPU88 RCC: 1405	 sites: 23	 partitions: 1
+CPU89 RCC: 1103	 sites: 23	 partitions: 1
+CPU90 RCC: 1664	 sites: 22	 partitions: 1
+CPU91 RCC: 2581	 sites: 23	 partitions: 1
+CPU92 RCC: 2103	 sites: 23	 partitions: 1
+CPU93 RCC: 1513	 sites: 22	 partitions: 1
+CPU94 RCC: 1899	 sites: 23	 partitions: 1
+CPU95 RCC: 1736	 sites: 23	 partitions: 1
+
+Worst RCC lower bound:	423 (total RCC before split / number of cores)
+Worst RCC: 		2581
+Worst RCC * cores: 	247776
+Sum of RCCs: 	 	92936
+Total repeats loss:	52288
+Worst partitions:	1

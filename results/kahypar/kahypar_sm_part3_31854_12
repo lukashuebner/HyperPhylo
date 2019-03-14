@@ -1,0 +1,24 @@
+Parsing repeats file ../HyperPhylo/datasets/extracted/sm_part3_31854.repeats...
+Parsing distribution file sm_part3_31854.hmetis.part12.epsilon0.02.seed28628.KaHyPar.ddf...
+***********************************
+** 	Analysis results	 **
+***********************************
+CPU0 RCC: 23725	 sites: 2708	 partitions: 1
+CPU1 RCC: 14697	 sites: 2067	 partitions: 1
+CPU2 RCC: 27044	 sites: 2707	 partitions: 1
+CPU3 RCC: 14103	 sites: 2708	 partitions: 1
+CPU4 RCC: 22306	 sites: 2708	 partitions: 1
+CPU5 RCC: 22252	 sites: 2708	 partitions: 1
+CPU6 RCC: 15100	 sites: 2708	 partitions: 1
+CPU7 RCC: 22487	 sites: 2708	 partitions: 1
+CPU8 RCC: 22344	 sites: 2708	 partitions: 1
+CPU9 RCC: 25124	 sites: 2708	 partitions: 1
+CPU10 RCC: 25675	 sites: 2708	 partitions: 1
+CPU11 RCC: 18903	 sites: 2708	 partitions: 1
+
+Worst RCC lower bound:	15471 (total RCC before split / number of cores)
+Worst RCC: 		27044
+Worst RCC * cores: 	324528
+Sum of RCCs: 	 	253760
+Total repeats loss:	68098
+Worst partitions:	1

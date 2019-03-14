@@ -1,0 +1,16 @@
+Parsing repeats file ../HyperPhylo/datasets/extracted/59-l.repeats...
+Parsing distribution file 59-l.hmetis.part4.epsilon0.02.seed17672.KaHyPar.ddf...
+***********************************
+** 	Analysis results	 **
+***********************************
+CPU0 RCC: 880	 sites: 533	 partitions: 1
+CPU1 RCC: 5362	 sites: 556	 partitions: 1
+CPU2 RCC: 753	 sites: 538	 partitions: 1
+CPU3 RCC: 3908	 sites: 556	 partitions: 1
+
+Worst RCC lower bound:	2551 (total RCC before split / number of cores)
+Worst RCC: 		5362
+Worst RCC * cores: 	21448
+Sum of RCCs: 	 	10903
+Total repeats loss:	698
+Worst partitions:	1
