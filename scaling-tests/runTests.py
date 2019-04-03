@@ -177,7 +177,7 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--algorithm", default="unknown", help="Algorithm name to print into CSV field")
     parser.add_argument("-d", "--dry-run", action="store_true", help="Do not perform any measurements")
     parser.add_argument("-t", "--nthreads", type=int, nargs="+", default=[1, 2, 4, 8], help="List of OMP_THREAD_NUM values to benchmark")
-    parser.add_argument("-s", "--scaling", choices=["strong", "weak", "both"], default="both", help="Which kinf of scaling test to perform")
+    parser.add_argument("-s", "--scaling", choices=["strong", "weak", "both"], default="both", help="Which kind of scaling test to perform")
     parser.add_argument("-P", "--param", action=SetParamAction, help="Change any values defined in config.py")
     parser.add_argument("-c", "--cpu-config", action=SetCPUConfigAction, help="Defines the CPU configuration as <nSockets>x<nCoresPerSocket>")
     parser.add_argument("-tp", "--thread_pinning", choices=["disabled", "balanced"], default="disabled", help="Choose thread pinning mode. disabled: no thread pinning. balanced: Use minimum number of sockets for given number of threads but balance out number of threads over per socket over the sockets.")
