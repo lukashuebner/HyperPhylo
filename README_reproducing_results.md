@@ -1,7 +1,7 @@
 # Scaling Tests
-All scripts used and intermmediate files generated for these results are located in the folder "scaling tests". For all scripts to work, the parameters in config.py have to be adjusted and python3 has to be installed on the system.
+All scripts used and intermediate files generated for these results are located in the folder "scaling tests". For all scripts to work, the parameters in config.py have to be adjusted and python3 has to be installed on the system.
 
-All tests are run through invocing the runTests.py script. This script will take care of automatically generating needed partition and repeats files if they do not exist already. When called with the --help parameter, the following help will be given:
+All tests are run through invoking the runTests.py script. This script will take care of automatically generating needed partition and repeats files if they do not exist already. When called with the --help parameter, the following help will be given:
  
 	usage: runTests.py [-h] [-p] [-m MACHINE_ID] [-a ALGORITHM] [-d]
 		               [-t NTHREADS [NTHREADS ...]] [-s {strong,weak,both}]
